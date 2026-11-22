@@ -1,4 +1,6 @@
 # Weekly update pull requests, grouped so a week's updates are one review.
+# Major versions of packages are planned as issues (they need migration work), so only minor
+# and patch updates come from here. @types/node follows the Node version the dashboard runs on.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -8,6 +10,11 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     labels: ["area: operations"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       npm:
         update-types: [minor, patch]
