@@ -25,18 +25,28 @@ the next milestone. Unfinished work is moved, never released half-done.
   `## [X.Y.Z] - <date>` with Added, Changed, Fixed, Security, built from the merged pull requests of
   the milestone (`gh api "repos/clavia-auth/clavia-dashboard/pulls?state=closed&per_page=100"`), written for
   operators, not as a commit list. Settings and migrations get their own lines.
-- Bump `version` in `package.json` (and `package-lock.json` with `npm version --no-git-tag-version`).
+- Bump `version` in `package.json` (and `package-lock.json` with `npm version --no-git-tag-version`):
+  the Release workflow refuses a tag that disagrees with it or with the changelog.
 - Branch `chore/release-X.Y.Z`, pull request `Release X.Y.Z` with `Part of` the release issue,
   review requested, as in **ticket-work**.
 
 ## 3. Publish, only after the maintainer merges and says go
 
-Tagging and publishing are public and hard to take back, so they wait for an explicit go.
+Tagging and publishing are public and hard to take back, so they wait for an explicit go. The
+steps, and what the Release workflow does, are in `docs/RELEASING.md`.
 
 ```bash
 git fetch origin main && git tag -a vX.Y.Z -m "X.Y.Z" origin/main && git push origin vX.Y.Z
-gh api repos/clavia-auth/clavia-dashboard/releases -f tag_name=vX.Y.Z -f name="X.Y.Z" -F body=@<notes>
+```
+
+Pushing the tag runs `.github/workflows/release.yml`, which verifies the tag (on `main`, CI green,
+`package.json` and `CHANGELOG.md` agree), builds and pushes the container image and creates the
+GitHub release with the changelog section as its notes. Do not create the release by hand: the
+workflow does, and a second one would make it fail. Watch it (`gh run watch`), then close the
+milestone in both repositories:
+
+```bash
 gh api -X PATCH repos/clavia-auth/clavia-dashboard/milestones/<number> -f state=closed
 ```
 
-The release notes are the changelog section. Then report the release links.
+Then report the release links.

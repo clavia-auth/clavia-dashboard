@@ -14,6 +14,8 @@ const publicHost = process.env.DASHBOARD_URL === undefined ? [] : [new URL(proce
 
 const nextConfig: NextConfig = {
   basePath: "/dashboard",
+  // The container image runs the traced server alone (`Dockerfile`), without `node_modules`.
+  output: "standalone",
   // In development the browser reaches the dev server through Caddy, on the public host.
   allowedDevOrigins: publicHost,
   poweredByHeader: false,

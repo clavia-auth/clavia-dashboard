@@ -28,3 +28,13 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: ["area: operations"]
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
