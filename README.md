@@ -107,6 +107,13 @@ The type checker then names every page the change touches.
 
 See [docs/architecture.md](docs/architecture.md).
 
+## Contributing
+
+Work is planned on the [Clavia board](https://github.com/orgs/clavia-auth/projects/1), shared with
+the server. [CONTRIBUTING.md](CONTRIBUTING.md) explains the board, what a pull request must meet,
+and how Claude works the backlog with the `ticket-*` skills; [CLAUDE.md](CLAUDE.md) holds the
+rules a change must keep, and [SECURITY.md](SECURITY.md) how to report a vulnerability.
+
 ## License
 
 BSD 3-Clause, like Clavia.

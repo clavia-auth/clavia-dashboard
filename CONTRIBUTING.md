@@ -40,11 +40,35 @@ Node 22.12 or later, `npm ci`, a running Clavia (see its README), then `npm run 
 - Tokens stay on the server: the browser never holds an access or refresh token.
 - Read `CLAUDE.md` and `AGENTS.md` before a change: they hold the rules.
 
-## Asking Claude
+## Working with Claude
 
-Anyone with write access can mention `@claude` in an issue or a pull request to get an answer,
-a review, or an implementation on a branch. Claude follows `CLAUDE.md`, and its pull requests
-are reviewed like anyone else's.
+Claude does most of the implementation; the maintainer reviews and merges. Claude never merges,
+approves, or pushes to `main`. The steps are skills in `.claude/skills/`, which Claude Code loads
+in this repository:
+
+| Skill            | Use it to                                                | Ask for example                |
+| ---------------- | -------------------------------------------------------- | ------------------------------ |
+| `ticket-pick`    | choose the next issue                                    | "What should we work on next?" |
+| `ticket-work`    | take an issue to a pull request awaiting review          | "Work on #12"                  |
+| `ticket-review`  | answer a review and push the fixes                       | "Address the review on #30"    |
+| `ticket-triage`  | classify issues; cut large work into sub-issues          | "Triage the new issues"        |
+| `ticket-design`  | write the design a `needs-design` issue requires         | "Design #10"                   |
+| `ticket-release` | prepare and, on the maintainer's go, publish a milestone | "Release 0.1"                  |
+
+Claude picks the skill from the request; `/ticket-work 12` names one explicitly.
+
+- **In Claude Code** (your machine, or a Claude session with the repositories attached), the
+  skills work fully. `.claude/scripts/board.sh` sets Status, Priority and Size on the board
+  when `gh` has the `project` scope (`gh auth refresh -s project`).
+- **On GitHub**, anyone with write access can mention `@claude` in an issue, a pull request or a
+  review ("@claude work on this issue"). That run cannot change board fields, so the board's own
+  automations move the card when the pull request is opened and merged. It runs `npm ci` and
+  `npm run check` there, and relies on the CI checks of its pull request for the build.
+- A pull request opened through the maintainer's own login is already theirs: GitHub cannot
+  request their review on it. Pull requests opened from `@claude` come from Claude's app and do
+  request it.
+
+Claude's pull requests are reviewed like anyone else's.
 
 ## Security
 

@@ -43,3 +43,6 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The commands the ticket-* skills run (.claude/skills/).
+          claude_args: >-
+            --allowedTools "Bash(gh api *),Bash(gh pr *),Bash(gh issue *),Bash(git *),Bash(jq *),Bash(.claude/scripts/board.sh *),Bash(npm ci),Bash(npm run *)"
