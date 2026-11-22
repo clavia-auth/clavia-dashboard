@@ -7,6 +7,28 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-23
+
+Passkeys, for the console of Clavia 0.2.0 (`docs/design/passkeys.md`, phases 1 and 2).
+
+### Added
+
+- **A Passkeys tab on every user**: what the account has registered (its name, whether a credential
+  manager syncs it or it stays on one device, when it was added and when it was last used). An
+  operator holding `update:users` can remove one, after a confirmation: for somebody who lost the
+  device it lived on. The dashboard never sees a credential id or key, and removing a passkey does
+  not touch the authenticator app or the recovery codes (they are turned off from the account
+  menu).
+- **The audit log names the passkey events**: `passkey.registered`, `passkey.renamed` and
+  `passkey.removed`, so a removal shows in the log and in the user's activity, and
+  `passkey.counter_regressed`, shown as a danger since a counter that goes back can mean a cloned
+  authenticator.
+
+### Changed
+
+- Needs Clavia 0.2.0 or later: the tab reads Clavia's new passkey endpoints of the Management API,
+  which are in no earlier version. No new scope, and no new setting.
+
 ## [0.1.0] - 2026-11-22
 
 The first release: the administration console of Clavia 0.1.0. Operators sign in through Clavia and
@@ -57,5 +79,6 @@ server.
 - Passkeys, signing keys and sign-in charts, which come with the next versions (0.2 to 0.4).
 - Exporting the audit log.
 
-[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.2.0
 [0.1.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.1.0
