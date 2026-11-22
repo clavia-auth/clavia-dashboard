@@ -196,6 +196,15 @@ export async function withdrawConsent(userId: string, clientId: string): Promise
   });
 }
 
+export async function removePasskey(userId: string, passkeyId: string): Promise<ActionState> {
+  return perform(async ({ api }) => {
+    await api.users.removePasskey(userId, passkeyId);
+    refresh();
+
+    return "Passkey removed. They can add it again from a device they have.";
+  });
+}
+
 export async function unlinkIdentity(userId: string, connection: string): Promise<ActionState> {
   return perform(async ({ api }) => {
     await api.users.unlinkIdentity(userId, connection);

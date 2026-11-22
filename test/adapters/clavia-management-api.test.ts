@@ -122,6 +122,39 @@ describe("ClaviaManagementApi", () => {
     expect(failure).toMatchObject({ kind });
   });
 
+  it("lists an account's passkeys and removes one, by the identifiers the contract names", async () => {
+    const passkey = {
+      id: "0f0c1d2e-3a4b-4c5d-8e6f-7a8b9c0d1e2f",
+      name: "Laptop",
+      synced: true,
+      backed_up: true,
+      aaguid: null,
+      created_at: "2026-01-01T00:00:00Z",
+      last_used_at: null,
+    };
+    const { requests, api } = server((request) =>
+      request.method === "DELETE" ? new Response(null, { status: 204 }) : json([passkey]),
+    );
+
+    const passkeys = await api.users.passkeys("u-1");
+    await api.users.removePasskey("u-1", passkey.id);
+
+    expect(passkeys).toEqual([passkey]);
+    expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/users/u-1/passkeys");
+    expect(requests[1]?.method).toBe("DELETE");
+    expect(requests[1]?.url).toBe(`https://management.clavia.test/api/v1/users/u-1/passkeys/${passkey.id}`);
+  });
+
+  it("says a passkey that is not the account's was not found", async () => {
+    const { api } = server(() =>
+      json({ type: "about:blank", title: "Not found", status: 404, detail: "No passkey." }, 404),
+    );
+
+    const failure = await api.users.removePasskey("u-1", "other").catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ kind: "not_found" });
+  });
+
   it("says the API is unavailable when it cannot be reached", async () => {
     const api = new ClaviaManagementApi("https://management.clavia.test", "t", (async () => {
       throw new TypeError("fetch failed");

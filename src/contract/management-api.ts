@@ -251,6 +251,54 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{user_id}/passkeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The account's passkeys.
+         * @description What each is called, whether a credential manager syncs it, its maker when known, and
+         *     when it was added and last used: never its credential id or its key. Oldest first.
+         */
+        get: operations["listUserPasskeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}/passkeys/{passkey_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+                passkey_id: components["parameters"]["PasskeyId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove one of the account's passkeys.
+         * @description For somebody who lost the device it lived on. One at a time, so an operator sees what
+         *     they remove; the authenticator app and the recovery codes are
+         *     `DELETE /api/v1/users/{user_id}/mfa`. A passkey of another account is not found.
+         */
+        delete: operations["removeUserPasskey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{user_id}/roles": {
         parameters: {
             query?: never;
@@ -683,7 +731,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -742,11 +790,14 @@ export type components = {
             /** @description Whether the account can be signed into with a password at all. */
             has_password: boolean;
             /**
-             * @description Whether signing in asks for a second factor: a confirmed TOTP authenticator.
-             *     Set by the account holder at `/auth/mfa/enroll`; cleared by them or by
-             *     `DELETE /api/v1/users/{user_id}/mfa`.
+             * @description Whether signing in asks for a second factor: a confirmed TOTP authenticator, or a
+             *     passkey. Set by the account holder at `/auth/mfa/enroll` or `/auth/passkeys`;
+             *     cleared by them, by `DELETE /api/v1/users/{user_id}/mfa` for the authenticator, and
+             *     by `DELETE /api/v1/users/{user_id}/passkeys/{passkey_id}` for each passkey.
              */
             mfa_enrolled: boolean;
+            /** @description How many passkeys the account holds (`GET /api/v1/users/{user_id}/passkeys`). */
+            passkey_count: number;
             name: string | null;
             given_name: string | null;
             family_name: string | null;
@@ -1111,6 +1162,25 @@ export type components = {
             /** Format: date-time */
             linked_at: string;
         };
+        UserPasskey: {
+            /** Format: uuid */
+            id: string;
+            /** @description What the account holder calls it. */
+            name: string;
+            /** @description Whether a credential manager backs it up across devices; false for one bound to a device. */
+            synced: boolean;
+            /** @description Whether it was backed up when last used. */
+            backed_up: boolean;
+            /**
+             * Format: uuid
+             * @description The make of the authenticator, when it says. A label, never a reason to refuse.
+             */
+            aaguid: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_used_at: string | null;
+        };
         /**
          * @description One browser session at `auth.*`. The cookie is never shown: nothing outside the
          *     browser holds it.
@@ -1336,6 +1406,7 @@ export type components = {
         ResourceServerId: string;
         RoleId: string;
         ConnectionNameParameter: components["schemas"]["ConnectionName"];
+        PasskeyId: string;
         /** @description The external connection the identity was linked through. */
         IdentityConnection: components["schemas"]["ConnectionName"];
     };
@@ -1735,6 +1806,59 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listUserPasskeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The passkeys. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPasskey"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    removeUserPasskey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+                passkey_id: components["parameters"]["PasskeyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
     };

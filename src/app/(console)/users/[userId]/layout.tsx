@@ -37,6 +37,7 @@ export default async function UserLayout({
     ...(operator.can("read:roles") ? [{ label: "Roles", href: `${base}/roles` as Route }] : []),
     { label: "Sessions", href: `${base}/sessions` as Route },
     { label: "Applications", href: `${base}/applications` as Route },
+    { label: "Passkeys", href: `${base}/passkeys` as Route },
     { label: "Identities", href: `${base}/identities` as Route },
     ...(operator.can("read:audit_events") ? [{ label: "Activity", href: `${base}/activity` as Route }] : []),
   ];

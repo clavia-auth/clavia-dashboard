@@ -23,6 +23,7 @@ import type {
   User,
   UserConsent,
   UserCreate,
+  UserPasskey,
   UserSession,
   UserUpdate,
 } from "@/contract";
@@ -55,6 +56,9 @@ export interface UsersApi {
   resetMfa(userId: string): Promise<void>;
   /** Mail the user a link to choose a password: an invitation or a reset, as the API words it. */
   sendPasswordLink(userId: string): Promise<PasswordLinkSent>;
+  /** The account's passkeys, oldest first: never a credential id or key. */
+  passkeys(userId: string): Promise<UserPasskey[]>;
+  removePasskey(userId: string, passkeyId: string): Promise<void>;
   sessions(userId: string): Promise<UserSession[]>;
   endSessions(userId: string): Promise<void>;
   endSession(userId: string, sid: string): Promise<void>;
