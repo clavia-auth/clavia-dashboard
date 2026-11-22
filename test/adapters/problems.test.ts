@@ -41,6 +41,8 @@ describe("managementError", () => {
     [409, "conflict"],
     [400, "invalid"],
     [415, "invalid"],
+    [429, "rate_limited"],
+    [503, "service_unavailable"],
     [500, "unavailable"],
     [502, "unavailable"],
   ] as const)("turns %i into %s", (status, kind) => {

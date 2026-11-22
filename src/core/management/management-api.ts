@@ -12,6 +12,7 @@ import type {
   EffectivePermission,
   Identity,
   Page,
+  PasswordLinkSent,
   ResourceServer,
   ResourceServerCreate,
   ResourceServerUpdate,
@@ -52,6 +53,8 @@ export interface UsersApi {
   update(userId: string, changes: UserUpdate): Promise<User>;
   delete(userId: string): Promise<void>;
   resetMfa(userId: string): Promise<void>;
+  /** Mail the user a link to choose a password: an invitation or a reset, as the API words it. */
+  sendPasswordLink(userId: string): Promise<PasswordLinkSent>;
   sessions(userId: string): Promise<UserSession[]>;
   endSessions(userId: string): Promise<void>;
   endSession(userId: string, sid: string): Promise<void>;

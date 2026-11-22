@@ -15,6 +15,7 @@ export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type UserSession = Schemas["UserSession"];
 export type UserConsent = Schemas["UserConsent"];
+export type PasswordLinkSent = Schemas["PasswordLinkSent"];
 export type Identity = Schemas["Identity"];
 export type EffectivePermission = Schemas["EffectivePermission"];
 

@@ -5,6 +5,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { isManagementError, ManagementError } from "@/core/management/errors";
 import { type ActionState, parse, perform } from "@/server/actions";
 
 /**
@@ -119,6 +120,25 @@ export async function resetMfa(userId: string): Promise<ActionState> {
     refresh();
 
     return "Two-factor authentication turned off. They can set it up again.";
+  });
+}
+
+/** Mail the user the link to choose a password: an invitation for an account without one, a reset for one with. */
+export async function sendPasswordLink(userId: string): Promise<ActionState> {
+  return perform(async ({ api }) => {
+    try {
+      const { kind } = await api.users.sendPasswordLink(userId);
+      refresh();
+
+      return kind === "invitation"
+        ? "Invitation sent. The link works once and expires."
+        : "Password reset link sent. The link works once and expires.";
+    } catch (error) {
+      if (isManagementError(error, "service_unavailable")) {
+        throw new ManagementError("service_unavailable", "No mail can be sent from this deployment. Nothing was done.");
+      }
+      throw error;
+    }
   });
 }
 

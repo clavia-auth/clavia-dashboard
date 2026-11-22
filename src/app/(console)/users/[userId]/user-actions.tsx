@@ -1,6 +1,14 @@
 "use client";
 
-import { MoreHorizontalIcon, PowerIcon, PowerOffIcon, ShieldOffIcon, Trash2Icon } from "lucide-react";
+import {
+  KeyRoundIcon,
+  MailIcon,
+  MoreHorizontalIcon,
+  PowerIcon,
+  PowerOffIcon,
+  ShieldOffIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmAction } from "@/components/app/confirm-action";
@@ -13,9 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { deleteUser, resetMfa, setActive } from "../actions";
+import { deleteUser, resetMfa, sendPasswordLink, setActive } from "../actions";
 
-type Dialog = "deactivate" | "reactivate" | "reset-mfa" | "delete";
+type Dialog = "deactivate" | "reactivate" | "reset-mfa" | "password-link" | "delete";
 
 /** What can be done to the account as a whole, each asking first. */
 export function UserActions({
@@ -23,7 +31,9 @@ export function UserActions({
   email,
   active,
   mfaEnrolled,
+  hasPassword,
   canUpdate,
+  canSendPasswordLink,
   canDelete,
   isSelf,
 }: {
@@ -31,12 +41,14 @@ export function UserActions({
   email: string;
   active: boolean;
   mfaEnrolled: boolean;
+  hasPassword: boolean;
   canUpdate: boolean;
+  canSendPasswordLink: boolean;
   canDelete: boolean;
   isSelf: boolean;
 }) {
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  if (!canUpdate && !canDelete) {
+  if (!canUpdate && !canSendPasswordLink && !canDelete) {
     return null;
   }
   const opened = (name: Dialog) => ({
@@ -66,6 +78,11 @@ export function UserActions({
           {canUpdate && mfaEnrolled ? (
             <DropdownMenuItem onSelect={() => setDialog("reset-mfa")}>
               <ShieldOffIcon aria-hidden /> Reset two-factor
+            </DropdownMenuItem>
+          ) : null}
+          {canSendPasswordLink ? (
+            <DropdownMenuItem onSelect={() => setDialog("password-link")} disabled={!active}>
+              {hasPassword ? <KeyRoundIcon aria-hidden /> : <MailIcon aria-hidden />} Send a password link
             </DropdownMenuItem>
           ) : null}
           {canDelete ? (
@@ -101,6 +118,17 @@ export function UserActions({
         confirm="Turn it off"
         destructive
         action={resetMfa.bind(null, userId)}
+      />
+      <ConfirmAction
+        {...opened("password-link")}
+        title={hasPassword ? `Send ${email} a password reset link?` : `Invite ${email} to choose a password?`}
+        description={
+          hasPassword
+            ? "They get an email with a one-time link. Choosing a new password signs them out everywhere. The link stops working if their password or address changes first."
+            : "They have no password yet. They get an email with a one-time link to choose one, which also verifies their address."
+        }
+        confirm={hasPassword ? "Send reset link" : "Send invitation"}
+        action={sendPasswordLink.bind(null, userId)}
       />
       <ConfirmAction
         {...opened("delete")}
