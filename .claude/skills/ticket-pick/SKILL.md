@@ -9,6 +9,29 @@ The backlog is the [Clavia board](https://github.com/orgs/clavia-auth/projects/1
 clavia. This skill picks from **this repository** (clavia-dashboard); say when a ticket in clavia would
 come first.
 
+## 0. Respect the WIP limit
+
+At most **two** issues are In progress at a time, across both repositories. In review does not
+count: it is the maintainer's queue. Count first:
+
+```bash
+.claude/scripts/board.sh show | grep -c '^In progress'
+```
+
+Where the board cannot be reached (`board.sh` exits 3), count work in progress instead: branches
+of the ticket form in both repositories that have no open pull request yet.
+
+```bash
+for r in clavia clavia-dashboard; do
+  open=$(gh api "repos/clavia-auth/$r/pulls?state=open&per_page=100" --jq '[.[].head.ref]')
+  gh api "repos/clavia-auth/$r/branches?per_page=100" | jq -r --argjson open "$open" \
+    '.[].name | select(test("^(feature|fix|chore|design)/")) | select(. as $b | $open | index($b) | not)'
+done
+```
+
+At two, start nothing new: say so, and offer to finish one of them instead (its checks, its
+review).
+
 ## 1. Gather
 
 ```bash
@@ -28,8 +51,10 @@ Leave out an issue that:
 - is assigned to someone, or says it depends on an issue that is still open;
 - is in Done or In review on the board.
 
-Prefer **Ready** items. If none is Ready, take from Backlog and say so: the maintainer moves items
-to Ready, so a Backlog pick is a suggestion, not a given.
+Prefer **Ready** items. The Board workflow keeps up to five there, moving them up from Backlog in
+the order below; the maintainer can move others. If Ready is empty, nothing in Backlog could
+start (it needs triage or a design): say so and offer **ticket-triage**, rather than picking from
+Backlog.
 
 ## 3. Order
 

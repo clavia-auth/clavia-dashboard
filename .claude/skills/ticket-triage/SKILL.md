@@ -31,6 +31,9 @@ gh api "repos/clavia-auth/clavia-dashboard/issues?state=open&per_page=100" --jq 
 
 - `needs-design` when the change adds or alters a protocol behaviour, a security rule, the
   schema beyond one table, or is L/XL: it then goes through **ticket-design**.
+- An issue that cannot start before another says so on a line of its body: `Depends on #N`, or
+  `Depends on clavia-auth/<repo>#N` across repositories. The Board workflow and **ticket-pick**
+  skip it until N is closed.
 - `good first issue` when it is XS or S, self-contained, and the issue says where to start.
 - A **Bug**: reproduce it first where possible; if information is missing, ask in a comment.
 - A vulnerability reported in a public issue: do not discuss the details. Ask the reporter to use

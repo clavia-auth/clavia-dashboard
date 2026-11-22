@@ -18,6 +18,10 @@ shared by [clavia](https://github.com/clavia-auth/clavia) and
   for one pull request each.
 - Statuses move **Backlog → Ready → In progress → In review → Done**. An issue is Ready when
   its "Done when" is clear.
+- **Ready holds up to five issues**, refilled from Backlog by the Board workflow in priority
+  order (milestone, priority, type, size), never with an issue that `needs-design` or depends
+  on an open one. **At most two are In progress** at a time; In review is the maintainer's
+  queue and does not count. The board shows both limits.
 
 ## Proposing a change
 

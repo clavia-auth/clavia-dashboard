@@ -1,0 +1,19 @@
+# Keeps Ready on the Clavia board stocked when this repository's issues and pull requests change.
+# The logic and the schedule live in clavia's Board workflow, which this calls.
+name: Board
+
+on:
+  issues:
+    types: [closed, reopened, labeled, unlabeled, milestoned, demilestoned]
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refill-ready:
+    uses: clavia-auth/clavia/.github/workflows/board.yml@main
+    secrets:
+      PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}

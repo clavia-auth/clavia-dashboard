@@ -21,6 +21,9 @@ approves, pushes to `main`, closes an issue by hand, or rewrites history someone
 
 ## 2. Start
 
+Check the WIP limit first (**ticket-pick**, step 0): with two issues In progress, start nothing
+new; say so.
+
 ```bash
 git fetch origin main && git switch -c <branch> origin/main
 .claude/scripts/board.sh status <issue html_url> "In progress"   # exit 3: carry on
