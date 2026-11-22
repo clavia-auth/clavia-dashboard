@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Editor
 /.idea/
+
+# Claude Code: personal settings, never shared.
+.claude/settings.local.json

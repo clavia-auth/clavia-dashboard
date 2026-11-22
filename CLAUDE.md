@@ -36,7 +36,11 @@ from `AGENTS.md` applies: read the guide in `node_modules/next/dist/docs/` befor
 
 ## Working agreements
 
-- **Commit only when asked.** Stage and propose a message; the maintainer commits.
+- **Work goes through the backlog and pull requests.** Claude takes an issue, works on a branch,
+  commits, pushes and opens a pull request; the maintainer reviews and merges. Claude never
+  merges, approves, or pushes to `main` (a ruleset protects it). The steps are skills in
+  `.claude/skills/`: `ticket-pick`, `ticket-work`, `ticket-review`, `ticket-triage`,
+  `ticket-design`, `ticket-release`; `CONTRIBUTING.md` describes the board they move issues on.
 - **`.env` and `.env.local` are the maintainer's**, and hold secrets: never read them back into
   a file or a message. `.env.example` documents every setting.
 - **`AGENTS.md` is written by `next dev`.** Leave its block as it is.
@@ -88,6 +92,8 @@ src/
 test/            Vitest: core/, adapters/, support/ (fakes, shared contracts)
 e2e/             Playwright smoke suite
 docs/architecture.md
+.claude/         the ticket-* skills and board.sh, which move work through the backlog
+.github/         CI, the @claude workflow, issue forms, the pull request template
 ```
 
 ## Architecture
