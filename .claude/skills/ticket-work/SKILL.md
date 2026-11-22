@@ -59,8 +59,12 @@ Run `npm run check` and `npm run build` until it is green. Never weaken a test, 
 gh pr create --base main --head <branch> --title "…" --body-file <file>
 # where gh pr create is unavailable (a REST-only sandbox):
 gh api repos/clavia-auth/clavia-dashboard/pulls -f title="…" -f head=<branch> -f base=main -F body=@<file>
-gh api repos/clavia-auth/clavia-dashboard/pulls/<pr>/requested_reviewers -f "reviewers[]=jguittard"
+gh api repos/clavia-auth/clavia-dashboard/pulls/<pr>/requested_reviewers -f "reviewers[]=jguittard"   # skip when the pull request is opened as jguittard: GitHub refuses (422)
 ```
+
+Where Claude works through the maintainer's own login (their machine, this kind of session), the
+pull request is theirs and no review can be requested: it already sits in their queue. From the
+`@claude` workflow it is opened by Claude's app, and the request goes through.
 
 Linking the issue moves it to **In review** on the board (a board workflow); merging moves it to
 Done and closes it.
