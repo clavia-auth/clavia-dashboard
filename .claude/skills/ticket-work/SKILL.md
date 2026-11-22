@@ -43,7 +43,8 @@ Run `npm run check` and `npm run build` until it is green. Never weaken a test, 
 ## 5. Commit and push
 
 - Small, coherent commits. Subject in the imperative, at most 72 characters; a body that says
-  why. End each message with the attribution trailer the session asks for.
+  why. No attribution trailer (`Co-Authored-By`, session links) and no signature, in commit
+  messages and pull request bodies alike: the maintainer's name is on the commit.
 - `git push -u origin <branch>`.
 
 ## 6. Open the pull request
