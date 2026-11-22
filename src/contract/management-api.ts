@@ -647,7 +647,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -999,6 +999,17 @@ export type components = {
              */
             is_domain_connection: boolean;
             /**
+             * @description A pool only: people may create their own account in it, from the sign-up page of an
+             *     application that enables it.
+             */
+            allow_sign_up: boolean;
+            /**
+             * @description A pool only: an account in it signs in with its password only once it has followed the
+             *     verification link it is sent. With sign-up open, this stops anyone registering a
+             *     stranger's address.
+             */
+            require_verified_email: boolean;
+            /**
              * @description Whether it could work if switched on: always for a pool; for the passwordless one,
              *     when the deployment sends mail; for a social connection, when the deployment set its
              *     credentials; for an OIDC one, when its secret decrypts.
@@ -1022,6 +1033,16 @@ export type components = {
             is_enabled: boolean;
             /** @default false */
             is_domain_connection: boolean;
+            /**
+             * @description A pool only. Refused for any other kind.
+             * @default false
+             */
+            allow_sign_up: boolean;
+            /**
+             * @description A pool only. Refused for any other kind.
+             * @default false
+             */
+            require_verified_email: boolean;
             /** @description An `oidc` connection's issuer, https. Required for one, refused for any other. */
             oidc_issuer?: string;
             oidc_client_id?: string;
@@ -1033,6 +1054,10 @@ export type components = {
             display_name?: components["schemas"]["ConnectionDisplayName"];
             is_enabled?: boolean;
             is_domain_connection?: boolean;
+            /** @description A pool only. Refused for any other kind. */
+            allow_sign_up?: boolean;
+            /** @description A pool only. Refused for any other kind. */
+            require_verified_email?: boolean;
             oidc_issuer?: string;
             oidc_client_id?: string;
             oidc_client_secret?: string;

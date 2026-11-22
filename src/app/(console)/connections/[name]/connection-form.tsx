@@ -14,10 +14,15 @@ import type { Connection } from "@/contract";
 import { fieldError, IDLE } from "@/server/action-state";
 
 import { deleteConnection, updateConnection } from "../actions";
+import { SelfServiceFields } from "../self-service-fields";
 
 export function ConnectionForm({ connection, editable }: { connection: Connection; editable: boolean }) {
   const oidc = connection.strategy === "oidc";
-  const [state, action, pending] = useActionState(updateConnection.bind(null, connection.name, oidc), IDLE);
+  const pool = connection.strategy === "database";
+  const [state, action, pending] = useActionState(
+    updateConnection.bind(null, connection.name, connection.strategy),
+    IDLE,
+  );
   useActionFeedback(state);
 
   return (
@@ -53,6 +58,15 @@ export function ConnectionForm({ connection, editable }: { connection: Connectio
                 description="Third-party applications offer it too."
                 defaultChecked={connection.is_domain_connection}
               />
+              {pool ? (
+                <>
+                  <FieldSeparator />
+                  <SelfServiceFields
+                    allowSignUp={connection.allow_sign_up}
+                    requireVerifiedEmail={connection.require_verified_email}
+                  />
+                </>
+              ) : null}
               {oidc ? (
                 <>
                   <FieldSeparator />

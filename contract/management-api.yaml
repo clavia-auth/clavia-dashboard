@@ -1650,7 +1650,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
+          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
         occurred_at:
           type: string
           format: date-time
@@ -2300,8 +2300,8 @@ components:
     Connection:
       type: object
       additionalProperties: false
-      required: [name, display_name, strategy, is_enabled, is_domain_connection, configured, usable,
-        oidc_issuer, oidc_client_id, oidc_scope, created_at]
+      required: [name, display_name, strategy, is_enabled, is_domain_connection, allow_sign_up,
+        require_verified_email, configured, usable, oidc_issuer, oidc_client_id, oidc_scope, created_at]
       properties:
         name:
           $ref: '#/components/schemas/ConnectionName'
@@ -2317,6 +2317,17 @@ components:
           description: |
             A domain connection: open to every third-party application, which gets no other
             kind. A first-party application goes by its own list.
+        allow_sign_up:
+          type: boolean
+          description: |
+            A pool only: people may create their own account in it, from the sign-up page of an
+            application that enables it.
+        require_verified_email:
+          type: boolean
+          description: |
+            A pool only: an account in it signs in with its password only once it has followed the
+            verification link it is sent. With sign-up open, this stops anyone registering a
+            stranger's address.
         configured:
           type: boolean
           description: |
@@ -2362,6 +2373,14 @@ components:
         is_domain_connection:
           type: boolean
           default: false
+        allow_sign_up:
+          type: boolean
+          default: false
+          description: A pool only. Refused for any other kind.
+        require_verified_email:
+          type: boolean
+          default: false
+          description: A pool only. Refused for any other kind.
         oidc_issuer:
           type: string
           maxLength: 2048
@@ -2390,6 +2409,12 @@ components:
           type: boolean
         is_domain_connection:
           type: boolean
+        allow_sign_up:
+          type: boolean
+          description: A pool only. Refused for any other kind.
+        require_verified_email:
+          type: boolean
+          description: A pool only. Refused for any other kind.
         oidc_issuer:
           type: string
           maxLength: 2048

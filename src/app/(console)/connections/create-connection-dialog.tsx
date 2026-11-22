@@ -22,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { fieldError, IDLE } from "@/server/action-state";
 
 import { createConnection } from "./actions";
+import { SelfServiceFields } from "./self-service-fields";
 import { STRATEGIES } from "./strategy";
 
 type Creatable = "database" | "oidc";
@@ -123,7 +124,9 @@ export function CreateConnectionDialog() {
                   error={fieldError(state, "oidc_scope")}
                 />
               </>
-            ) : null}
+            ) : (
+              <SelfServiceFields />
+            )}
             <SwitchField
               name="is_domain_connection"
               label="Domain connection"
