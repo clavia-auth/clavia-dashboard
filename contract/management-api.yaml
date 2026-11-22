@@ -476,6 +476,66 @@ paths:
         '422':
           $ref: '#/components/responses/Unprocessable'
 
+  /api/v1/users/{user_id}/passkeys:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [users]
+      operationId: listUserPasskeys
+      summary: The account's passkeys.
+      description: |
+        What each is called, whether a credential manager syncs it, its maker when known, and
+        when it was added and last used: never its credential id or its key. Oldest first.
+      security:
+        - managementToken: [read:users]
+      responses:
+        '200':
+          description: The passkeys.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPasskey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/users/{user_id}/passkeys/{passkey_id}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/PasskeyId'
+    delete:
+      tags: [users]
+      operationId: removeUserPasskey
+      summary: Remove one of the account's passkeys.
+      description: |
+        For somebody who lost the device it lived on. One at a time, so an operator sees what
+        they remove; the authenticator app and the recovery codes are
+        `DELETE /api/v1/users/{user_id}/mfa`. A passkey of another account is not found.
+      security:
+        - managementToken: [update:users]
+      responses:
+        '204':
+          description: Removed.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
   /api/v1/users/{user_id}/roles:
     parameters:
       - $ref: '#/components/parameters/UserId'
@@ -1505,6 +1565,13 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/ConnectionName'
+    PasskeyId:
+      name: passkey_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     IdentityConnection:
       name: connection
       in: path
@@ -1711,7 +1778,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
+          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
         occurred_at:
           type: string
           format: date-time
@@ -1808,8 +1875,8 @@ components:
     User:
       type: object
       additionalProperties: false
-      required: [id, connection, email, email_verified, is_active, has_password, mfa_enrolled, name,
-        given_name, family_name, nickname, picture, locale, created_at, updated_at]
+      required: [id, connection, email, email_verified, is_active, has_password, mfa_enrolled, passkey_count,
+        name, given_name, family_name, nickname, picture, locale, created_at, updated_at]
       properties:
         id:
           type: string
@@ -1833,9 +1900,14 @@ components:
         mfa_enrolled:
           type: boolean
           description: |
-            Whether signing in asks for a second factor: a confirmed TOTP authenticator.
-            Set by the account holder at `/auth/mfa/enroll`; cleared by them or by
-            `DELETE /api/v1/users/{user_id}/mfa`.
+            Whether signing in asks for a second factor: a confirmed TOTP authenticator, or a
+            passkey. Set by the account holder at `/auth/mfa/enroll` or `/auth/passkeys`;
+            cleared by them, by `DELETE /api/v1/users/{user_id}/mfa` for the authenticator, and
+            by `DELETE /api/v1/users/{user_id}/passkeys/{passkey_id}` for each passkey.
+        passkey_count:
+          type: integer
+          minimum: 0
+          description: How many passkeys the account holds (`GET /api/v1/users/{user_id}/passkeys`).
         name:
           type: string
           nullable: true
@@ -2510,6 +2582,36 @@ components:
         linked_at:
           type: string
           format: date-time
+
+    UserPasskey:
+      type: object
+      additionalProperties: false
+      required: [id, name, synced, backed_up, aaguid, created_at, last_used_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: What the account holder calls it.
+        synced:
+          type: boolean
+          description: Whether a credential manager backs it up across devices; false for one bound to a device.
+        backed_up:
+          type: boolean
+          description: Whether it was backed up when last used.
+        aaguid:
+          type: string
+          format: uuid
+          nullable: true
+          description: The make of the authenticator, when it says. A label, never a reason to refuse.
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
 
     UserSession:
       type: object
