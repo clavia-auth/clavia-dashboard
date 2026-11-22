@@ -1,0 +1,9 @@
+# shadcn's components, kept as the CLI writes them so updates diff cleanly
+src/components/ui/
+# a copy of Clavia's document, kept identical
+contract/
+# generated
+src/contract/management-api.ts
+src/contract/scopes.ts
+next-env.d.ts
+package-lock.json

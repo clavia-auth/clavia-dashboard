@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-brand: var(--brand);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Clavia's palette, taken from the logo (public/clavia-icon.svg): green #52B788 and
+ * gold #D4A843. Primary actions use the deep green in light mode (#2D6A4F: 6.4:1 with
+ * white text) and the brand green in dark mode (7.6:1 with the dark ground); focus rings
+ * are gold in both. Every text and background pair below meets WCAG 2.2 AA.
+ */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.222 0.026 164.6);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.222 0.026 164.6);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.222 0.026 164.6);
+  --primary: oklch(0.476 0.078 162.2);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.975 0.007 160.1);
+  --secondary-foreground: oklch(0.222 0.026 164.6);
+  --muted: oklch(0.975 0.007 160.1);
+  --muted-foreground: oklch(0.512 0.024 160.8);
+  --accent: oklch(0.954 0.015 158.2);
+  --accent-foreground: oklch(0.348 0.055 163.4);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.918 0.015 158.2);
+  --input: oklch(0.918 0.015 158.2);
+  --ring: oklch(0.753 0.127 84.9);
+  --brand: oklch(0.706 0.118 160.9);
+  --gold: oklch(0.753 0.127 84.9);
+  --gold-foreground: oklch(0.542 0.105 86.3);
+  --success: oklch(0.476 0.078 162.2);
+  --chart-1: oklch(0.706 0.118 160.9);
+  --chart-2: oklch(0.753 0.127 84.9);
+  --chart-3: oklch(0.476 0.078 162.2);
+  --chart-4: oklch(0.542 0.105 86.3);
+  --chart-5: oklch(0.348 0.055 163.4);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.982 0.005 165);
+  --sidebar-foreground: oklch(0.222 0.026 164.6);
+  --sidebar-primary: oklch(0.476 0.078 162.2);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.954 0.015 158.2);
+  --sidebar-accent-foreground: oklch(0.348 0.055 163.4);
+  --sidebar-border: oklch(0.918 0.015 158.2);
+  --sidebar-ring: oklch(0.753 0.127 84.9);
+}
+
+.dark {
+  --background: oklch(0.181 0.016 165.4);
+  --foreground: oklch(0.946 0.013 159.9);
+  --card: oklch(0.217 0.02 166.8);
+  --card-foreground: oklch(0.946 0.013 159.9);
+  --popover: oklch(0.217 0.02 166.8);
+  --popover-foreground: oklch(0.946 0.013 159.9);
+  --primary: oklch(0.706 0.118 160.9);
+  --primary-foreground: oklch(0.181 0.016 165.4);
+  --secondary: oklch(0.268 0.025 165.5);
+  --secondary-foreground: oklch(0.946 0.013 159.9);
+  --muted: oklch(0.268 0.025 165.5);
+  --muted-foreground: oklch(0.707 0.027 160.3);
+  --accent: oklch(0.283 0.028 165);
+  --accent-foreground: oklch(0.946 0.013 159.9);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.303 0.027 164);
+  --input: oklch(0.303 0.027 164);
+  --ring: oklch(0.753 0.127 84.9);
+  --brand: oklch(0.706 0.118 160.9);
+  --gold: oklch(0.753 0.127 84.9);
+  --gold-foreground: oklch(0.753 0.127 84.9);
+  --success: oklch(0.706 0.118 160.9);
+  --chart-1: oklch(0.706 0.118 160.9);
+  --chart-2: oklch(0.753 0.127 84.9);
+  --chart-3: oklch(0.476 0.078 162.2);
+  --chart-4: oklch(0.542 0.105 86.3);
+  --chart-5: oklch(0.946 0.013 159.9);
+  --sidebar: oklch(0.201 0.018 169.8);
+  --sidebar-foreground: oklch(0.946 0.013 159.9);
+  --sidebar-primary: oklch(0.706 0.118 160.9);
+  --sidebar-primary-foreground: oklch(0.181 0.016 165.4);
+  --sidebar-accent: oklch(0.283 0.028 165);
+  --sidebar-accent-foreground: oklch(0.946 0.013 159.9);
+  --sidebar-border: oklch(0.303 0.027 164);
+  --sidebar-ring: oklch(0.753 0.127 84.9);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}

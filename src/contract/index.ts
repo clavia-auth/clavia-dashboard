@@ -1,0 +1,52 @@
+/**
+ * The Management API's published language: the resources the dashboard manages, named
+ * as the contract names them. Generated from `contract/management-api.yaml` (see
+ * `scripts/generate-contract.mjs`), never written by hand — a field the contract adds or
+ * removes reaches the type checker at the next `npm run contract`.
+ */
+import type { components } from "./management-api";
+
+type Schemas = components["schemas"];
+
+export type Page<T> = { items: T[]; total: number; page: number; per_page: number };
+
+export type User = Schemas["User"];
+export type UserCreate = Schemas["UserCreate"];
+export type UserUpdate = Schemas["UserUpdate"];
+export type UserSession = Schemas["UserSession"];
+export type UserConsent = Schemas["UserConsent"];
+export type Identity = Schemas["Identity"];
+export type EffectivePermission = Schemas["EffectivePermission"];
+
+export type Client = Schemas["Client"];
+export type ClientWithSecret = Schemas["ClientWithSecret"];
+export type ClientCreate = Schemas["ClientCreate"];
+export type ClientUpdate = Schemas["ClientUpdate"];
+export type ClientType = Schemas["ClientType"];
+export type AuthMethod = Schemas["AuthMethod"];
+export type GrantType = Schemas["GrantType"];
+
+export type ResourceServer = Schemas["ResourceServer"];
+export type ResourceServerCreate = Schemas["ResourceServerCreate"];
+export type ResourceServerUpdate = Schemas["ResourceServerUpdate"];
+export type Permission = Schemas["Permission"];
+
+export type Role = Schemas["Role"];
+export type RoleWithPermissions = Schemas["RoleWithPermissions"];
+export type RoleCreate = Schemas["RoleCreate"];
+export type RoleUpdate = Schemas["RoleUpdate"];
+export type PermissionReference = Schemas["PermissionReference"];
+
+export type Connection = Schemas["Connection"];
+export type ConnectionCreate = Schemas["ConnectionCreate"];
+export type ConnectionUpdate = Schemas["ConnectionUpdate"];
+export type ConnectionStrategy = Schemas["ConnectionStrategy"];
+
+export type AuditEvent = Schemas["AuditEvent"];
+export type AuditEventType = AuditEvent["type"];
+export type AuditOutcome = Schemas["AuditOutcome"];
+export type AuditTargetType = Schemas["AuditTargetType"];
+
+export type Problem = Schemas["Problem"];
+
+export { MANAGEMENT_SCOPES, type ManagementScope } from "./scopes";

@@ -1,0 +1,58 @@
+import { type FieldProblem, ManagementError } from "@/core/management/errors";
+
+/**
+ * Clavia's refusal, as a {@link ManagementError}: RFC 9457 problems for a request it
+ * refused, RFC 6750 bearer errors (body and `WWW-Authenticate`) for the token.
+ */
+export function managementError(response: Response, body: unknown): ManagementError {
+  const problem = isRecord(body) ? body : {};
+  const detail =
+    typeof problem.detail === "string"
+      ? problem.detail
+      : typeof problem.error_description === "string"
+        ? problem.error_description
+        : response.statusText || `The Management API answered ${response.status}.`;
+
+  switch (response.status) {
+    case 401:
+      return new ManagementError("unauthenticated", "Your session at Clavia has ended. Sign in again.");
+    case 403:
+      return new ManagementError(
+        "forbidden",
+        "Your roles do not allow this.",
+        [],
+        scopeOf(response.headers.get("WWW-Authenticate")),
+      );
+    case 404:
+      return new ManagementError("not_found", detail);
+    case 409:
+      return new ManagementError("conflict", detail);
+    case 400:
+    case 415:
+    case 422:
+      return new ManagementError("invalid", detail, fieldsOf(problem.errors));
+    default:
+      return new ManagementError("unavailable", `The Management API answered ${response.status}.`);
+  }
+}
+
+function fieldsOf(errors: unknown): FieldProblem[] {
+  if (!Array.isArray(errors)) {
+    return [];
+  }
+
+  return errors.filter(isRecord).map((error) => ({
+    pointer: typeof error.pointer === "string" ? error.pointer : null,
+    parameter: typeof error.parameter === "string" ? error.parameter : null,
+    detail: typeof error.detail === "string" ? error.detail : "Invalid.",
+  }));
+}
+
+/** The scope an `insufficient_scope` challenge names (RFC 6750 §3). */
+function scopeOf(challenge: string | null): string | null {
+  return challenge?.match(/scope="([^"]*)"/)?.[1] ?? null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}

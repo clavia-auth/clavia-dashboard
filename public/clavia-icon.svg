@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Clavia">
+  <!-- Clavia icon — key with C-shaped ring -->
+  <rect width="120" height="120" rx="28" fill="#52B788"/>
+  <!-- Key ring — broken circle forming a C, rotated -12deg -->
+  <circle cx="60" cy="50" r="28"
+    fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"
+    stroke-dasharray="133 43" stroke-dashoffset="21"
+    transform="rotate(-12 60 50)"/>
+  <!-- Key blade: shaft + teeth drawn as one shape (teeth overlap the shaft) -->
+  <g fill="#FFFFFF">
+    <rect x="54" y="74"  width="12" height="34" rx="4"/>
+    <rect x="57" y="86"  width="20" height="10" rx="3"/>
+    <rect x="57" y="99"  width="17" height="9"  rx="3"/>
+  </g>
+  <!-- Keyhole -->
+  <circle cx="60" cy="50" r="10" fill="#D4A843"/>
+  <circle cx="60" cy="50" r="4.5" fill="#52B788"/>
+</svg>
