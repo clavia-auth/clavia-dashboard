@@ -22,6 +22,7 @@ export const MANAGEMENT_SCOPES = {
   "create:connections": "Create pools and OpenID Connect providers",
   "update:connections": "Switch, rename and reconfigure connections",
   "delete:connections": "Delete pools and OpenID Connect providers nothing depends on",
+  "create:user_tickets": "Mail end users a link to choose a password",
   "read:audit_events": "Read the audit trail",
 } as const;
 

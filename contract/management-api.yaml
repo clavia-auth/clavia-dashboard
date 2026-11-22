@@ -82,7 +82,12 @@ paths:
     post:
       tags: [users]
       operationId: createUser
-      summary: Create a user with a password. The password is hashed and never returned.
+      summary: Create a user, with a password or to be invited.
+      description: |
+        A password is hashed and never returned. Without one the account has none yet
+        (`has_password` is `false`): it cannot sign in with a password, and its person
+        chooses one from the link `POST /api/v1/users/{user_id}/password-reset` mails them,
+        an invitation.
       security:
         - managementToken: [create:users]
       requestBody:
@@ -229,6 +234,49 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/users/{user_id}/password-reset:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [users]
+      operationId: sendUserPasswordLink
+      summary: Mail a user a link to choose a password.
+      description: |
+        An invitation for an account that has no password yet, a reset for one that has: the
+        same one-time link the sign-in page mails to whoever asks, worded for each. It works
+        once, expires after `CLAVIA_RESET_LINK_LIFETIME`, and dies as soon as the account's
+        password or address changes. Choosing a password verifies the address and ends every
+        session of the account.
+
+        Unlike the public form, the caller is told how it went. Mail counts against the
+        account send limit per address and per client address, so a user cannot be flooded.
+        Only an account in a pool has a password; a deactivated account is refused.
+      security:
+        - managementToken: [create:user_tickets]
+      responses:
+        '202':
+          description: The email was sent and the link is open.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordLinkSent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /api/v1/users/{user_id}/consents:
     parameters:
@@ -1380,6 +1428,7 @@ components:
             create:connections: Create pools and OpenID Connect providers
             update:connections: Switch, rename and reconfigure connections
             delete:connections: Delete pools and OpenID Connect providers nothing depends on
+            create:user_tickets: Mail end users a link to choose a password
             read:audit_events: Read the audit trail
 
   headers:
@@ -1524,6 +1573,18 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    TooManyRequests:
+      description: A limit is reached; nothing was done. Try again later.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: This deployment cannot do it now (it sends no mail, or the mail server refused); nothing was done.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
 
   schemas:
     Problem:
@@ -1650,7 +1711,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
+          enum: [authentication.succeeded, authentication.failed, session.ended, mfa.enrolled, mfa.removed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
         occurred_at:
           type: string
           format: date-time
@@ -1803,7 +1864,7 @@ components:
     UserCreate:
       type: object
       additionalProperties: false
-      required: [email, password]
+      required: [email]
       properties:
         connection:
           type: string
@@ -1819,7 +1880,9 @@ components:
           type: string
           minLength: 8
           maxLength: 256
-          description: At least 8 characters, at most 72 bytes once encoded.
+          description: |
+            At least 8 characters, at most 72 bytes once encoded. Omit it to create the
+            account without one; it is then invited with `POST /users/{user_id}/password-reset`.
         email_verified:
           type: boolean
           default: false
@@ -2487,6 +2550,18 @@ components:
                 type: string
               name:
                 type: string
+
+    PasswordLinkSent:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [invitation, reset]
+          description: |
+            Which email went out: `invitation` for an account with no password yet, `reset`
+            for one that has a password.
 
     UserConsent:
       type: object

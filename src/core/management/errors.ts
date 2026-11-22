@@ -17,6 +17,10 @@ export type ManagementErrorKind =
   | "conflict"
   /** The request was refused as invalid; `fields` says where. */
   | "invalid"
+  /** A limit is reached (429): nothing was done, and trying again later may work. */
+  | "rate_limited"
+  /** The deployment cannot do this now (503): nothing was done. */
+  | "service_unavailable"
   /** The API could not be reached, or answered with something it should not have. */
   | "unavailable";
 

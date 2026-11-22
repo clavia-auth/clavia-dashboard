@@ -206,8 +206,8 @@ export async function updateRole(roleId: string, _: ActionState, form: FormData)
 `Role`, `AuditEvent`, `Page<T>`…). After Clavia's API changes: copy the document, regenerate,
 `npm run typecheck`, and fix what it names. `ClaviaManagementApi` maps Clavia's problem documents
 to `ManagementError` kinds: `unauthenticated` (401), `forbidden` (403, with the scope from
-`WWW-Authenticate`), `not_found`, `conflict` (409), `invalid` (400, 415, 422, with fields), and
-`unavailable` for anything else, without echoing the body.
+`WWW-Authenticate`), `not_found`, `conflict` (409), `invalid` (400, 415, 422, with fields), `rate_limited` (429),
+`service_unavailable` (503), and `unavailable` for anything else, without echoing the body.
 
 ## Interface
 

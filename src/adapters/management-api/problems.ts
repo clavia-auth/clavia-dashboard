@@ -31,6 +31,10 @@ export function managementError(response: Response, body: unknown): ManagementEr
     case 415:
     case 422:
       return new ManagementError("invalid", detail, fieldsOf(problem.errors));
+    case 429:
+      return new ManagementError("rate_limited", "A sending limit is reached. Nothing was done; try again later.");
+    case 503:
+      return new ManagementError("service_unavailable", "Clavia cannot do this right now. Nothing was done.");
     default:
       return new ManagementError("unavailable", `The Management API answered ${response.status}.`);
   }

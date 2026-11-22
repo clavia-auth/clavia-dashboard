@@ -11,7 +11,13 @@ export type paths = {
         /** List users, newest first, optionally searching the email address. */
         get: operations["listUsers"];
         put?: never;
-        /** Create a user with a password. The password is hashed and never returned. */
+        /**
+         * Create a user, with a password or to be invited.
+         * @description A password is hashed and never returned. Without one the account has none yet
+         *     (`has_password` is `false`): it cannot sign in with a password, and its person
+         *     chooses one from the link `POST /api/v1/users/{user_id}/password-reset` mails them,
+         *     an invitation.
+         */
         post: operations["createUser"];
         delete?: never;
         options?: never;
@@ -68,6 +74,36 @@ export type paths = {
          *     two-factor authentication is off afterwards, whether it was on or not.
          */
         delete: operations["resetUserMfa"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mail a user a link to choose a password.
+         * @description An invitation for an account that has no password yet, a reset for one that has: the
+         *     same one-time link the sign-in page mails to whoever asks, worded for each. It works
+         *     once, expires after `CLAVIA_RESET_LINK_LIFETIME`, and dies as soon as the account's
+         *     password or address changes. Choosing a password verifies the address and ends every
+         *     session of the account.
+         *
+         *     Unlike the public form, the caller is told how it went. Mail counts against the
+         *     account send limit per address and per client address, so a user cannot be flooded.
+         *     Only an account in a pool has a password; a deactivated account is refused.
+         */
+        post: operations["sendUserPasswordLink"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -647,7 +683,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -729,8 +765,11 @@ export type components = {
              */
             connection?: string;
             email: string;
-            /** @description At least 8 characters, at most 72 bytes once encoded. */
-            password: string;
+            /**
+             * @description At least 8 characters, at most 72 bytes once encoded. Omit it to create the
+             *     account without one; it is then invited with `POST /users/{user_id}/password-reset`.
+             */
+            password?: string;
             /** @default false */
             email_verified: boolean;
             /** @default true */
@@ -1100,6 +1139,14 @@ export type components = {
                 name: string;
             }[];
         };
+        PasswordLinkSent: {
+            /**
+             * @description Which email went out: `invitation` for an account with no password yet, `reset`
+             *     for one that has a password.
+             * @enum {string}
+             */
+            kind: "invitation" | "reset";
+        };
         UserConsent: {
             client_id: string;
             client_name: string;
@@ -1250,6 +1297,24 @@ export type components = {
         };
         /** @description The request does not satisfy this document, or describes something that could never work. */
         Unprocessable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description A limit is reached; nothing was done. Try again later. */
+        TooManyRequests: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description This deployment cannot do it now (it sends no mail, or the mail server refused); nothing was done. */
+        ServiceUnavailable: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1455,6 +1520,36 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    sendUserPasswordLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The email was sent and the link is open. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordLinkSent"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+            429: components["responses"]["TooManyRequests"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     listUserConsents: {

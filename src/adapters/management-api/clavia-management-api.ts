@@ -48,6 +48,8 @@ export class ClaviaManagementApi implements ManagementApi {
         read(http.PATCH("/api/v1/users/{user_id}", { params: { path: { user_id: userId } }, body: changes })),
       delete: (userId) => done(http.DELETE("/api/v1/users/{user_id}", { params: { path: { user_id: userId } } })),
       resetMfa: (userId) => done(http.DELETE("/api/v1/users/{user_id}/mfa", { params: { path: { user_id: userId } } })),
+      sendPasswordLink: (userId) =>
+        read(http.POST("/api/v1/users/{user_id}/password-reset", { params: { path: { user_id: userId } } })),
       sessions: (userId) =>
         read(http.GET("/api/v1/users/{user_id}/sessions", { params: { path: { user_id: userId } } })),
       endSessions: (userId) =>

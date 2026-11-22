@@ -31,6 +31,7 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "user.signed_up": { label: "Signed up", group: "Users", tone: "positive" },
   "user.email_verified": { label: "Address verified", group: "Users", tone: "positive" },
   "user.password_reset": { label: "Password reset", group: "Users", tone: "warning" },
+  "user.password_link_sent": { label: "Password link sent", group: "Users", tone: "neutral" },
   "role.created": { label: "Role created", group: "Roles", tone: "positive" },
   "role.updated": { label: "Role changed", group: "Roles", tone: "neutral" },
   "role.deleted": { label: "Role deleted", group: "Roles", tone: "warning" },

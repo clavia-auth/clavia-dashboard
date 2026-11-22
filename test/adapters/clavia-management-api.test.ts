@@ -100,6 +100,28 @@ describe("ClaviaManagementApi", () => {
     });
   });
 
+  it("asks Clavia to mail a user a password link and says which mail went out", async () => {
+    const { requests, api } = server(() => json({ kind: "invitation" }, 202));
+
+    const sent = await api.users.sendPasswordLink("u-1");
+
+    expect(sent).toEqual({ kind: "invitation" });
+    expect(requests[0]?.method).toBe("POST");
+    expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/users/u-1/password-reset");
+  });
+
+  it.each([
+    [409, "conflict"],
+    [429, "rate_limited"],
+    [503, "service_unavailable"],
+  ] as const)("tells a refused password link (%i) from a failure", async (status, kind) => {
+    const { api } = server(() => json({ type: "about:blank", title: "x", status, detail: "Deactivated." }, status));
+
+    const failure = await api.users.sendPasswordLink("u-1").catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ kind });
+  });
+
   it("says the API is unavailable when it cannot be reached", async () => {
     const api = new ClaviaManagementApi("https://management.clavia.test", "t", (async () => {
       throw new TypeError("fetch failed");

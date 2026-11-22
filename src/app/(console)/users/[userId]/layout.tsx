@@ -62,7 +62,9 @@ export default async function UserLayout({
             email={user.email}
             active={user.is_active}
             mfaEnrolled={user.mfa_enrolled}
+            hasPassword={user.has_password}
             canUpdate={operator.can("update:users")}
+            canSendPasswordLink={operator.can("create:user_tickets")}
             canDelete={operator.can("delete:users")}
             isSelf={user.id === operator.identity.subject}
           />
