@@ -1,0 +1,45 @@
+name: Feature
+description: Something Clavia should do that it does not do yet.
+projects: ["clavia-auth/1"]
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the need before the solution. Large features get a design in `docs/design/`
+        first; say so if you think this is one.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who needs this, and what can they not do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should happen. Name the specification (RFC, OpenID spec) when one applies.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Sign-in and sessions
+        - Console pages
+        - Management API client
+        - Operations (build, deployment, configuration)
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Done when
+      description: The behaviour that proves it works, as a short list.

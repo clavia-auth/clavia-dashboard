@@ -1,0 +1,53 @@
+name: Bug
+description: Something that behaves differently from what it should.
+projects: ["clavia-auth/1"]
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **A security problem is not a bug report.** Report it privately instead: see SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+      description: Cite the specification when the expectation comes from one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Sign-in and sessions
+        - Console pages
+        - Management API client
+        - Operations (build, deployment, configuration)
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and error references
+      description: An error page shows a reference; the server logs it with the details. Remove secrets and tokens.
+      render: text
