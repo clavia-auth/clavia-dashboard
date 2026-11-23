@@ -40,6 +40,16 @@ describe("ClaviaIdentityProvider", () => {
       });
       expect(url.searchParams.get("code_challenge")).not.toBe(pending.codeVerifier);
       expect(pending.codeVerifier.length).toBeGreaterThanOrEqual(43);
+      expect(url.searchParams.has("acr_values")).toBe(false);
+    });
+
+    it("asks for the authentication level a step-up needs", async () => {
+      const { url } = await provider.authorize(
+        ["openid"],
+        "http://schemas.openid.net/pape/policies/2007/06/multi-factor",
+      );
+
+      expect(url.searchParams.get("acr_values")).toBe("http://schemas.openid.net/pape/policies/2007/06/multi-factor");
     });
   });
 

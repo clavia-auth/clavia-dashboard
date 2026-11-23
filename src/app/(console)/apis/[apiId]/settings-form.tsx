@@ -55,6 +55,16 @@ export function ApiSettingsForm({ resourceServer, editable }: { resourceServer: 
                 defaultChecked={resourceServer.allow_skipping_consent}
                 disabled={system}
               />
+              <SwitchField
+                name="mfa_policy"
+                label="Require a second factor"
+                description={
+                  system
+                    ? "Every administrator must sign in with more than one factor, and a token from a sign-in with one is refused. Administrators without a second factor set one up on the way, if their address is verified. It applies from the next sign-in."
+                    : "A token for this API is issued only to someone who signed in with more than one factor. Someone signed in with one is asked for another without typing their password again. It applies from the next authorization."
+                }
+                defaultChecked={resourceServer.mfa_policy === "required"}
+              />
             </FieldGroup>
           </fieldset>
         </CardContent>

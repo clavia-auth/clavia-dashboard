@@ -114,6 +114,12 @@ export function SettingsForm({ client, editable }: { client: Client; editable: b
                 }
                 defaultChecked={client.backchannel_logout_session_required}
               />
+              <SwitchField
+                name="mfa_policy"
+                label="Require a second factor"
+                description="Whoever signs in through this application must give more than one factor. Someone signed in with one is asked for another without typing their password again; someone with none sets one up on the way, if their address is verified. It applies from the next sign-in."
+                defaultChecked={client.mfa_policy === "required"}
+              />
               {confidential ? (
                 <SwitchField
                   name="require_pkce"

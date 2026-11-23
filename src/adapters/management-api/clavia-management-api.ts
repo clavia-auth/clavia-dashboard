@@ -226,6 +226,8 @@ async function reach<T>(request: Promise<Answer<T>>): Promise<Answer<T>> {
   try {
     return await request;
   } catch (cause) {
-    throw new ManagementError("unavailable", "The Management API could not be reached.", [], null, { cause });
+    throw new ManagementError("unavailable", "The Management API could not be reached.", [], null, null, {
+      cause,
+    });
   }
 }

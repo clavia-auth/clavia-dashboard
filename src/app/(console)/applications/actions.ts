@@ -86,6 +86,7 @@ const settingsSchema = z.object({
     .pipe(z.url("Enter an https URL.").nullable()),
   backchannel_logout_session_required: z.boolean(),
   require_pkce: z.boolean().optional(),
+  mfa_policy: z.enum(["optional", "required"]),
 });
 
 export async function updateApplication(
@@ -103,6 +104,7 @@ export async function updateApplication(
     backchannel_logout_uri: form.get("backchannel_logout_uri") ?? "",
     backchannel_logout_session_required: form.get("backchannel_logout_session_required") === "on",
     require_pkce: confidential ? form.get("require_pkce") === "on" : undefined,
+    mfa_policy: form.get("mfa_policy") === "on" ? "required" : "optional",
   });
   if (!parsed.ok) {
     return parsed.state;

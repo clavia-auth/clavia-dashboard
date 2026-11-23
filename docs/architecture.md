@@ -43,6 +43,13 @@ The dashboard is a confidential OAuth client. Clavia never hands its tokens to t
 5. `POST /auth/backchannel-logout` takes Clavia's logout token when the operator signs out
    elsewhere. It checks the signature, `typ: logout+jwt`, the events claim and the absence of a
    nonce, then ends every session the token's `sid` or `sub` names.
+6. **Step-up.** When the Management API requires more than one factor and the operator's token
+   came from a sign-in with one, it answers `401` with `insufficient_user_authentication` and
+   the `acr_values` to ask for (RFC 9470). The adapter turns that into a `step_up_required`
+   error; `perform()` and `load()` send the browser to sign in again with those values and back
+   to the page it was on. Clavia raises its session with one more factor, so the operator is not
+   asked for their password. A session under a minute old is not sent round again: a new
+   sign-in would not change the answer, so the refusal is shown.
 
 Session records are sealed with AES-256-GCM, with their key as additional data, so a record
 cannot be read, or moved to another key, without `DASHBOARD_SESSION_SECRET`. Redis stores only

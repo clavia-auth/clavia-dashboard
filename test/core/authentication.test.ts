@@ -44,6 +44,18 @@ describe("Authentication", () => {
       });
     });
 
+    it("asks for the level a step-up names, and for nothing when the value is not a plain list", async () => {
+      const mfa = "http://schemas.openid.net/pape/policies/2007/06/multi-factor";
+
+      const stepUp = await authentication.beginSignIn("/users", mfa);
+      const plain = await authentication.beginSignIn("/users");
+      const forged = await authentication.beginSignIn("/users", "phr\r\nSet-Cookie: x=1");
+
+      expect(stepUp.authorizationUrl.searchParams.get("acr_values")).toBe(mfa);
+      expect(plain.authorizationUrl.searchParams.has("acr_values")).toBe(false);
+      expect(forged.authorizationUrl.searchParams.has("acr_values")).toBe(false);
+    });
+
     it("redeems the callback of the browser that started it, and keeps the tokens server-side", async () => {
       const { state } = await authentication.beginSignIn("/users/42");
 

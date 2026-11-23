@@ -5,8 +5,14 @@ import type { DashboardSession, OperatorIdentity, PendingSignIn, TokenSet } from
  * flow with PKCE, refresh, revocation, RP-Initiated Logout and back-channel logout.
  */
 export interface IdentityProvider {
-  /** Where to send the browser, and what the callback will be checked against. */
-  authorize(scopes: readonly string[]): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }>;
+  /**
+   * Where to send the browser, and what the callback will be checked against. `acrValues`
+   * asks for an authentication level (OpenID Connect Core §3.1.2.1), as a step-up does.
+   */
+  authorize(
+    scopes: readonly string[],
+    acrValues?: string,
+  ): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }>;
   /**
    * Check the callback against the attempt and redeem its code. Throws
    * {@link SignInRefused} when the provider sent an error, or anything does not check out.

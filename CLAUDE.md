@@ -137,7 +137,12 @@ The dashboard is a confidential OAuth client of Clavia (`client_secret_basic`). 
    most (`DASHBOARD_SESSION_LIFETIME`) and one hour unused (`DASHBOARD_SESSION_IDLE_TIMEOUT`).
 4. **`POST /auth/sign-out`** (same origin only): the session is destroyed, the refresh token
    revoked, and the browser sent to Clavia's end-session endpoint with the ID token as hint.
-5. **`POST /auth/backchannel-logout`**: Clavia's logout token is verified (signature, issuer,
+5. **Step-up (RFC 9470).** When the Management API's `mfa_policy` is `required` and the operator's token
+   came from a one-factor sign-in, it answers `401` with `error="insufficient_user_authentication"` and
+   `acr_values`. `perform()` and `load()` send the browser to `/auth/sign-in?return_to=…&acr_values=…`
+   (`stepUp()` in `server/operator.ts`), and Clavia raises the session with one more factor instead of asking
+   for the password. A session under a minute old is not sent round again: the refusal is shown.
+6. **`POST /auth/backchannel-logout`**: Clavia's logout token is verified (signature, issuer,
    audience, `typ: logout+jwt`, the events claim, no nonce, a `sid` or `sub`), and every session
    it names ends.
 
@@ -208,7 +213,8 @@ export async function updateRole(roleId: string, _: ActionState, form: FormData)
 (`MANAGEMENT_SCOPES`). `src/contract/index.ts` gives the types their names (`User`, `Client`,
 `Role`, `AuditEvent`, `Page<T>`…). After Clavia's API changes: copy the document, regenerate,
 `npm run typecheck`, and fix what it names. `ClaviaManagementApi` maps Clavia's problem documents
-to `ManagementError` kinds: `unauthenticated` (401), `forbidden` (403, with the scope from
+to `ManagementError` kinds: `unauthenticated` (401), `step_up_required` (401 with `insufficient_user_authentication`, carrying the
+`acr_values`), `forbidden` (403, with the scope from
 `WWW-Authenticate`), `not_found`, `conflict` (409), `invalid` (400, 415, 422, with fields), `rate_limited` (429),
 `service_unavailable` (503), and `unavailable` for anything else, without echoing the body.
 

@@ -35,6 +35,33 @@ describe("managementError", () => {
     expect(error.scope).toBe("delete:users");
   });
 
+  it("turns RFC 9470's challenge into a step-up that names the level to ask for", () => {
+    const error = managementError(
+      response(401, {
+        "WWW-Authenticate":
+          'Bearer realm="https://management.clavia.test/api/v1/", error="insufficient_user_authentication", ' +
+          'error_description="A second factor is required.", ' +
+          'acr_values="http://schemas.openid.net/pape/policies/2007/06/multi-factor"',
+      }),
+      { error: "insufficient_user_authentication" },
+    );
+
+    expect(error.kind).toBe("step_up_required");
+    expect(error.acrValues).toBe("http://schemas.openid.net/pape/policies/2007/06/multi-factor");
+  });
+
+  it("keeps a plain invalid token a lost session, even if its description mentions a step-up", () => {
+    const error = managementError(
+      response(401, {
+        "WWW-Authenticate": 'Bearer error="invalid_token", error_description="Not insufficient_user_authentication."',
+      }),
+      { error: "invalid_token" },
+    );
+
+    expect(error.kind).toBe("unauthenticated");
+    expect(error.acrValues).toBeNull();
+  });
+
   it.each([
     [401, "unauthenticated"],
     [404, "not_found"],
