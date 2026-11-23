@@ -93,6 +93,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserPage'
+              examples:
+                UserPage:
+                  $ref: '#/components/examples/UserPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -120,6 +123,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCreate'
+            examples:
+              UserCreate:
+                $ref: '#/components/examples/UserCreate'
       responses:
         '201':
           description: The user, as created.
@@ -130,6 +136,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              examples:
+                User:
+                  $ref: '#/components/examples/User'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -161,6 +170,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              examples:
+                User:
+                  $ref: '#/components/examples/User'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -189,6 +201,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdate'
+            examples:
+              UserUpdate:
+                $ref: '#/components/examples/UserUpdate'
       responses:
         '200':
           description: The user, as updated.
@@ -196,6 +211,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              examples:
+                User:
+                  $ref: '#/components/examples/User'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -294,6 +312,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PasswordLinkSent'
+              examples:
+                PasswordLinkSent:
+                  $ref: '#/components/examples/PasswordLinkSent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -334,6 +355,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/UserConsent'
+              examples:
+                UserConsents:
+                  $ref: '#/components/examples/UserConsents'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -397,6 +421,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/UserSession'
+              examples:
+                UserSessions:
+                  $ref: '#/components/examples/UserSessions'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -478,6 +505,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Identity'
+              examples:
+                UserIdentities:
+                  $ref: '#/components/examples/UserIdentities'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -542,6 +572,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/UserPasskey'
+              examples:
+                UserPasskeys:
+                  $ref: '#/components/examples/UserPasskeys'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -602,6 +635,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Role'
+              examples:
+                Roles:
+                  $ref: '#/components/examples/Roles'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -630,6 +666,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RoleIds'
+            examples:
+              RoleIds:
+                $ref: '#/components/examples/RoleIds'
       responses:
         '200':
           description: The roles the user holds now, by name.
@@ -639,6 +678,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Role'
+              examples:
+                Roles:
+                  $ref: '#/components/examples/Roles'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -675,6 +717,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EffectivePermission'
+              examples:
+                EffectivePermissions:
+                  $ref: '#/components/examples/EffectivePermissions'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -705,6 +750,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientPage'
+              examples:
+                ClientPage:
+                  $ref: '#/components/examples/ClientPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -732,6 +780,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ClientCreate'
+            examples:
+              ClientCreate:
+                $ref: '#/components/examples/ClientCreate'
       responses:
         '201':
           description: The client, with its secret.
@@ -742,6 +793,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientWithSecret'
+              examples:
+                ClientWithSecret:
+                  $ref: '#/components/examples/ClientWithSecret'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -770,6 +824,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Client'
+              examples:
+                Client:
+                  $ref: '#/components/examples/Client'
+                SelfRegisteredClient:
+                  $ref: '#/components/examples/SelfRegisteredClient'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -797,6 +856,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ClientUpdate'
+            examples:
+              ClientUpdate:
+                $ref: '#/components/examples/ClientUpdate'
       responses:
         '200':
           description: The client, as updated.
@@ -804,6 +866,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Client'
+              examples:
+                Client:
+                  $ref: '#/components/examples/Client'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -862,6 +927,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientWithSecret'
+              examples:
+                ClientWithSecret:
+                  $ref: '#/components/examples/ClientWithSecret'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -895,6 +963,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConnectionNames'
+            examples:
+              ConnectionNames:
+                $ref: '#/components/examples/ConnectionNames'
       responses:
         '200':
           description: The connections it enables now, by name.
@@ -904,6 +975,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ConnectionName'
+              examples:
+                ConnectionNameList:
+                  $ref: '#/components/examples/ConnectionNameList'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -934,6 +1008,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Connection'
+              examples:
+                Connections:
+                  $ref: '#/components/examples/Connections'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -963,6 +1040,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConnectionCreate'
+            examples:
+              ConnectionCreate:
+                $ref: '#/components/examples/ConnectionCreate'
       responses:
         '201':
           description: The connection.
@@ -973,6 +1053,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connection'
+              examples:
+                Connection:
+                  $ref: '#/components/examples/Connection'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1004,6 +1087,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connection'
+              examples:
+                PasswordPool:
+                  $ref: '#/components/examples/PasswordPool'
+                Connection:
+                  $ref: '#/components/examples/Connection'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1033,6 +1121,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ConnectionUpdate'
+            examples:
+              ConnectionUpdate:
+                $ref: '#/components/examples/ConnectionUpdate'
       responses:
         '200':
           description: The connection, as updated.
@@ -1040,6 +1131,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connection'
+              examples:
+                PasswordPool:
+                  $ref: '#/components/examples/PasswordPool'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1099,6 +1193,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResourceServerPage'
+              examples:
+                ResourceServerPage:
+                  $ref: '#/components/examples/ResourceServerPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1120,6 +1217,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResourceServerCreate'
+            examples:
+              ResourceServerCreate:
+                $ref: '#/components/examples/ResourceServerCreate'
       responses:
         '201':
           description: The API, as registered.
@@ -1130,6 +1230,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResourceServer'
+              examples:
+                ResourceServer:
+                  $ref: '#/components/examples/ResourceServer'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1159,6 +1262,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResourceServer'
+              examples:
+                ResourceServer:
+                  $ref: '#/components/examples/ResourceServer'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1186,6 +1292,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResourceServerUpdate'
+            examples:
+              ResourceServerUpdate:
+                $ref: '#/components/examples/ResourceServerUpdate'
       responses:
         '200':
           description: The API, as updated.
@@ -1193,6 +1302,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResourceServer'
+              examples:
+                ResourceServer:
+                  $ref: '#/components/examples/ResourceServer'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1252,6 +1364,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RolePage'
+              examples:
+                RolePage:
+                  $ref: '#/components/examples/RolePage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1276,6 +1391,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RoleCreate'
+            examples:
+              RoleCreate:
+                $ref: '#/components/examples/RoleCreate'
       responses:
         '201':
           description: The role, as defined.
@@ -1286,6 +1404,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleWithPermissions'
+              examples:
+                RoleWithPermissions:
+                  $ref: '#/components/examples/RoleWithPermissions'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1316,6 +1437,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleWithPermissions'
+              examples:
+                RoleWithPermissions:
+                  $ref: '#/components/examples/RoleWithPermissions'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1343,6 +1467,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RoleUpdate'
+            examples:
+              RoleUpdate:
+                $ref: '#/components/examples/RoleUpdate'
       responses:
         '200':
           description: The role, as updated.
@@ -1350,6 +1477,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleWithPermissions'
+              examples:
+                RoleWithPermissions:
+                  $ref: '#/components/examples/RoleWithPermissions'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1408,6 +1538,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserPage'
+              examples:
+                UserPage:
+                  $ref: '#/components/examples/UserPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1435,6 +1568,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserIds'
+            examples:
+              UserIds:
+                $ref: '#/components/examples/UserIds'
       responses:
         '204':
           description: Every user named holds the role.
@@ -1500,6 +1636,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SigningKey'
+              examples:
+                SigningKeys:
+                  $ref: '#/components/examples/SigningKeys'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1528,6 +1667,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SigningKeyRotation'
+              examples:
+                SigningKeyRotation:
+                  $ref: '#/components/examples/SigningKeyRotation'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1561,6 +1703,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InitialAccessTokenPage'
+              examples:
+                InitialAccessTokenPage:
+                  $ref: '#/components/examples/InitialAccessTokenPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1585,6 +1730,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InitialAccessTokenCreate'
+            examples:
+              InitialAccessTokenCreate:
+                $ref: '#/components/examples/InitialAccessTokenCreate'
       responses:
         '201':
           description: The token, with its value.
@@ -1595,6 +1743,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IssuedInitialAccessToken'
+              examples:
+                IssuedInitialAccessToken:
+                  $ref: '#/components/examples/IssuedInitialAccessToken'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1698,6 +1849,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuditEventPage'
+              examples:
+                AuditEventPage:
+                  $ref: '#/components/examples/AuditEventPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1854,9 +2008,15 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            MalformedRequest:
+              $ref: '#/components/examples/MalformedRequest'
         application/json:
           schema:
             $ref: '#/components/schemas/BearerError'
+          examples:
+            MalformedBearer:
+              $ref: '#/components/examples/MalformedBearer'
     Unauthorized:
       description: |
         No usable token: none at all (a bare `Bearer` challenge and `{}`), or one that
@@ -1881,6 +2041,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/BearerError'
+          examples:
+            InvalidToken:
+              $ref: '#/components/examples/InvalidToken'
+            MissingToken:
+              $ref: '#/components/examples/MissingToken'
+            StepUp:
+              $ref: '#/components/examples/StepUp'
     Forbidden:
       description: The token does not carry the scope this operation requires (`insufficient_scope`).
       headers:
@@ -1891,42 +2058,687 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/BearerError'
+          examples:
+            InsufficientScope:
+              $ref: '#/components/examples/InsufficientScope'
     UnsupportedMediaType:
       description: The body is not `application/json`.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            UnsupportedMediaType:
+              $ref: '#/components/examples/UnsupportedMediaType'
     NotFound:
       description: No such resource.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            NotFound:
+              $ref: '#/components/examples/NotFound'
     Conflict:
       description: The request contradicts what exists — a taken address or identifier, a protected resource.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            Conflict:
+              $ref: '#/components/examples/Conflict'
     Unprocessable:
       description: The request does not satisfy this document, or describes something that could never work.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            Unprocessable:
+              $ref: '#/components/examples/Unprocessable'
     TooManyRequests:
       description: A limit is reached; nothing was done. Try again later.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            TooManyRequests:
+              $ref: '#/components/examples/TooManyRequests'
     ServiceUnavailable:
       description: This deployment cannot do it now (it sends no mail, or the mail server refused); nothing was done.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+
+          examples:
+            ServiceUnavailable:
+              $ref: '#/components/examples/ServiceUnavailable'
+  examples:
+    User:
+      summary: A person
+      value:
+        id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"
+        connection: "password"
+        email: "ada@example.com"
+        email_verified: true
+        is_active: true
+        has_password: true
+        mfa_enrolled: true
+        passkey_count: 1
+        name: "Ada Lovelace"
+        given_name: "Ada"
+        family_name: "Lovelace"
+        nickname: "ada"
+        picture: null
+        locale: "en-GB"
+        created_at: "2026-01-15T10:00:00Z"
+        updated_at: "2026-02-03T08:30:00Z"
+    UserPage:
+      summary: A page of users
+      value:
+        items:
+          - id: "9b2c7e4a-1d3f-4a6b-9c8e-2f1a0b3c4d5e"
+            connection: "password"
+            email: "grace@example.com"
+            email_verified: false
+            is_active: true
+            has_password: false
+            mfa_enrolled: false
+            passkey_count: 0
+            name: "Grace Hopper"
+            given_name: "Grace"
+            family_name: "Hopper"
+            nickname: null
+            picture: null
+            locale: null
+            created_at: "2026-02-10T14:00:00Z"
+            updated_at: "2026-02-10T14:00:00Z"
+          - id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"
+            connection: "password"
+            email: "ada@example.com"
+            email_verified: true
+            is_active: true
+            has_password: true
+            mfa_enrolled: true
+            passkey_count: 1
+            name: "Ada Lovelace"
+            given_name: "Ada"
+            family_name: "Lovelace"
+            nickname: "ada"
+            picture: null
+            locale: "en-GB"
+            created_at: "2026-01-15T10:00:00Z"
+            updated_at: "2026-02-03T08:30:00Z"
+        total: 2
+        page: 1
+        per_page: 50
+    UserCreate:
+      summary: A person invited to choose a password
+      value:
+        connection: "password"
+        email: "grace@example.com"
+        name: "Grace Hopper"
+        given_name: "Grace"
+        family_name: "Hopper"
+    UserUpdate:
+      summary: A new name and locale
+      value:
+        name: "Ada King"
+        family_name: "King"
+        locale: "fr-FR"
+    PasswordLinkSent:
+      summary: An invitation sent
+      value:
+        kind: "invitation"
+    UserConsents:
+      summary: What Ada allowed
+      value:
+        - client_id: "tpc_Hn4Wq8Zr2Tc6Vb1Ym5Kp9Ld3Xf7Gs0Ja"
+          client_name: "Partner Analytics"
+          is_first_party: false
+          audience: "https://api.example.com/reports"
+          scopes: ["openid", "profile", "read:reports"]
+          granted_at: "2026-02-02T10:15:00Z"
+          updated_at: "2026-02-02T10:15:00Z"
+    UserSessions:
+      summary: Ada's sessions
+      value:
+        - sid: "Rk9vYmFyLXNpZC1leGFtcGxlLW5vdC1yZWFsLTAwMDA"
+          created_at: "2026-03-04T09:00:00Z"
+          expires_at: "2026-03-04T21:00:00Z"
+          amr: ["pwd", "otp", "mfa"]
+          connection: "password"
+          clients:
+            - client_id: "Xk7pQ2mN9vR4tL8wC3yB6hJ1dF5gS0aE"
+              name: "Acme Reports"
+    UserIdentities:
+      summary: A linked Google account
+      value:
+        - connection: "google"
+          subject: "104857600000000000001"
+          email: "ada@example.com"
+          linked_at: "2026-01-16T12:00:00Z"
+    UserPasskeys:
+      summary: Ada's passkey
+      value:
+        - id: "c1b2a3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+          name: "MacBook Touch ID"
+          synced: true
+          backed_up: true
+          aaguid: "fbfc3007-154e-4ecc-8c0b-6e020557d7bd"
+          created_at: "2026-01-18T08:00:00Z"
+          last_used_at: "2026-03-04T09:00:00Z"
+    Roles:
+      summary: The roles a user holds
+      value:
+        - id: "rol_S4f9Gh2Jk7Lp3Qa1"
+          name: "Report editor"
+          description: "Reads and writes reports."
+          created_at: "2026-01-15T10:00:00Z"
+    RoleIds:
+      summary: Exactly these roles
+      value:
+        role_ids: ["rol_S4f9Gh2Jk7Lp3Qa1"]
+    EffectivePermissions:
+      summary: What Ada holds, and through which roles
+      value:
+        - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+          resource_server_identifier: "https://api.example.com/reports"
+          value: "read:reports"
+          description: "Read reports"
+          roles:
+            - id: "rol_S4f9Gh2Jk7Lp3Qa1"
+              name: "Report editor"
+            - id: "rol_D8k2Jv5Nb7Wc4Ym6"
+              name: "Auditor"
+        - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+          resource_server_identifier: "https://api.example.com/reports"
+          value: "write:reports"
+          description: "Create and change reports"
+          roles:
+            - id: "rol_S4f9Gh2Jk7Lp3Qa1"
+              name: "Report editor"
+    Client:
+      summary: An operator's web application
+      value:
+        client_id: "Xk7pQ2mN9vR4tL8wC3yB6hJ1dF5gS0aE"
+        name: "Acme Reports"
+        client_type: "confidential"
+        token_endpoint_auth_method: "client_secret_basic"
+        redirect_uris: ["https://reports.example.com/callback"]
+        grant_types: ["authorization_code", "refresh_token"]
+        response_types: ["code"]
+        post_logout_redirect_uris: ["https://reports.example.com/"]
+        is_first_party: true
+        connections: ["password", "google"]
+        backchannel_logout_uri: "https://reports.example.com/backchannel-logout"
+        backchannel_logout_session_required: true
+        require_pkce: true
+        mfa_policy: "optional"
+        require_pushed_authorization_requests: false
+        dpop_bound_access_tokens: false
+        registration: null
+        created_at: "2026-01-15T10:00:00Z"
+    SelfRegisteredClient:
+      summary: A partner's application that registered itself
+      value:
+        client_id: "tpc_Hn4Wq8Zr2Tc6Vb1Ym5Kp9Ld3Xf7Gs0Ja"
+        name: "Partner Analytics"
+        client_type: "confidential"
+        token_endpoint_auth_method: "client_secret_basic"
+        redirect_uris: ["https://analytics.partner.example/callback"]
+        grant_types: ["authorization_code", "refresh_token"]
+        response_types: ["code"]
+        post_logout_redirect_uris: []
+        is_first_party: false
+        connections: []
+        backchannel_logout_uri: null
+        backchannel_logout_session_required: false
+        require_pkce: true
+        mfa_policy: "optional"
+        require_pushed_authorization_requests: false
+        dpop_bound_access_tokens: false
+        registration:
+          initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
+          registered_at: "2026-02-01T09:00:00Z"
+        created_at: "2026-02-01T09:00:00Z"
+    ClientPage:
+      summary: A page of clients
+      value:
+        items:
+          - client_id: "tpc_Hn4Wq8Zr2Tc6Vb1Ym5Kp9Ld3Xf7Gs0Ja"
+            name: "Partner Analytics"
+            client_type: "confidential"
+            token_endpoint_auth_method: "client_secret_basic"
+            redirect_uris: ["https://analytics.partner.example/callback"]
+            grant_types: ["authorization_code", "refresh_token"]
+            response_types: ["code"]
+            post_logout_redirect_uris: []
+            is_first_party: false
+            connections: []
+            backchannel_logout_uri: null
+            backchannel_logout_session_required: false
+            require_pkce: true
+            mfa_policy: "optional"
+            require_pushed_authorization_requests: false
+            dpop_bound_access_tokens: false
+            registration:
+              initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
+              registered_at: "2026-02-01T09:00:00Z"
+            created_at: "2026-02-01T09:00:00Z"
+          - client_id: "Xk7pQ2mN9vR4tL8wC3yB6hJ1dF5gS0aE"
+            name: "Acme Reports"
+            client_type: "confidential"
+            token_endpoint_auth_method: "client_secret_basic"
+            redirect_uris: ["https://reports.example.com/callback"]
+            grant_types: ["authorization_code", "refresh_token"]
+            response_types: ["code"]
+            post_logout_redirect_uris: ["https://reports.example.com/"]
+            is_first_party: true
+            connections: ["password", "google"]
+            backchannel_logout_uri: "https://reports.example.com/backchannel-logout"
+            backchannel_logout_session_required: true
+            require_pkce: true
+            mfa_policy: "optional"
+            require_pushed_authorization_requests: false
+            dpop_bound_access_tokens: false
+            registration: null
+            created_at: "2026-01-15T10:00:00Z"
+        total: 2
+        page: 1
+        per_page: 50
+    ClientCreate:
+      summary: A web application
+      value:
+        name: "Acme Reports"
+        client_type: "confidential"
+        redirect_uris: ["https://reports.example.com/callback"]
+        grant_types: ["authorization_code", "refresh_token"]
+        response_types: ["code"]
+        post_logout_redirect_uris: ["https://reports.example.com/"]
+        connections: ["password", "google"]
+        backchannel_logout_uri: "https://reports.example.com/backchannel-logout"
+        backchannel_logout_session_required: true
+    ClientWithSecret:
+      summary: The application, with its secret shown once
+      value:
+        client_id: "Xk7pQ2mN9vR4tL8wC3yB6hJ1dF5gS0aE"
+        name: "Acme Reports"
+        client_type: "confidential"
+        token_endpoint_auth_method: "client_secret_basic"
+        redirect_uris: ["https://reports.example.com/callback"]
+        grant_types: ["authorization_code", "refresh_token"]
+        response_types: ["code"]
+        post_logout_redirect_uris: ["https://reports.example.com/"]
+        is_first_party: true
+        connections: ["password", "google"]
+        backchannel_logout_uri: "https://reports.example.com/backchannel-logout"
+        backchannel_logout_session_required: true
+        require_pkce: true
+        mfa_policy: "optional"
+        require_pushed_authorization_requests: false
+        dpop_bound_access_tokens: false
+        registration: null
+        created_at: "2026-01-15T10:00:00Z"
+        client_secret: "example-client-secret-not-a-real-one-00000"
+    ClientUpdate:
+      summary: More redirect URIs, and a second factor required
+      value:
+        redirect_uris: ["https://reports.example.com/callback", "https://reports.example.com/v2/callback"]
+        mfa_policy: "required"
+    ConnectionNames:
+      summary: Email and password, and Google
+      value:
+        connections: ["password", "google"]
+    ConnectionNameList:
+      summary: The connections now enabled
+      value:
+        ["password", "google"]
+    Connections:
+      summary: The connections
+      value:
+        - name: "password"
+          display_name: "Email and password"
+          strategy: "database"
+          is_enabled: true
+          is_domain_connection: true
+          allow_sign_up: true
+          require_verified_email: true
+          configured: true
+          usable: true
+          oidc_issuer: null
+          oidc_client_id: null
+          oidc_scope: null
+          created_at: "2026-01-15T10:00:00Z"
+        - name: "acme-okta"
+          display_name: "Acme staff"
+          strategy: "oidc"
+          is_enabled: true
+          is_domain_connection: false
+          allow_sign_up: false
+          require_verified_email: false
+          configured: true
+          usable: true
+          oidc_issuer: "https://acme.okta.example"
+          oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
+          oidc_scope: "openid email profile"
+          created_at: "2026-01-20T11:00:00Z"
+    Connection:
+      summary: An OpenID Connect provider
+      value:
+        name: "acme-okta"
+        display_name: "Acme staff"
+        strategy: "oidc"
+        is_enabled: true
+        is_domain_connection: false
+        allow_sign_up: false
+        require_verified_email: false
+        configured: true
+        usable: true
+        oidc_issuer: "https://acme.okta.example"
+        oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
+        oidc_scope: "openid email profile"
+        created_at: "2026-01-20T11:00:00Z"
+    ConnectionCreate:
+      summary: A company's OpenID Connect provider
+      value:
+        name: "acme-okta"
+        display_name: "Acme staff"
+        strategy: "oidc"
+        oidc_issuer: "https://acme.okta.example"
+        oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
+        oidc_client_secret: "example-provider-secret-not-real"
+    ConnectionUpdate:
+      summary: Sign-ups opened, with a verified address
+      value:
+        allow_sign_up: true
+        require_verified_email: true
+    PasswordPool:
+      summary: The pool of email and password accounts
+      value:
+        name: "password"
+        display_name: "Email and password"
+        strategy: "database"
+        is_enabled: true
+        is_domain_connection: true
+        allow_sign_up: true
+        require_verified_email: true
+        configured: true
+        usable: true
+        oidc_issuer: null
+        oidc_client_id: null
+        oidc_scope: null
+        created_at: "2026-01-15T10:00:00Z"
+    ResourceServer:
+      summary: An API
+      value:
+        id: "rs_A7d2Kq9Lm4Xp1Zt8"
+        identifier: "https://api.example.com/reports"
+        name: "Reports API"
+        permissions:
+          - value: "read:reports"
+            description: "Read reports"
+          - value: "write:reports"
+            description: "Create and change reports"
+        is_system: false
+        enforce_policies: true
+        allow_skipping_consent: true
+        access_token_format: "jwt"
+        mfa_policy: "optional"
+        created_at: "2026-01-15T10:00:00Z"
+    ResourceServerPage:
+      summary: A page of APIs
+      value:
+        items:
+          - id: "rs_A7d2Kq9Lm4Xp1Zt8"
+            identifier: "https://api.example.com/reports"
+            name: "Reports API"
+            permissions:
+              - value: "read:reports"
+                description: "Read reports"
+              - value: "write:reports"
+                description: "Create and change reports"
+            is_system: false
+            enforce_policies: true
+            allow_skipping_consent: true
+            access_token_format: "jwt"
+            mfa_policy: "optional"
+            created_at: "2026-01-15T10:00:00Z"
+        total: 1
+        page: 1
+        per_page: 50
+    ResourceServerCreate:
+      summary: An API taking JWT access tokens
+      value:
+        identifier: "https://api.example.com/reports"
+        name: "Reports API"
+        permissions:
+          - value: "read:reports"
+            description: "Read reports"
+          - value: "write:reports"
+            description: "Create and change reports"
+        access_token_format: "jwt"
+    ResourceServerUpdate:
+      summary: Roles enforced, and a second factor required
+      value:
+        enforce_policies: true
+        mfa_policy: "required"
+    RolePage:
+      summary: A page of roles
+      value:
+        items:
+          - id: "rol_S4f9Gh2Jk7Lp3Qa1"
+            name: "Report editor"
+            description: "Reads and writes reports."
+            created_at: "2026-01-15T10:00:00Z"
+        total: 1
+        page: 1
+        per_page: 50
+    RoleWithPermissions:
+      summary: A role, and what it grants
+      value:
+        id: "rol_S4f9Gh2Jk7Lp3Qa1"
+        name: "Report editor"
+        description: "Reads and writes reports."
+        created_at: "2026-01-15T10:00:00Z"
+        permissions:
+          - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+            resource_server_identifier: "https://api.example.com/reports"
+            value: "read:reports"
+            description: "Read reports"
+          - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+            resource_server_identifier: "https://api.example.com/reports"
+            value: "write:reports"
+            description: "Create and change reports"
+    RoleCreate:
+      summary: A role over one API
+      value:
+        name: "Report editor"
+        description: "Reads and writes reports."
+        permissions:
+          - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+            value: "read:reports"
+          - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
+            value: "write:reports"
+    RoleUpdate:
+      summary: A clearer description
+      value:
+        description: "Reads, writes and publishes reports."
+    UserIds:
+      summary: Two people
+      value:
+        user_ids: ["3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f", "9b2c7e4a-1d3f-4a6b-9c8e-2f1a0b3c4d5e"]
+    SigningKeys:
+      summary: The active key and the one it replaced
+      value:
+        - kid: "NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs"
+          algorithm: "RS256"
+          status: "active"
+          published: true
+          created_at: "2026-03-01T00:00:00Z"
+          retired_at: null
+          published_until: null
+        - kid: "J5xQ2vR8tY3wN6mK9pL1zB4cF7gH0dS2aE5uI8oP3qT"
+          algorithm: "RS256"
+          status: "retired"
+          published: true
+          created_at: "2026-01-15T10:00:00Z"
+          retired_at: "2026-03-01T00:00:00Z"
+          published_until: "2026-03-03T01:00:00Z"
+    SigningKeyRotation:
+      summary: A rotation
+      value:
+        active:
+          kid: "NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs"
+          algorithm: "RS256"
+          status: "active"
+          published: true
+          created_at: "2026-03-01T00:00:00Z"
+          retired_at: null
+          published_until: null
+        retired:
+          kid: "J5xQ2vR8tY3wN6mK9pL1zB4cF7gH0dS2aE5uI8oP3qT"
+          algorithm: "RS256"
+          status: "retired"
+          published: true
+          created_at: "2026-01-15T10:00:00Z"
+          retired_at: "2026-03-01T00:00:00Z"
+          published_until: "2026-03-03T01:00:00Z"
+    InitialAccessTokenPage:
+      summary: A page of initial access tokens
+      value:
+        items:
+          - id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
+            description: "Partner Analytics onboarding"
+            created_at: "2026-01-30T16:00:00Z"
+            expires_at: "2026-02-06T16:00:00Z"
+            max_uses: 5
+            uses: 1
+            state: "active"
+            revoked_at: null
+        total: 1
+        page: 1
+        per_page: 50
+    InitialAccessTokenCreate:
+      summary: Five registrations, for a week
+      value:
+        description: "Partner Analytics onboarding"
+        max_uses: 5
+    IssuedInitialAccessToken:
+      summary: The token, shown once
+      value:
+        id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
+        description: "Partner Analytics onboarding"
+        created_at: "2026-01-30T16:00:00Z"
+        expires_at: "2026-02-06T16:00:00Z"
+        max_uses: 5
+        uses: 0
+        state: "active"
+        revoked_at: null
+        token: "example-initial-access-token-not-real-00000"
+    AuditEventPage:
+      summary: A page of the trail
+      value:
+        items:
+          - id: "8e7d6c5b-4a39-4281-9f0e-1d2c3b4a5968"
+            type: "client.updated"
+            occurred_at: "2026-03-04T09:05:00Z"
+            outcome: "success"
+            actor:
+              kind: "person"
+              user_id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"
+              client_id: "Dsh8Kq2Wm5Np9Rt3Vx6Zb1Cf4Gj7Ln0Ps"
+            target:
+              type: "client"
+              id: "Xk7pQ2mN9vR4tL8wC3yB6hJ1dF5gS0aE"
+            details:
+              fields: ["redirect_uris", "mfa_policy"]
+            client_address: "203.0.113.42"
+            user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15"
+        total: 1
+        page: 1
+        per_page: 50
+    MissingToken:
+      summary: "No token at all: a bare challenge"
+      value:
+        {}
+    InvalidToken:
+      summary: A token that cannot be used
+      value:
+        error: "invalid_token"
+        error_description: "The access token is expired, revoked, or not valid for this API."
+    StepUp:
+      summary: A stronger sign-in needed (RFC 9470)
+      value:
+        error: "insufficient_user_authentication"
+        error_description: "The Management API requires a stronger sign-in."
+    InsufficientScope:
+      summary: A scope missing
+      value:
+        error: "insufficient_scope"
+        error_description: "The access token does not carry the 'update:users' scope."
+    MalformedRequest:
+      summary: Unreadable JSON
+      value:
+        type: "about:blank"
+        title: "Bad Request"
+        status: 400
+        detail: "The request cannot be read."
+    MalformedBearer:
+      summary: A malformed Authorization header
+      value:
+        error: "invalid_request"
+        error_description: "Malformed 'Authorization' header."
+    NotFound:
+      summary: Nothing there
+      value:
+        type: "about:blank"
+        title: "Not Found"
+        status: 404
+        detail: "No such user."
+    Conflict:
+      summary: The state refuses it
+      value:
+        type: "about:blank"
+        title: "Conflict"
+        status: 409
+        detail: "A token cannot delete the account it is acting as."
+    UnsupportedMediaType:
+      summary: Not JSON
+      value:
+        type: "about:blank"
+        title: "Unsupported Media Type"
+        status: 415
+        detail: "The body must be application/json."
+    Unprocessable:
+      summary: What the contract refuses, every violation listed
+      value:
+        type: "about:blank"
+        title: "Unprocessable Content"
+        status: 422
+        detail: "The request does not satisfy the API's contract."
+        errors:
+          - pointer: "/email"
+            detail: "Must be a string."
+          - parameter: "per_page"
+            detail: "Must be at most 100."
+    TooManyRequests:
+      summary: The send limit reached
+      value:
+        type: "about:blank"
+        title: "Too Many Requests"
+        status: 429
+        detail: "Too many emails have been sent to this address or from this one. Try again later."
+    ServiceUnavailable:
+      summary: Mail cannot be sent
+      value:
+        type: "about:blank"
+        title: "Service Unavailable"
+        status: 503
+        detail: "The email could not be sent. Try again later."
 
   schemas:
     SigningKey:
