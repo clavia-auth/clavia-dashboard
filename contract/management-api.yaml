@@ -47,6 +47,13 @@ tags:
     description: |
       The ways people sign in — pools of accounts with passwords, social providers, OpenID
       Connect providers — and which applications may use each.
+  - name: signing-keys
+    description: |
+      The keys ID tokens, logout tokens and JWT access tokens are signed with, for the
+      `postgres` backend, whose keys this server keeps. Never any key material: the public
+      keys are the JWKS's to publish (`/oidc/jwks.json`), and the private ones never leave the
+      backend. With any other backend the keys live at the provider and are rotated there;
+      both operations answer 409.
   - name: audit
     description: |
       The audit trail: sign-ins, sessions, consents, tokens and every change to the
@@ -1382,6 +1389,64 @@ paths:
         '422':
           $ref: '#/components/responses/Unprocessable'
 
+  /api/v1/signing-keys:
+    get:
+      tags: [signing-keys]
+      operationId: listSigningKeys
+      summary: The signing keys, newest first.
+      description: |
+        The active key, and every retired one with when it stopped signing and how long it stays
+        published. A retired key stays in the JWKS until every token it signed has expired.
+      security:
+        - managementToken: [read:signing_keys]
+      responses:
+        '200':
+          description: The keys.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SigningKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/signing-keys/rotate:
+    post:
+      tags: [signing-keys]
+      operationId: rotateSigningKey
+      summary: Replace the active signing key.
+      description: |
+        A new key signs from now on. The one it replaces stops signing at once and stays in the
+        JWKS for the grace period — twice the longest token lifetime, plus a day — so every
+        token it signed keeps verifying until it expires. Relying parties that refetch the JWKS
+        on an unknown `kid` find the new key straight away. Recorded as `signing_key.rotated`.
+      security:
+        - managementToken: [create:signing_keys]
+      responses:
+        '200':
+          description: The key that signs now, and the one it replaced.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SigningKeyRotation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
   /api/v1/audit-events:
     get:
       tags: [audit]
@@ -1490,6 +1555,8 @@ components:
             delete:connections: Delete pools and OpenID Connect providers nothing depends on
             create:user_tickets: Mail end users a link to choose a password
             read:audit_events: Read the audit trail
+            read:signing_keys: View the keys tokens are signed with
+            create:signing_keys: Rotate the signing key
 
   headers:
     Location:
@@ -1660,6 +1727,68 @@ components:
             $ref: '#/components/schemas/Problem'
 
   schemas:
+    SigningKey:
+      type: object
+      additionalProperties: false
+      required: [kid, algorithm, status, published, created_at, retired_at, published_until]
+      properties:
+        kid:
+          type: string
+          description: The RFC 7638 thumbprint of the public key, as the JWKS and token headers name it.
+        algorithm:
+          type: string
+          enum: [RS256]
+        status:
+          type: string
+          enum: [active, retired]
+        published:
+          type: boolean
+          description: Whether the key is in the JWKS now.
+        created_at:
+          type: string
+          format: date-time
+        retired_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a retired key leaves the JWKS; null for the active key.
+    SigningKeyRotation:
+      type: object
+      additionalProperties: false
+      required: [active, retired]
+      properties:
+        active:
+          $ref: '#/components/schemas/SigningKey'
+        retired:
+          type: object
+          nullable: true
+          description: The key that was active, now retired; null when there was none.
+          additionalProperties: false
+          required: [kid, algorithm, status, published, created_at, retired_at, published_until]
+          properties:
+            kid:
+              type: string
+            algorithm:
+              type: string
+              enum: [RS256]
+            status:
+              type: string
+              enum: [retired]
+            published:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+            retired_at:
+              type: string
+              format: date-time
+            published_until:
+              type: string
+              format: date-time
     Problem:
       description: An RFC 9457 problem document.
       type: object
@@ -2056,7 +2185,8 @@ components:
       additionalProperties: false
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
-        backchannel_logout_session_required, require_pkce, mfa_policy, created_at]
+        backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
+        created_at]
       properties:
         client_id:
           type: string
@@ -2108,6 +2238,12 @@ components:
             omit it (OAuth 2.1 §7.5.1).
         mfa_policy:
           $ref: '#/components/schemas/MfaPolicy'
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |
+            Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+            `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+            refused with `invalid_request`.
         created_at:
           type: string
           format: date-time
@@ -2126,7 +2262,8 @@ components:
       additionalProperties: false
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
-        backchannel_logout_session_required, require_pkce, mfa_policy, created_at, client_secret]
+        backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
+        created_at, client_secret]
       properties:
         client_id:
           type: string
@@ -2178,6 +2315,12 @@ components:
             omit it (OAuth 2.1 §7.5.1).
         mfa_policy:
           $ref: '#/components/schemas/MfaPolicy'
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |
+            Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+            `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+            refused with `invalid_request`.
         created_at:
           type: string
           format: date-time
@@ -2252,6 +2395,12 @@ components:
             to true.
         mfa_policy:
           $ref: '#/components/schemas/MfaPolicy'
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |
+            Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+            `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+            refused with `invalid_request`.
       description: |
         `client_type` defaults to `public`; `token_endpoint_auth_method` to `none` for a
         public client and `client_secret_basic` for a confidential one.
@@ -2304,6 +2453,12 @@ components:
             carry a `nonce` (OAuth 2.1 §7.5.1); a public client is refused (422).
         mfa_policy:
           $ref: '#/components/schemas/MfaPolicy'
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |
+            Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+            `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+            refused with `invalid_request`.
 
     Permission:
       type: object

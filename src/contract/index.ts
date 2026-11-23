@@ -44,6 +44,9 @@ export type ConnectionCreate = Schemas["ConnectionCreate"];
 export type ConnectionUpdate = Schemas["ConnectionUpdate"];
 export type ConnectionStrategy = Schemas["ConnectionStrategy"];
 
+export type SigningKey = Schemas["SigningKey"];
+export type SigningKeyRotation = Schemas["SigningKeyRotation"];
+
 export type AuditEvent = Schemas["AuditEvent"];
 export type AuditEventType = AuditEvent["type"];
 export type AuditOutcome = Schemas["AuditOutcome"];

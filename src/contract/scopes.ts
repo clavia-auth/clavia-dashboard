@@ -24,6 +24,8 @@ export const MANAGEMENT_SCOPES = {
   "delete:connections": "Delete pools and OpenID Connect providers nothing depends on",
   "create:user_tickets": "Mail end users a link to choose a password",
   "read:audit_events": "Read the audit trail",
+  "read:signing_keys": "View the keys tokens are signed with",
+  "create:signing_keys": "Rotate the signing key",
 } as const;
 
 export type ManagementScope = keyof typeof MANAGEMENT_SCOPES;
