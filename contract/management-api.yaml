@@ -2,7 +2,8 @@ openapi: 3.0.3
 
 info:
   title: Clavia Management API
-  version: 1.0.0
+  # The API's own version, the `v1` of its paths: see "Versions" below.
+  version: '1'
   license:
     name: BSD-3-Clause
     url: https://opensource.org/licenses/BSD-3-Clause
@@ -28,6 +29,11 @@ info:
     There is no endpoint that grants a client access to an API: a scope that could write
     client grants would be the scope that grants every other scope. Grants are written
     from the shell (`clavia clients:grant`).
+
+    **Versions.** `info.version` is the version of this API, `1`, the `v1` of its paths. Additions
+    (an operation, an optional field, a value) never change it; a change that would break a client
+    would come as `/api/v2`, beside this one. Which server release a copy of this document belongs
+    to is a different number, Clavia's own (`0.3.0`), shown beside it on the published reference.
 
 servers:
   - url: /
