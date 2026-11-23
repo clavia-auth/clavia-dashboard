@@ -772,12 +772,12 @@ export type components = {
             }[];
         };
         /**
-         * @description An RFC 6750 §3 error. Empty when the request carried no credentials at all: there
-         *     is nothing yet to be wrong with.
+         * @description An RFC 6750 §3 error (or RFC 9449 §7.1's `invalid_dpop_proof`). Empty when the
+         *     request carried no credentials at all: there is nothing yet to be wrong with.
          */
         BearerError: {
             /** @enum {string} */
-            error?: "invalid_request" | "invalid_token" | "insufficient_scope" | "insufficient_user_authentication";
+            error?: "invalid_request" | "invalid_token" | "insufficient_scope" | "insufficient_user_authentication" | "invalid_dpop_proof";
             error_description?: string;
         };
         /** @description One page of users, newest first. */
@@ -980,6 +980,13 @@ export type components = {
              *     refused with `invalid_request`.
              */
             require_pushed_authorization_requests: boolean;
+            /**
+             * @description Whether every token it is issued must be bound to a DPoP key (RFC 9449 §5.2): a token
+             *     request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
+             *     proof is welcome but not required. Takes effect from its next token request: tokens
+             *     already issued keep working as they were.
+             */
+            dpop_bound_access_tokens: boolean;
             /** Format: date-time */
             created_at: string;
         };
@@ -1026,6 +1033,13 @@ export type components = {
              *     refused with `invalid_request`.
              */
             require_pushed_authorization_requests: boolean;
+            /**
+             * @description Whether every token it is issued must be bound to a DPoP key (RFC 9449 §5.2): a token
+             *     request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
+             *     proof is welcome but not required. Takes effect from its next token request: tokens
+             *     already issued keep working as they were.
+             */
+            dpop_bound_access_tokens: boolean;
             /** Format: date-time */
             created_at: string;
             /** @description Null for a public client, which has none. */
@@ -1080,6 +1094,13 @@ export type components = {
              *     refused with `invalid_request`.
              */
             require_pushed_authorization_requests?: boolean;
+            /**
+             * @description Whether every token it is issued must be bound to a DPoP key (RFC 9449 §5.2): a token
+             *     request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
+             *     proof is welcome but not required. Takes effect from its next token request: tokens
+             *     already issued keep working as they were.
+             */
+            dpop_bound_access_tokens?: boolean;
         };
         /**
          * @description `client_type` and `is_first_party` are identity, not configuration: neither can change
@@ -1111,6 +1132,13 @@ export type components = {
              *     refused with `invalid_request`.
              */
             require_pushed_authorization_requests?: boolean;
+            /**
+             * @description Whether every token it is issued must be bound to a DPoP key (RFC 9449 §5.2): a token
+             *     request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
+             *     proof is welcome but not required. Takes effect from its next token request: tokens
+             *     already issued keep working as they were.
+             */
+            dpop_bound_access_tokens?: boolean;
         };
         Permission: {
             value: string;
@@ -1478,6 +1506,11 @@ export type components = {
          *     challenge names the `acr_values` to ask for, and the client sends the person back to
          *     `/oauth2/authorize` with them to step up. Checked after the audience and before the
          *     scope. A token a client obtained as itself is never refused for this.
+         *
+         *     A token bound to a DPoP key (RFC 9449) is presented as `Authorization: DPoP <token>`
+         *     with a fresh proof in the `DPoP` header, for this method and URL and naming the token.
+         *     Presented as `Bearer`, it is `invalid_token`; without a good proof, `invalid_dpop_proof`.
+         *     A DPoP request is challenged with `WWW-Authenticate: DPoP`, naming the `algs` accepted.
          */
         Unauthorized: {
             headers: {
