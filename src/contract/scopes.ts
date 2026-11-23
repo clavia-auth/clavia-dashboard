@@ -26,6 +26,9 @@ export const MANAGEMENT_SCOPES = {
   "read:audit_events": "Read the audit trail",
   "read:signing_keys": "View the keys tokens are signed with",
   "create:signing_keys": "Rotate the signing key",
+  "read:initial_access_tokens": "View the initial access tokens issued",
+  "create:initial_access_tokens": "Issue initial access tokens, which register third-party clients",
+  "delete:initial_access_tokens": "Revoke initial access tokens",
 } as const;
 
 export type ManagementScope = keyof typeof MANAGEMENT_SCOPES;

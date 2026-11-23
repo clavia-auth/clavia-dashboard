@@ -47,6 +47,11 @@ export type ConnectionStrategy = Schemas["ConnectionStrategy"];
 export type SigningKey = Schemas["SigningKey"];
 export type SigningKeyRotation = Schemas["SigningKeyRotation"];
 
+export type InitialAccessToken = Schemas["InitialAccessToken"];
+export type InitialAccessTokenCreate = Schemas["InitialAccessTokenCreate"];
+export type IssuedInitialAccessToken = Schemas["IssuedInitialAccessToken"];
+export type InitialAccessTokenState = Schemas["InitialAccessTokenState"];
+
 export type AuditEvent = Schemas["AuditEvent"];
 export type AuditEventType = AuditEvent["type"];
 export type AuditOutcome = Schemas["AuditOutcome"];
