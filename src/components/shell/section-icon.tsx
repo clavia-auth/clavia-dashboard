@@ -7,6 +7,7 @@ import {
   PlugIcon,
   ScrollTextIcon,
   ShieldCheckIcon,
+  TicketIcon,
   UsersIcon,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ const ICONS = {
   roles: ShieldCheckIcon,
   connections: PlugIcon,
   keys: KeyRoundIcon,
+  tokens: TicketIcon,
   audit: ScrollTextIcon,
 } as const;
 

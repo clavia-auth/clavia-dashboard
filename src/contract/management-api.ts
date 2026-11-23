@@ -692,6 +692,55 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/initial-access-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List initial access tokens, newest first, optionally searching the description.
+         * @description Never a token's value, which is not kept.
+         */
+        get: operations["listInitialAccessTokens"];
+        put?: never;
+        /**
+         * Issue an initial access token.
+         * @description The answer carries the token, once: store it or hand it over now, it cannot be read
+         *     again. Registration must also be switched on (`CLAVIA_CLIENT_REGISTRATION=token`) for the
+         *     token to register anything. Recorded as `initial_access_token.issued`.
+         */
+        post: operations["issueInitialAccessToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/initial-access-tokens/{initial_access_token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                initial_access_token_id: components["parameters"]["InitialAccessTokenId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an initial access token.
+         * @description It registers nothing more, at once. The clients it registered keep working. Revoking a
+         *     revoked token changes nothing. Recorded as `initial_access_token.revoked`.
+         */
+        delete: operations["revokeInitialAccessToken"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events": {
         parameters: {
             query?: never;
@@ -812,7 +861,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -841,7 +890,69 @@ export type components = {
         /** @enum {string} */
         AuditOutcome: "success" | "failure";
         /** @enum {string} */
-        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key";
+        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "initial_access_token";
+        /** @description One page of initial access tokens, newest first. */
+        InitialAccessTokenPage: {
+            items: components["schemas"]["InitialAccessToken"][];
+            total: components["schemas"]["Total"];
+            page: components["schemas"]["PageNumber"];
+            per_page: components["schemas"]["PerPage"];
+        };
+        InitialAccessTokenCreate: {
+            /** @description Who it is for. The token itself is never shown again, so this is how it is told apart. */
+            description: string;
+            /**
+             * @description Seconds until it expires, from a minute to ninety days. Seven days by default.
+             * @default 604800
+             */
+            expires_in: number;
+            /**
+             * @description How many clients it may register.
+             * @default 1
+             */
+            max_uses: number;
+        };
+        InitialAccessToken: {
+            /** Format: uuid */
+            id: string;
+            description: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            max_uses: number;
+            /** @description How many clients it has registered. */
+            uses: number;
+            state: components["schemas"]["InitialAccessTokenState"];
+            /** Format: date-time */
+            revoked_at: string | null;
+        };
+        /** @description A token just issued, with its value, which is never shown again. */
+        IssuedInitialAccessToken: {
+            /** Format: uuid */
+            id: string;
+            description: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            max_uses: number;
+            uses: number;
+            state: components["schemas"]["InitialAccessTokenState"];
+            /** Format: date-time */
+            revoked_at: string | null;
+            /**
+             * @description The value software sends as `Authorization: Bearer` to `/oauth2/register`. Only its
+             *     digest is kept.
+             */
+            token: string;
+        };
+        /**
+         * @description `active` registers clients; `revoked` was stopped by an operator, `expired` passed its
+         *     date, `used_up` registered as many clients as it allows.
+         * @enum {string}
+         */
+        InitialAccessTokenState: "active" | "expired" | "used_up" | "revoked";
         /** @description One page of roles, newest first. */
         RolePage: {
             items: components["schemas"]["Role"][];
@@ -987,6 +1098,20 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens: boolean;
+            /**
+             * @description For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
+             *     access token let it in, and when. Null for a client an operator made. Such a client is
+             *     always third-party.
+             */
+            registration: {
+                /**
+                 * Format: uuid
+                 * @description Null once that token no longer exists.
+                 */
+                initial_access_token_id: string | null;
+                /** Format: date-time */
+                registered_at: string;
+            } | null;
             /** Format: date-time */
             created_at: string;
         };
@@ -1040,6 +1165,20 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens: boolean;
+            /**
+             * @description For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
+             *     access token let it in, and when. Null for a client an operator made. Such a client is
+             *     always third-party.
+             */
+            registration: {
+                /**
+                 * Format: uuid
+                 * @description Null once that token no longer exists.
+                 */
+                initial_access_token_id: string | null;
+                /** Format: date-time */
+                registered_at: string;
+            } | null;
             /** Format: date-time */
             created_at: string;
             /** @description Null for a public client, which has none. */
@@ -1597,6 +1736,7 @@ export type components = {
         Sid: string;
         ClientId: string;
         ResourceServerId: string;
+        InitialAccessTokenId: string;
         RoleId: string;
         ConnectionNameParameter: components["schemas"]["ConnectionName"];
         PasskeyId: string;
@@ -2917,6 +3057,92 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listInitialAccessTokens: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page. */
+                per_page?: components["parameters"]["PerPage"];
+                /** @description A case-insensitive substring, taken literally (`%` and `_` are not wildcards). */
+                q?: components["parameters"]["Search"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of initial access tokens. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InitialAccessTokenPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    issueInitialAccessToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InitialAccessTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description The token, with its value. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedInitialAccessToken"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    revokeInitialAccessToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                initial_access_token_id: components["parameters"]["InitialAccessTokenId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
         };
     };
     listAuditEvents: {

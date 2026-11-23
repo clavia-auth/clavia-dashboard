@@ -15,17 +15,24 @@ import {
 import { CopyButton } from "./copy-button";
 
 /**
- * A client secret, shown the one time Clavia hands it out: it is stored hashed and can
- * only be replaced, never read again.
+ * A secret, shown the one time Clavia hands it out: it is stored hashed and can only be
+ * replaced, never read again. A client secret by default; `clientId` shows beside it.
  */
 export function SecretDialog({
   clientId,
   secret,
+  title = "Copy the client secret now",
+  label = "Client secret",
+  lost = "rotate it.",
   open,
   onDone,
 }: {
-  clientId: string;
+  clientId?: string;
   secret: string;
+  title?: string;
+  label?: string;
+  /** What to do if it is lost, finishing "Clavia keeps only a hash of it: if it is lost, …". */
+  lost?: string;
   open: boolean;
   onDone: () => void;
 }) {
@@ -33,15 +40,15 @@ export function SecretDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onDone()}>
       <DialogContent className="sm:max-w-lg" onInteractOutside={(event) => event.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Copy the client secret now</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="flex gap-2">
             <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 text-gold-foreground" aria-hidden />
-            It is shown once. Clavia keeps only a hash of it: if it is lost, rotate it.
+            It is shown once. Clavia keeps only a hash of it: if it is lost, {lost}
           </DialogDescription>
         </DialogHeader>
         <dl className="space-y-3 text-sm">
-          <Credential label="Client ID" value={clientId} />
-          <Credential label="Client secret" value={secret} />
+          {clientId !== undefined ? <Credential label="Client ID" value={clientId} /> : null}
+          <Credential label={label} value={secret} />
         </dl>
         <DialogFooter>
           <Button onClick={onDone}>I have copied it</Button>

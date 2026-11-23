@@ -9,6 +9,7 @@ import type {
   AuditQuery,
   ClientsApi,
   ConnectionsApi,
+  InitialAccessTokensApi,
   ListQuery,
   ManagementApi,
   ResourceServersApi,
@@ -33,6 +34,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
+  readonly initialAccessTokens: InitialAccessTokensApi;
   readonly auditEvents: AuditEventsApi;
 
   constructor(baseUrl: string, accessToken: string, fetcher: typeof fetch = fetch) {
@@ -175,6 +177,17 @@ export class ClaviaManagementApi implements ManagementApi {
     this.signingKeys = {
       list: () => read(http.GET("/api/v1/signing-keys")),
       rotate: () => read(http.POST("/api/v1/signing-keys/rotate")),
+    };
+
+    this.initialAccessTokens = {
+      list: (query) => read(http.GET("/api/v1/initial-access-tokens", { params: { query: listParameters(query) } })),
+      issue: (token) => read(http.POST("/api/v1/initial-access-tokens", { body: token })),
+      revoke: (tokenId) =>
+        done(
+          http.DELETE("/api/v1/initial-access-tokens/{initial_access_token_id}", {
+            params: { path: { initial_access_token_id: tokenId } },
+          }),
+        ),
     };
 
     this.auditEvents = {

@@ -246,4 +246,67 @@ describe("ClaviaManagementApi", () => {
       });
     });
   });
+
+  describe("initial access tokens", () => {
+    const token = {
+      id: "0198f7a1-0000-7000-8000-000000000001",
+      description: "Acme",
+      created_at: "2026-11-23T10:00:00Z",
+      expires_at: "2026-11-30T10:00:00Z",
+      max_uses: 3,
+      uses: 1,
+      state: "active",
+      revoked_at: null,
+    };
+
+    it("lists a page, searching the description", async () => {
+      const { requests, api } = server(() => json({ items: [token], total: 1, page: 2, per_page: 25 }));
+
+      const page = await api.initialAccessTokens.list({ page: 2, perPage: 25, search: " acme " });
+
+      expect(new URL(requests[0]!.url).pathname).toBe("/api/v1/initial-access-tokens");
+      expect(new URL(requests[0]!.url).search).toBe("?page=2&per_page=25&q=acme");
+      expect(page.items[0]?.description).toBe("Acme");
+    });
+
+    it("issues a token with what was asked, and hands back its value", async () => {
+      const { requests, api } = server(() => json({ ...token, token: "iat-secret" }, 201));
+
+      const issued = await api.initialAccessTokens.issue({ description: "Acme", max_uses: 3, expires_in: 604800 });
+
+      expect(requests[0]?.method).toBe("POST");
+      expect(await requests[0]?.json()).toEqual({ description: "Acme", max_uses: 3, expires_in: 604800 });
+      expect(issued.token).toBe("iat-secret");
+    });
+
+    it("revokes by id", async () => {
+      const { requests, api } = server(() => new Response(null, { status: 204 }));
+
+      await api.initialAccessTokens.revoke(token.id);
+
+      expect(requests[0]?.method).toBe("DELETE");
+      expect(requests[0]?.url).toBe(`https://management.clavia.test/api/v1/initial-access-tokens/${token.id}`);
+    });
+
+    it("names the field Clavia refuses", async () => {
+      const { api } = server(() =>
+        json(
+          {
+            title: "Unprocessable Content",
+            status: 422,
+            detail: "The request was refused.",
+            errors: [{ pointer: "/max_uses", detail: "Must be at most 1000." }],
+          },
+          422,
+        ),
+      );
+
+      await expect(
+        api.initialAccessTokens.issue({ description: "x", max_uses: 5000, expires_in: 3600 }),
+      ).rejects.toMatchObject({
+        kind: "invalid",
+        fields: [{ pointer: "/max_uses" }],
+      });
+    });
+  });
 });

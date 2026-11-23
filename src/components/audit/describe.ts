@@ -48,6 +48,16 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "connection.deleted": { label: "Connection deleted", group: "Connections", tone: "warning" },
   "signing_key.created": { label: "Signing key created", group: "Signing keys", tone: "positive" },
   "signing_key.rotated": { label: "Signing key rotated", group: "Signing keys", tone: "warning" },
+  "initial_access_token.issued": {
+    label: "Initial access token issued",
+    group: "Initial access tokens",
+    tone: "positive",
+  },
+  "initial_access_token.revoked": {
+    label: "Initial access token revoked",
+    group: "Initial access tokens",
+    tone: "warning",
+  },
 };
 
 export type Tone = "neutral" | "positive" | "warning" | "danger";
@@ -62,7 +72,7 @@ export function isEventType(value: string): value is AuditEventType {
   return Object.hasOwn(EVENT_TYPES, value);
 }
 
-/** Where an event's target lives in the dashboard; null for what has no page (a signing key). */
+/** Where an event's target lives in the dashboard; null for what has no page (a signing key, an initial access token). */
 export function targetHref(type: AuditTargetType, id: string): Route | null {
   const path = {
     user: "/users",
@@ -71,6 +81,7 @@ export function targetHref(type: AuditTargetType, id: string): Route | null {
     role: "/roles",
     connection: "/connections",
     signing_key: null,
+    initial_access_token: null,
   }[type];
 
   return path === null ? null : (`${path}/${encodeURIComponent(id)}` as Route);
@@ -83,6 +94,7 @@ export const TARGET_TYPES: Readonly<Record<AuditTargetType, string>> = {
   role: "Role",
   connection: "Connection",
   signing_key: "Signing key",
+  initial_access_token: "Initial access token",
 };
 
 /** Who acted, in a few words. */

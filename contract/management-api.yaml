@@ -54,6 +54,12 @@ tags:
       keys are the JWKS's to publish (`/oidc/jwks.json`), and the private ones never leave the
       backend. With any other backend the keys live at the provider and are rotated there;
       both operations answer 409.
+  - name: initial-access-tokens
+    description: |
+      What lets software register itself as a client at `/oauth2/register` (RFC 7591 §3): a
+      token an operator hands to a partner, good for a number of registrations until a date,
+      revocable. A client registered with one is always third-party, so it never reaches a system
+      API. The token is shown once, when it is issued; only its digest is kept.
   - name: audit
     description: |
       The audit trail: sign-ins, sessions, consents, tokens and every change to the
@@ -1447,6 +1453,96 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/initial-access-tokens:
+    get:
+      tags: [initial-access-tokens]
+      operationId: listInitialAccessTokens
+      summary: List initial access tokens, newest first, optionally searching the description.
+      description: Never a token's value, which is not kept.
+      security:
+        - managementToken: [read:initial_access_tokens]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Search'
+      responses:
+        '200':
+          description: One page of initial access tokens.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitialAccessTokenPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    post:
+      tags: [initial-access-tokens]
+      operationId: issueInitialAccessToken
+      summary: Issue an initial access token.
+      description: |
+        The answer carries the token, once: store it or hand it over now, it cannot be read
+        again. Registration must also be switched on (`CLAVIA_CLIENT_REGISTRATION=token`) for the
+        token to register anything. Recorded as `initial_access_token.issued`.
+      security:
+        - managementToken: [create:initial_access_tokens]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitialAccessTokenCreate'
+      responses:
+        '201':
+          description: The token, with its value.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssuedInitialAccessToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/initial-access-tokens/{initial_access_token_id}:
+    parameters:
+      - $ref: '#/components/parameters/InitialAccessTokenId'
+    delete:
+      tags: [initial-access-tokens]
+      operationId: revokeInitialAccessToken
+      summary: Revoke an initial access token.
+      description: |
+        It registers nothing more, at once. The clients it registered keep working. Revoking a
+        revoked token changes nothing. Recorded as `initial_access_token.revoked`.
+      security:
+        - managementToken: [delete:initial_access_tokens]
+      responses:
+        '204':
+          description: Revoked.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
   /api/v1/audit-events:
     get:
       tags: [audit]
@@ -1557,6 +1653,9 @@ components:
             read:audit_events: Read the audit trail
             read:signing_keys: View the keys tokens are signed with
             create:signing_keys: Rotate the signing key
+            read:initial_access_tokens: View the initial access tokens issued
+            create:initial_access_tokens: Issue initial access tokens, which register third-party clients
+            delete:initial_access_tokens: Revoke initial access tokens
 
   headers:
     Location:
@@ -1619,6 +1718,13 @@ components:
       schema:
         type: string
         pattern: '^rs_[A-Za-z0-9]{16}$'
+    InitialAccessTokenId:
+      name: initial_access_token_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     RoleId:
       name: role_id
       in: path
@@ -1918,7 +2024,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked]
         occurred_at:
           type: string
           format: date-time
@@ -1976,7 +2082,119 @@ components:
 
     AuditTargetType:
       type: string
-      enum: [user, client, resource_server, role, connection, signing_key]
+      enum: [user, client, resource_server, role, connection, signing_key, initial_access_token]
+
+    InitialAccessTokenPage:
+      description: One page of initial access tokens, newest first.
+      type: object
+      additionalProperties: false
+      required: [items, total, page, per_page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InitialAccessToken'
+        total:
+          $ref: '#/components/schemas/Total'
+        page:
+          $ref: '#/components/schemas/PageNumber'
+        per_page:
+          $ref: '#/components/schemas/PerPage'
+
+    InitialAccessTokenCreate:
+      type: object
+      additionalProperties: false
+      required: [description]
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Who it is for. The token itself is never shown again, so this is how it is told apart.
+        expires_in:
+          type: integer
+          minimum: 60
+          maximum: 7776000
+          default: 604800
+          description: Seconds until it expires, from a minute to ninety days. Seven days by default.
+        max_uses:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 1
+          description: How many clients it may register.
+
+    InitialAccessToken:
+      type: object
+      additionalProperties: false
+      required: [id, description, created_at, expires_at, max_uses, uses, state, revoked_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        max_uses:
+          type: integer
+          minimum: 1
+        uses:
+          type: integer
+          minimum: 0
+          description: How many clients it has registered.
+        state:
+          $ref: '#/components/schemas/InitialAccessTokenState'
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    IssuedInitialAccessToken:
+      description: A token just issued, with its value, which is never shown again.
+      type: object
+      additionalProperties: false
+      required: [id, description, created_at, expires_at, max_uses, uses, state, revoked_at, token]
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        max_uses:
+          type: integer
+          minimum: 1
+        uses:
+          type: integer
+          minimum: 0
+        state:
+          $ref: '#/components/schemas/InitialAccessTokenState'
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        token:
+          type: string
+          description: |
+            The value software sends as `Authorization: Bearer` to `/oauth2/register`. Only its
+            digest is kept.
+
+    InitialAccessTokenState:
+      type: string
+      enum: [active, expired, used_up, revoked]
+      description: |
+        `active` registers clients; `revoked` was stopped by an operator, `expired` passed its
+        date, `used_up` registered as many clients as it allows.
 
     RolePage:
       description: One page of roles, newest first.
@@ -2191,7 +2409,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, created_at]
+        dpop_bound_access_tokens, registration, created_at]
       properties:
         client_id:
           type: string
@@ -2256,6 +2474,24 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        registration:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [initial_access_token_id, registered_at]
+          description: |
+            For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
+            access token let it in, and when. Null for a client an operator made. Such a client is
+            always third-party.
+          properties:
+            initial_access_token_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: Null once that token no longer exists.
+            registered_at:
+              type: string
+              format: date-time
         created_at:
           type: string
           format: date-time
@@ -2275,7 +2511,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, created_at, client_secret]
+        dpop_bound_access_tokens, registration, created_at, client_secret]
       properties:
         client_id:
           type: string
@@ -2340,6 +2576,24 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        registration:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [initial_access_token_id, registered_at]
+          description: |
+            For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
+            access token let it in, and when. Null for a client an operator made. Such a client is
+            always third-party.
+          properties:
+            initial_access_token_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: Null once that token no longer exists.
+            registered_at:
+              type: string
+              format: date-time
         created_at:
           type: string
           format: date-time
