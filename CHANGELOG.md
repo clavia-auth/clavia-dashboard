@@ -7,6 +7,59 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
+Tokens and policies, for the console of Clavia 0.3.0: MFA policies and the step-up challenge,
+signing keys, DPoP, and initial access tokens for clients that register themselves.
+
+### Added
+
+- **MFA policies.** Applications and APIs have a "Require a second factor" switch, which makes
+  signing in through that application, or being issued a token for that API, take more than one
+  factor. The Management API is among the APIs: switching it on makes every administrator sign in
+  with a second factor. Someone signed in with one is asked for another without typing their
+  password again; someone with none sets one up on the way, if their address is verified. It
+  applies from the next sign-in.
+- **The step-up challenge.** When the Management API refuses a token because the sign-in behind it
+  used one factor (RFC 9470), the dashboard sends the operator to sign in again with the level it
+  asks for, and back to the page they were on. A session under a minute old is not sent round
+  again: the refusal is shown, so a step-up that does not help cannot loop.
+- **A Signing keys section**, for operators holding `read:signing_keys`: the active key and the
+  retired ones, with their key id, algorithm, state and dates, including when each leaves the
+  published key set. An operator holding `create:signing_keys` can rotate the active key, after a
+  confirmation that explains the grace period. Where Clavia keeps its keys at another provider,
+  the page says so and offers no rotation.
+- **Require DPoP of an application.** A switch on the application settings makes every token the
+  application is issued bound to a key it holds (RFC 9449), and says what that asks of the
+  application. The dashboard's own application cannot be switched: it sends no DPoP proofs, so
+  requiring them would lock every operator out.
+- **An Initial access tokens section**, for operators holding `read:initial_access_tokens`: the
+  tokens that let software register itself as an application (RFC 7591), with their state (active,
+  used up, expired, revoked), uses and expiry, searchable by description. An operator holding
+  `create:initial_access_tokens` can issue one (a description, a number of registrations, a
+  duration), and its value is shown once. With `delete:initial_access_tokens` they can revoke an
+  active one, after a confirmation.
+- **A self-registered application says so** on its settings page: when it registered and with which
+  initial access token.
+- **The audit log names the new events**: `session.stepped_up`, `initial_access_token.issued` and
+  `initial_access_token.revoked`, and the initial access token as a target.
+
+### Changed
+
+- Needs Clavia 0.3.0 or later: these pages read Clavia's new fields and endpoints of the Management
+  API. There is no new setting and no migration.
+- **Three groups of scopes are new**: `read:signing_keys` and `create:signing_keys`, and
+  `read:initial_access_tokens`, `create:initial_access_tokens` and `delete:initial_access_tokens`.
+  The dashboard asks for every scope at sign-in, but an operator's role must grant them, and a
+  session opened before upgrading does not carry them: they sign in again.
+- Registration must also be switched on in Clavia (`CLAVIA_CLIENT_REGISTRATION=token`) for an
+  initial access token to register anything; the page says so.
+
+### Fixed
+
+- In development, a refused sign-in showed an error page instead of the signed-out page after the
+  server had reloaded a module.
+
 ## [0.2.0] - 2026-11-23
 
 Passkeys, for the console of Clavia 0.2.0 (`docs/design/passkeys.md`, phases 1 and 2).
@@ -79,6 +132,7 @@ server.
 - Passkeys, signing keys and sign-in charts, which come with the next versions (0.2 to 0.4).
 - Exporting the audit log.
 
-[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.3.0
 [0.2.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.2.0
 [0.1.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.1.0
