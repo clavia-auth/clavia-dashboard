@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { SignInRefused } from "@/core/auth/ports";
+import { isSignInRefused } from "@/core/auth/ports";
 import { config } from "@/server/config";
 import { authentication } from "@/server/container";
 import { expired, SESSION_COOKIE, SIGN_IN_COOKIE, sessionCookie } from "@/server/cookies";
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     response = NextResponse.redirect(`${settings.dashboardUrl}${returnTo === "/" ? "" : returnTo}`, 303);
     response.cookies.set(sessionCookie(handle, settings.sessionLifetime));
   } catch (error) {
-    if (!(error instanceof SignInRefused)) {
+    if (!isSignInRefused(error)) {
       throw error;
     }
     console.warn(`Sign-in refused (${error.reason}): ${error.message}`);

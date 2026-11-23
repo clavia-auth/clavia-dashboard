@@ -77,3 +77,15 @@ export class SignInRefused extends Error {
     super(message);
   }
 }
+
+/**
+ * Whether `error` is a {@link SignInRefused}, whichever copy of the class threw it. The
+ * composition root keeps `Authentication` across development's module reloads, so an error
+ * it throws can come from an older copy of the class than the one a route imports, and
+ * `instanceof` is then false for it.
+ */
+export function isSignInRefused(error: unknown): error is SignInRefused {
+  return (
+    error instanceof SignInRefused || (error instanceof Error && error.name === "SignInRefused" && "reason" in error)
+  );
+}
