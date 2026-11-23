@@ -1,6 +1,7 @@
 import { TerminalIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { config } from "@/server/config";
 import { signedIn } from "@/server/operator";
 
 import { applicationById } from "./data";
@@ -26,7 +27,11 @@ export default async function ApplicationSettingsPage({ params }: { params: Prom
           </AlertDescription>
         </Alert>
       ) : null}
-      <SettingsForm client={client} editable={operator.can("update:clients")} />
+      <SettingsForm
+        client={client}
+        editable={operator.can("update:clients")}
+        dashboard={client.client_id === config().clientId}
+      />
     </>
   );
 }
