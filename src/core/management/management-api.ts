@@ -11,6 +11,9 @@ import type {
   ConnectionUpdate,
   EffectivePermission,
   Identity,
+  InitialAccessToken,
+  InitialAccessTokenCreate,
+  IssuedInitialAccessToken,
   Page,
   PasswordLinkSent,
   ResourceServer,
@@ -44,6 +47,7 @@ export interface ManagementApi {
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
+  readonly initialAccessTokens: InitialAccessTokensApi;
   readonly auditEvents: AuditEventsApi;
 }
 
@@ -102,6 +106,19 @@ export interface SigningKeysApi {
   list(): Promise<SigningKey[]>;
   /** A new key signs from now on; the one it replaces stays published for the grace period. */
   rotate(): Promise<SigningKeyRotation>;
+}
+
+/**
+ * What lets software register itself as a client (RFC 7591): a token an operator hands to a
+ * partner, good for a number of registrations until a date. Its value is shown once, when it is
+ * issued, and never read again.
+ */
+export interface InitialAccessTokensApi {
+  /** Newest first; the description is what a search matches. Never a token's value. */
+  list(query?: ListQuery): Promise<Page<InitialAccessToken>>;
+  issue(token: InitialAccessTokenCreate): Promise<IssuedInitialAccessToken>;
+  /** Stop it registering more. The clients it registered keep working. */
+  revoke(tokenId: string): Promise<void>;
 }
 
 export interface RolesApi {

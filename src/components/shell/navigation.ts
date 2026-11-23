@@ -6,7 +6,7 @@ import type { ManagementScope } from "@/contract";
 export type Section = Readonly<{
   title: string;
   href: Route;
-  icon: "overview" | "users" | "applications" | "apis" | "roles" | "connections" | "keys" | "audit";
+  icon: "overview" | "users" | "applications" | "apis" | "roles" | "connections" | "keys" | "tokens" | "audit";
   /** What the operator's token must carry to see it; null for every operator. */
   needs: ManagementScope | null;
   description: string;
@@ -30,6 +30,13 @@ export const SECTIONS: readonly Section[] = [
     icon: "connections",
     needs: "read:connections",
     description: "Ways to sign in",
+  },
+  {
+    title: "Initial access tokens",
+    href: "/initial-access-tokens",
+    icon: "tokens",
+    needs: "read:initial_access_tokens",
+    description: "Let software register itself",
   },
   {
     title: "Signing keys",
