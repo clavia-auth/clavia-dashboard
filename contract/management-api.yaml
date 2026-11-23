@@ -34,33 +34,41 @@ servers:
 
 tags:
   - name: users
+    x-displayName: Users
     description: End users — the resource owners, and the subjects of ID tokens.
-  - name: clients
-    description: Applications registered to obtain tokens.
-  - name: resource-servers
-    description: The APIs tokens are issued for, and the permissions each defines.
   - name: roles
+    x-displayName: Roles
     description: |
       Named sets of permissions, across APIs, that users are given. On an API that enforces
       roles, a person's token carries only what their roles grant there.
+  - name: clients
+    x-displayName: Clients
+    description: Applications registered to obtain tokens.
+  - name: initial-access-tokens
+    x-displayName: Initial access tokens
+    description: |
+      What lets software register itself as a client at `/oauth2/register` (RFC 7591 §3): a
+      token an operator hands to a partner, good for a number of registrations until a date,
+      revocable. A client registered with one is always third-party, so it never reaches a system
+      API. The token is shown once, when it is issued; only its digest is kept.
+  - name: resource-servers
+    x-displayName: APIs
+    description: The APIs tokens are issued for, and the permissions each defines.
   - name: connections
+    x-displayName: Connections
     description: |
       The ways people sign in — pools of accounts with passwords, social providers, OpenID
       Connect providers — and which applications may use each.
   - name: signing-keys
+    x-displayName: Signing keys
     description: |
       The keys ID tokens, logout tokens and JWT access tokens are signed with, for the
       `postgres` backend, whose keys this server keeps. Never any key material: the public
       keys are the JWKS's to publish (`/oidc/jwks.json`), and the private ones never leave the
       backend. With any other backend the keys live at the provider and are rotated there;
       both operations answer 409.
-  - name: initial-access-tokens
-    description: |
-      What lets software register itself as a client at `/oauth2/register` (RFC 7591 §3): a
-      token an operator hands to a partner, good for a number of registrations until a date,
-      revocable. A client registered with one is always third-party, so it never reaches a system
-      API. The token is shown once, when it is issued; only its digest is kept.
   - name: audit
+    x-displayName: Audit log
     description: |
       The audit trail: sign-ins, sessions, consents, tokens and every change to the
       configuration, append-only and kept for CLAVIA_AUDIT_RETENTION_DAYS. Read-only.
@@ -70,7 +78,8 @@ paths:
     get:
       tags: [users]
       operationId: listUsers
-      summary: List users, newest first, optionally searching the email address.
+      summary: List users
+      description: List users, newest first, optionally searching the email address.
       security:
         - managementToken: [read:users]
       parameters:
@@ -95,8 +104,10 @@ paths:
     post:
       tags: [users]
       operationId: createUser
-      summary: Create a user, with a password or to be invited.
+      summary: Create a user
       description: |
+        Create a user, with a password or to be invited.
+
         A password is hashed and never returned. Without one the account has none yet
         (`has_password` is `false`): it cannot sign in with a password, and its person
         chooses one from the link `POST /api/v1/users/{user_id}/password-reset` mails them,
@@ -140,7 +151,7 @@ paths:
     get:
       tags: [users]
       operationId: getUser
-      summary: Read one user.
+      summary: Get a user
       security:
         - managementToken: [read:users]
       responses:
@@ -163,8 +174,10 @@ paths:
     patch:
       tags: [users]
       operationId: updateUser
-      summary: Change some of a user's fields; absent fields are left alone.
+      summary: Update a user
       description: |
+        Change some of a user's fields; absent fields are left alone.
+
         A profile field set to `null` is cleared. A new email address is unverified
         unless the same request says otherwise. Deactivating an account stops every
         session and token it holds from being accepted on their next use.
@@ -200,8 +213,11 @@ paths:
     delete:
       tags: [users]
       operationId: deleteUser
-      summary: Delete a user, and every code and token issued on their behalf.
-      description: Refused for the account the token is acting as.
+      summary: Delete a user
+      description: |
+        Delete a user, and every code and token issued on their behalf.
+
+        Refused for the account the token is acting as.
       security:
         - managementToken: [delete:users]
       responses:
@@ -226,8 +242,10 @@ paths:
     delete:
       tags: [users]
       operationId: resetUserMfa
-      summary: Turn a user's two-factor authentication off.
+      summary: Reset a user's MFA
       description: |
+        Turn a user's two-factor authentication off.
+
         The way back for someone who lost both their authenticator and their recovery
         codes: every second factor and every recovery code of the account is removed,
         and the next sign-in is by password alone. Idempotent — the user's
@@ -254,8 +272,10 @@ paths:
     post:
       tags: [users]
       operationId: sendUserPasswordLink
-      summary: Mail a user a link to choose a password.
+      summary: Send a password link
       description: |
+        Mail a user a link to choose a password.
+
         An invitation for an account that has no password yet, a reset for one that has: the
         same one-time link the sign-in page mails to whoever asks, worded for each. It works
         once, expires after `CLAVIA_RESET_LINK_LIFETIME`, and dies as soon as the account's
@@ -297,8 +317,10 @@ paths:
     get:
       tags: [users]
       operationId: listUserConsents
-      summary: The applications a user allowed to act as them, and what they allowed.
+      summary: List a user's consents
       description: |
+        The applications a user allowed to act as them, and what they allowed.
+
         Only what the user was actually asked on the consent screen: a first-party
         application that did without it has nothing here. Oldest first.
       security:
@@ -330,8 +352,10 @@ paths:
     delete:
       tags: [users]
       operationId: withdrawUserConsent
-      summary: Withdraw everything a user allowed one application, on every API.
+      summary: Withdraw a consent
       description: |
+        Withdraw everything a user allowed one application, on every API.
+
         The application's next authorization request asks again. Tokens it already holds
         run to their own expiry. Idempotent: nothing to withdraw is still withdrawn; only
         an unknown user is a 404.
@@ -357,8 +381,10 @@ paths:
     get:
       tags: [users]
       operationId: listUserSessions
-      summary: A user's browser sessions, with the applications that signed in through each.
+      summary: List a user's sessions
       description: |
+        A user's browser sessions, with the applications that signed in through each.
+
         Oldest first. Device approvals are not sessions and are not here.
       security:
         - managementToken: [read:users]
@@ -384,8 +410,10 @@ paths:
     delete:
       tags: [users]
       operationId: endUserSessions
-      summary: Sign a user out everywhere.
+      summary: End all of a user's sessions
       description: |
+        Sign a user out everywhere.
+
         Ends every browser session and, after the response, posts a logout token to each
         application that signed in through one of them and registered a back-channel logout
         URI. Tokens already issued are not revoked (`/oauth2/revoke` does that). Idempotent:
@@ -413,7 +441,8 @@ paths:
     delete:
       tags: [users]
       operationId: endUserSession
-      summary: End one session, by its sid, and tell its applications.
+      summary: End a session
+      description: End one session, by its sid, and tell its applications.
       security:
         - managementToken: [update:users]
       responses:
@@ -434,9 +463,10 @@ paths:
     parameters:
       - $ref: '#/components/parameters/UserId'
     get:
-      tags: [users, connections]
+      tags: [users]
       operationId: listUserIdentities
-      summary: The accounts at external providers linked to this one.
+      summary: List linked identities
+      description: The accounts at external providers linked to this one.
       security:
         - managementToken: [read:users]
       responses:
@@ -464,10 +494,12 @@ paths:
       - $ref: '#/components/parameters/UserId'
       - $ref: '#/components/parameters/IdentityConnection'
     delete:
-      tags: [users, connections]
+      tags: [users]
       operationId: unlinkUserIdentity
-      summary: Detach the account's identity at an external provider.
+      summary: Unlink an identity
       description: |
+        Detach the account's identity at an external provider.
+
         Signing in through that provider again makes a new account, or links by address as
         a first sign-in would. Refused (409) when it is the account's only way in: no
         password it could use and nothing else linked.
@@ -495,7 +527,7 @@ paths:
     get:
       tags: [users]
       operationId: listUserPasskeys
-      summary: The account's passkeys.
+      summary: List a user's passkeys
       description: |
         What each is called, whether a credential manager syncs it, its maker when known, and
         when it was added and last used: never its credential id or its key. Oldest first.
@@ -528,8 +560,10 @@ paths:
     delete:
       tags: [users]
       operationId: removeUserPasskey
-      summary: Remove one of the account's passkeys.
+      summary: Remove a passkey
       description: |
+        Remove one of the account's passkeys.
+
         For somebody who lost the device it lived on. One at a time, so an operator sees what
         they remove; the authenticator app and the recovery codes are
         `DELETE /api/v1/users/{user_id}/mfa`. A passkey of another account is not found.
@@ -553,9 +587,10 @@ paths:
     parameters:
       - $ref: '#/components/parameters/UserId'
     get:
-      tags: [users, roles]
+      tags: [users]
       operationId: listUserRoles
-      summary: The roles a user holds, by name.
+      summary: List a user's roles
+      description: The roles a user holds, by name.
       security:
         - managementToken: [read:users]
       responses:
@@ -578,10 +613,12 @@ paths:
         '422':
           $ref: '#/components/responses/Unprocessable'
     put:
-      tags: [users, roles]
+      tags: [users]
       operationId: setUserRoles
-      summary: Make a user hold exactly these roles.
+      summary: Set a user's roles
       description: |
+        Make a user hold exactly these roles.
+
         Needs `update:roles`, not `update:users`: this confers authority, and conferring it
         takes the scope that guards authority wherever it happens. Refused whole (404) when
         one of the roles does not exist. Takes effect on the user's next token.
@@ -619,10 +656,12 @@ paths:
     parameters:
       - $ref: '#/components/parameters/UserId'
     get:
-      tags: [users, roles]
+      tags: [users]
       operationId: listUserPermissions
-      summary: Every permission a user holds through their roles, and which roles grant each.
+      summary: List a user's permissions
       description: |
+        Every permission a user holds through their roles, and which roles grant each.
+
         Several roles can grant the same permission; all of them are listed, because
         taking one away does not necessarily take the permission.
       security:
@@ -651,7 +690,8 @@ paths:
     get:
       tags: [clients]
       operationId: listClients
-      summary: List clients, newest first, optionally searching the id and the name.
+      summary: List clients
+      description: List clients, newest first, optionally searching the id and the name.
       security:
         - managementToken: [read:clients]
       parameters:
@@ -676,8 +716,10 @@ paths:
     post:
       tags: [clients]
       operationId: createClient
-      summary: Register a client. Its id — and, when confidential, its secret — are generated.
+      summary: Create a client
       description: |
+        Register a client. Its id — and, when confidential, its secret — are generated.
+
         The secret is in this response and nowhere else: only its hash is kept. A
         registration that no flow could serve is refused — a confidential client without
         a secret method, a public one with one, the client credentials grant for a public
@@ -717,7 +759,8 @@ paths:
     get:
       tags: [clients]
       operationId: getClient
-      summary: Read one client. Its secret is never part of it.
+      summary: Get a client
+      description: Read one client. Its secret is never part of it.
       security:
         - managementToken: [read:clients]
       responses:
@@ -740,8 +783,12 @@ paths:
     patch:
       tags: [clients]
       operationId: updateClient
-      summary: Change some of a client's registration; the result is checked as a new one would be.
-      description: The type is not changeable — switching between public and confidential is a different client.
+      summary: Update a client
+      description: |
+        Change some of a client's registration; the result is checked as a new one would be.
+
+        The type is not changeable — switching between public and confidential is a different
+        client.
       security:
         - managementToken: [update:clients]
       requestBody:
@@ -772,8 +819,11 @@ paths:
     delete:
       tags: [clients]
       operationId: deleteClient
-      summary: Delete a client, and every code, token and grant it holds.
-      description: Refused for the client the token was issued to.
+      summary: Delete a client
+      description: |
+        Delete a client, and every code, token and grant it holds.
+
+        Refused for the client the token was issued to.
       security:
         - managementToken: [delete:clients]
       responses:
@@ -798,8 +848,11 @@ paths:
     post:
       tags: [clients]
       operationId: rotateClientSecret
-      summary: Replace a confidential client's secret. The old one stops working at once.
-      description: Tokens already issued are not affected; only the next token request needs the new secret.
+      summary: Rotate a client secret
+      description: |
+        Replace a confidential client's secret. The old one stops working at once.
+
+        Tokens already issued are not affected; only the next token request needs the new secret.
       security:
         - managementToken: [update:clients]
       responses:
@@ -824,10 +877,12 @@ paths:
     parameters:
       - $ref: '#/components/parameters/ClientId'
     put:
-      tags: [clients, connections]
+      tags: [clients]
       operationId: setClientConnections
-      summary: Replace the connections an application's users may sign in through.
+      summary: Set a client's connections
       description: |
+        Replace the connections an application's users may sign in through.
+
         Takes effect at the next sign-in: a session established through a connection the
         application stops enabling no longer counts for it. A third-party application
         cannot be given a list (422): it uses the domain connections.
@@ -866,7 +921,8 @@ paths:
     get:
       tags: [connections]
       operationId: listConnections
-      summary: Every connection, by name, with whether it can work.
+      summary: List connections
+      description: Every connection, by name, with whether it can work.
       security:
         - managementToken: [read:connections]
       responses:
@@ -889,8 +945,10 @@ paths:
     post:
       tags: [connections]
       operationId: createConnection
-      summary: Create a pool of accounts, or register an OpenID Connect provider.
+      summary: Create a connection
       description: |
+        Create a pool of accounts, or register an OpenID Connect provider.
+
         The name is permanent: accounts, sessions and identities record it, and for an OIDC
         connection it is part of the callback URL registered at the provider,
         `https://auth.{domain}/auth/social/{name}/callback`. A provider is discovered now —
@@ -936,7 +994,7 @@ paths:
     get:
       tags: [connections]
       operationId: getConnection
-      summary: Read one connection.
+      summary: Get a connection
       security:
         - managementToken: [read:connections]
       responses:
@@ -959,8 +1017,10 @@ paths:
     patch:
       tags: [connections]
       operationId: updateConnection
-      summary: Switch a connection, open it to third parties, rename it, or change its provider settings.
+      summary: Update a connection
       description: |
+        Switch a connection, open it to third parties, rename it, or change its provider settings.
+
         Switching one off takes effect at the next sign-in: sessions established through it
         stand until they end. A social connection the deployment has no credentials for can
         be switched on — the intent is recorded — but stays unusable until it is configured.
@@ -995,8 +1055,10 @@ paths:
     delete:
       tags: [connections]
       operationId: deleteConnection
-      summary: Delete a pool or an OpenID Connect provider nothing depends on.
+      summary: Delete a connection
       description: |
+        Delete a pool or an OpenID Connect provider nothing depends on.
+
         Refused (409) while accounts belong to it or identities are linked through it, and
         for a built-in connection — the social ones and the default pool — which is
         switched off instead. Applications that enabled it stop listing it.
@@ -1022,7 +1084,8 @@ paths:
     get:
       tags: [resource-servers]
       operationId: listResourceServers
-      summary: List APIs, newest first, optionally searching the identifier and the name.
+      summary: List APIs
+      description: List APIs, newest first, optionally searching the identifier and the name.
       security:
         - managementToken: [read:resource_servers]
       parameters:
@@ -1047,7 +1110,7 @@ paths:
     post:
       tags: [resource-servers]
       operationId: createResourceServer
-      summary: Register an API.
+      summary: Create an API
       description: A system API — one the server depends on — cannot be created here.
       security:
         - managementToken: [create:resource_servers]
@@ -1086,7 +1149,7 @@ paths:
     get:
       tags: [resource-servers]
       operationId: getResourceServer
-      summary: Read one API.
+      summary: Get an API
       security:
         - managementToken: [read:resource_servers]
       responses:
@@ -1109,8 +1172,10 @@ paths:
     patch:
       tags: [resource-servers]
       operationId: updateResourceServer
-      summary: Rename an API, or replace the permissions it defines.
+      summary: Update an API
       description: |
+        Rename an API, or replace the permissions it defines.
+
         The identifier never changes: it is the `aud` of every token already issued.
         A system API may be renamed, but its permissions are the server's own (409).
       security:
@@ -1145,8 +1210,11 @@ paths:
     delete:
       tags: [resource-servers]
       operationId: deleteResourceServer
-      summary: Delete an API, its permissions and every client grant on it.
-      description: Refused for a system API (409). Every role stops granting its permissions.
+      summary: Delete an API
+      description: |
+        Delete an API, its permissions and every client grant on it.
+
+        Refused for a system API (409). Every role stops granting its permissions.
       security:
         - managementToken: [delete:resource_servers]
       responses:
@@ -1169,7 +1237,8 @@ paths:
     get:
       tags: [roles]
       operationId: listRoles
-      summary: List roles, newest first, optionally searching the name and the description.
+      summary: List roles
+      description: List roles, newest first, optionally searching the name and the description.
       security:
         - managementToken: [read:roles]
       parameters:
@@ -1194,8 +1263,11 @@ paths:
     post:
       tags: [roles]
       operationId: createRole
-      summary: Define a role, and the permissions it grants.
-      description: A permission an API does not define is refused (422).
+      summary: Create a role
+      description: |
+        Define a role, and the permissions it grants.
+
+        A permission an API does not define is refused (422).
       security:
         - managementToken: [create:roles]
       requestBody:
@@ -1233,7 +1305,8 @@ paths:
     get:
       tags: [roles]
       operationId: getRole
-      summary: Read one role, with the permissions it grants.
+      summary: Get a role
+      description: Read one role, with the permissions it grants.
       security:
         - managementToken: [read:roles]
       responses:
@@ -1256,8 +1329,10 @@ paths:
     patch:
       tags: [roles]
       operationId: updateRole
-      summary: Rename a role, describe it, or replace the permissions it grants.
+      summary: Update a role
       description: |
+        Rename a role, describe it, or replace the permissions it grants.
+
         `permissions`, when present, is the whole new set. Takes effect on the next token
         each holder obtains: roles are read at issuance, never trusted from a token.
       security:
@@ -1292,8 +1367,11 @@ paths:
     delete:
       tags: [roles]
       operationId: deleteRole
-      summary: Delete a role, and every assignment of it.
-      description: Its holders lose what it granted at their next token.
+      summary: Delete a role
+      description: |
+        Delete a role, and every assignment of it.
+
+        Its holders lose what it granted at their next token.
       security:
         - managementToken: [delete:roles]
       responses:
@@ -1316,7 +1394,8 @@ paths:
     get:
       tags: [roles]
       operationId: listRoleUsers
-      summary: The users holding a role, most recently given first.
+      summary: List a role's users
+      description: The users holding a role, most recently given first.
       security:
         - managementToken: [read:roles]
       parameters:
@@ -1342,8 +1421,10 @@ paths:
     post:
       tags: [roles]
       operationId: assignRole
-      summary: Give a role to some users.
+      summary: Assign a role
       description: |
+        Give a role to some users.
+
         Idempotent: giving it to somebody who holds it changes nothing. Refused whole (404)
         when one of the users does not exist.
       security:
@@ -1377,8 +1458,11 @@ paths:
     delete:
       tags: [roles]
       operationId: unassignRole
-      summary: Take a role from a user.
-      description: Idempotent — the user does not hold the role afterwards, whether they did or not.
+      summary: Unassign a role
+      description: |
+        Take a role from a user.
+
+        Idempotent — the user does not hold the role afterwards, whether they did or not.
       security:
         - managementToken: [update:roles]
       responses:
@@ -1399,8 +1483,10 @@ paths:
     get:
       tags: [signing-keys]
       operationId: listSigningKeys
-      summary: The signing keys, newest first.
+      summary: List signing keys
       description: |
+        The signing keys, newest first.
+
         The active key, and every retired one with when it stopped signing and how long it stays
         published. A retired key stays in the JWKS until every token it signed has expired.
       security:
@@ -1427,7 +1513,7 @@ paths:
     post:
       tags: [signing-keys]
       operationId: rotateSigningKey
-      summary: Replace the active signing key.
+      summary: Rotate the signing key
       description: |
         A new key signs from now on. The one it replaces stops signing at once and stays in the
         JWKS for the grace period — twice the longest token lifetime, plus a day — so every
@@ -1457,8 +1543,11 @@ paths:
     get:
       tags: [initial-access-tokens]
       operationId: listInitialAccessTokens
-      summary: List initial access tokens, newest first, optionally searching the description.
-      description: Never a token's value, which is not kept.
+      summary: List initial access tokens
+      description: |
+        List initial access tokens, newest first, optionally searching the description.
+
+        Never a token's value, which is not kept.
       security:
         - managementToken: [read:initial_access_tokens]
       parameters:
@@ -1483,7 +1572,7 @@ paths:
     post:
       tags: [initial-access-tokens]
       operationId: issueInitialAccessToken
-      summary: Issue an initial access token.
+      summary: Issue an initial access token
       description: |
         The answer carries the token, once: store it or hand it over now, it cannot be read
         again. Registration must also be switched on (`CLAVIA_CLIENT_REGISTRATION=token`) for the
@@ -1523,7 +1612,7 @@ paths:
     delete:
       tags: [initial-access-tokens]
       operationId: revokeInitialAccessToken
-      summary: Revoke an initial access token.
+      summary: Revoke an initial access token
       description: |
         It registers nothing more, at once. The clients it registered keep working. Revoking a
         revoked token changes nothing. Recorded as `initial_access_token.revoked`.
@@ -1547,8 +1636,10 @@ paths:
     get:
       tags: [audit]
       operationId: listAuditEvents
-      summary: Read the audit trail, newest first.
+      summary: List audit events
       description: |
+        Read the audit trail, newest first.
+
         Every filter given must hold. `client_id` matches the application that acted or that
         a person acted through; `target_type` and `target_id` go together.
       security:

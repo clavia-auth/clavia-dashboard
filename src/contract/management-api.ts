@@ -8,12 +8,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List users, newest first, optionally searching the email address. */
+        /**
+         * List users
+         * @description List users, newest first, optionally searching the email address.
+         */
         get: operations["listUsers"];
         put?: never;
         /**
-         * Create a user, with a password or to be invited.
-         * @description A password is hashed and never returned. Without one the account has none yet
+         * Create a user
+         * @description Create a user, with a password or to be invited.
+         *
+         *     A password is hashed and never returned. Without one the account has none yet
          *     (`has_password` is `false`): it cannot sign in with a password, and its person
          *     chooses one from the link `POST /api/v1/users/{user_id}/password-reset` mails them,
          *     an invitation.
@@ -34,20 +39,24 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** Read one user. */
+        /** Get a user */
         get: operations["getUser"];
         put?: never;
         post?: never;
         /**
-         * Delete a user, and every code and token issued on their behalf.
-         * @description Refused for the account the token is acting as.
+         * Delete a user
+         * @description Delete a user, and every code and token issued on their behalf.
+         *
+         *     Refused for the account the token is acting as.
          */
         delete: operations["deleteUser"];
         options?: never;
         head?: never;
         /**
-         * Change some of a user's fields; absent fields are left alone.
-         * @description A profile field set to `null` is cleared. A new email address is unverified
+         * Update a user
+         * @description Change some of a user's fields; absent fields are left alone.
+         *
+         *     A profile field set to `null` is cleared. A new email address is unverified
          *     unless the same request says otherwise. Deactivating an account stops every
          *     session and token it holds from being accepted on their next use.
          */
@@ -67,8 +76,10 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Turn a user's two-factor authentication off.
-         * @description The way back for someone who lost both their authenticator and their recovery
+         * Reset a user's MFA
+         * @description Turn a user's two-factor authentication off.
+         *
+         *     The way back for someone who lost both their authenticator and their recovery
          *     codes: every second factor and every recovery code of the account is removed,
          *     and the next sign-in is by password alone. Idempotent — the user's
          *     two-factor authentication is off afterwards, whether it was on or not.
@@ -91,8 +102,10 @@ export type paths = {
         get?: never;
         put?: never;
         /**
-         * Mail a user a link to choose a password.
-         * @description An invitation for an account that has no password yet, a reset for one that has: the
+         * Send a password link
+         * @description Mail a user a link to choose a password.
+         *
+         *     An invitation for an account that has no password yet, a reset for one that has: the
          *     same one-time link the sign-in page mails to whoever asks, worded for each. It works
          *     once, expires after `CLAVIA_RESET_LINK_LIFETIME`, and dies as soon as the account's
          *     password or address changes. Choosing a password verifies the address and ends every
@@ -119,8 +132,10 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * The applications a user allowed to act as them, and what they allowed.
-         * @description Only what the user was actually asked on the consent screen: a first-party
+         * List a user's consents
+         * @description The applications a user allowed to act as them, and what they allowed.
+         *
+         *     Only what the user was actually asked on the consent screen: a first-party
          *     application that did without it has nothing here. Oldest first.
          */
         get: operations["listUserConsents"];
@@ -146,8 +161,10 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Withdraw everything a user allowed one application, on every API.
-         * @description The application's next authorization request asks again. Tokens it already holds
+         * Withdraw a consent
+         * @description Withdraw everything a user allowed one application, on every API.
+         *
+         *     The application's next authorization request asks again. Tokens it already holds
          *     run to their own expiry. Idempotent: nothing to withdraw is still withdrawn; only
          *     an unknown user is a 404.
          */
@@ -167,15 +184,19 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * A user's browser sessions, with the applications that signed in through each.
-         * @description Oldest first. Device approvals are not sessions and are not here.
+         * List a user's sessions
+         * @description A user's browser sessions, with the applications that signed in through each.
+         *
+         *     Oldest first. Device approvals are not sessions and are not here.
          */
         get: operations["listUserSessions"];
         put?: never;
         post?: never;
         /**
-         * Sign a user out everywhere.
-         * @description Ends every browser session and, after the response, posts a logout token to each
+         * End all of a user's sessions
+         * @description Sign a user out everywhere.
+         *
+         *     Ends every browser session and, after the response, posts a logout token to each
          *     application that signed in through one of them and registered a back-channel logout
          *     URI. Tokens already issued are not revoked (`/oauth2/revoke` does that). Idempotent:
          *     a user with no session is already signed out everywhere.
@@ -199,7 +220,10 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** End one session, by its sid, and tell its applications. */
+        /**
+         * End a session
+         * @description End one session, by its sid, and tell its applications.
+         */
         delete: operations["endUserSession"];
         options?: never;
         head?: never;
@@ -215,7 +239,10 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** The accounts at external providers linked to this one. */
+        /**
+         * List linked identities
+         * @description The accounts at external providers linked to this one.
+         */
         get: operations["listUserIdentities"];
         put?: never;
         post?: never;
@@ -240,8 +267,10 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Detach the account's identity at an external provider.
-         * @description Signing in through that provider again makes a new account, or links by address as
+         * Unlink an identity
+         * @description Detach the account's identity at an external provider.
+         *
+         *     Signing in through that provider again makes a new account, or links by address as
          *     a first sign-in would. Refused (409) when it is the account's only way in: no
          *     password it could use and nothing else linked.
          */
@@ -261,7 +290,7 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * The account's passkeys.
+         * List a user's passkeys
          * @description What each is called, whether a credential manager syncs it, its maker when known, and
          *     when it was added and last used: never its credential id or its key. Oldest first.
          */
@@ -288,8 +317,10 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Remove one of the account's passkeys.
-         * @description For somebody who lost the device it lived on. One at a time, so an operator sees what
+         * Remove a passkey
+         * @description Remove one of the account's passkeys.
+         *
+         *     For somebody who lost the device it lived on. One at a time, so an operator sees what
          *     they remove; the authenticator app and the recovery codes are
          *     `DELETE /api/v1/users/{user_id}/mfa`. A passkey of another account is not found.
          */
@@ -308,11 +339,16 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** The roles a user holds, by name. */
+        /**
+         * List a user's roles
+         * @description The roles a user holds, by name.
+         */
         get: operations["listUserRoles"];
         /**
-         * Make a user hold exactly these roles.
-         * @description Needs `update:roles`, not `update:users`: this confers authority, and conferring it
+         * Set a user's roles
+         * @description Make a user hold exactly these roles.
+         *
+         *     Needs `update:roles`, not `update:users`: this confers authority, and conferring it
          *     takes the scope that guards authority wherever it happens. Refused whole (404) when
          *     one of the roles does not exist. Takes effect on the user's next token.
          */
@@ -334,8 +370,10 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * Every permission a user holds through their roles, and which roles grant each.
-         * @description Several roles can grant the same permission; all of them are listed, because
+         * List a user's permissions
+         * @description Every permission a user holds through their roles, and which roles grant each.
+         *
+         *     Several roles can grant the same permission; all of them are listed, because
          *     taking one away does not necessarily take the permission.
          */
         get: operations["listUserPermissions"];
@@ -354,12 +392,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List clients, newest first, optionally searching the id and the name. */
+        /**
+         * List clients
+         * @description List clients, newest first, optionally searching the id and the name.
+         */
         get: operations["listClients"];
         put?: never;
         /**
-         * Register a client. Its id — and, when confidential, its secret — are generated.
-         * @description The secret is in this response and nowhere else: only its hash is kept. A
+         * Create a client
+         * @description Register a client. Its id — and, when confidential, its secret — are generated.
+         *
+         *     The secret is in this response and nowhere else: only its hash is kept. A
          *     registration that no flow could serve is refused — a confidential client without
          *     a secret method, a public one with one, the client credentials grant for a public
          *     client, the code flow without a redirect URI or with only half of it.
@@ -380,20 +423,28 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** Read one client. Its secret is never part of it. */
+        /**
+         * Get a client
+         * @description Read one client. Its secret is never part of it.
+         */
         get: operations["getClient"];
         put?: never;
         post?: never;
         /**
-         * Delete a client, and every code, token and grant it holds.
-         * @description Refused for the client the token was issued to.
+         * Delete a client
+         * @description Delete a client, and every code, token and grant it holds.
+         *
+         *     Refused for the client the token was issued to.
          */
         delete: operations["deleteClient"];
         options?: never;
         head?: never;
         /**
-         * Change some of a client's registration; the result is checked as a new one would be.
-         * @description The type is not changeable — switching between public and confidential is a different client.
+         * Update a client
+         * @description Change some of a client's registration; the result is checked as a new one would be.
+         *
+         *     The type is not changeable — switching between public and confidential is a different
+         *     client.
          */
         patch: operations["updateClient"];
         trace?: never;
@@ -410,8 +461,10 @@ export type paths = {
         get?: never;
         put?: never;
         /**
-         * Replace a confidential client's secret. The old one stops working at once.
-         * @description Tokens already issued are not affected; only the next token request needs the new secret.
+         * Rotate a client secret
+         * @description Replace a confidential client's secret. The old one stops working at once.
+         *
+         *     Tokens already issued are not affected; only the next token request needs the new secret.
          */
         post: operations["rotateClientSecret"];
         delete?: never;
@@ -431,8 +484,10 @@ export type paths = {
         };
         get?: never;
         /**
-         * Replace the connections an application's users may sign in through.
-         * @description Takes effect at the next sign-in: a session established through a connection the
+         * Set a client's connections
+         * @description Replace the connections an application's users may sign in through.
+         *
+         *     Takes effect at the next sign-in: a session established through a connection the
          *     application stops enabling no longer counts for it. A third-party application
          *     cannot be given a list (422): it uses the domain connections.
          *     An unknown connection is a 404, and nothing changes.
@@ -452,12 +507,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Every connection, by name, with whether it can work. */
+        /**
+         * List connections
+         * @description Every connection, by name, with whether it can work.
+         */
         get: operations["listConnections"];
         put?: never;
         /**
-         * Create a pool of accounts, or register an OpenID Connect provider.
-         * @description The name is permanent: accounts, sessions and identities record it, and for an OIDC
+         * Create a connection
+         * @description Create a pool of accounts, or register an OpenID Connect provider.
+         *
+         *     The name is permanent: accounts, sessions and identities record it, and for an OIDC
          *     connection it is part of the callback URL registered at the provider,
          *     `https://auth.{domain}/auth/social/{name}/callback`. A provider is discovered now —
          *     an issuer that does not answer, or names endpoints this server must not fetch, is
@@ -480,13 +540,15 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** Read one connection. */
+        /** Get a connection */
         get: operations["getConnection"];
         put?: never;
         post?: never;
         /**
-         * Delete a pool or an OpenID Connect provider nothing depends on.
-         * @description Refused (409) while accounts belong to it or identities are linked through it, and
+         * Delete a connection
+         * @description Delete a pool or an OpenID Connect provider nothing depends on.
+         *
+         *     Refused (409) while accounts belong to it or identities are linked through it, and
          *     for a built-in connection — the social ones and the default pool — which is
          *     switched off instead. Applications that enabled it stop listing it.
          */
@@ -494,8 +556,10 @@ export type paths = {
         options?: never;
         head?: never;
         /**
-         * Switch a connection, open it to third parties, rename it, or change its provider settings.
-         * @description Switching one off takes effect at the next sign-in: sessions established through it
+         * Update a connection
+         * @description Switch a connection, open it to third parties, rename it, or change its provider settings.
+         *
+         *     Switching one off takes effect at the next sign-in: sessions established through it
          *     stand until they end. A social connection the deployment has no credentials for can
          *     be switched on — the intent is recorded — but stays unusable until it is configured.
          *     Changed OIDC settings are discovered again; a new secret replaces the old one.
@@ -510,11 +574,14 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List APIs, newest first, optionally searching the identifier and the name. */
+        /**
+         * List APIs
+         * @description List APIs, newest first, optionally searching the identifier and the name.
+         */
         get: operations["listResourceServers"];
         put?: never;
         /**
-         * Register an API.
+         * Create an API
          * @description A system API — one the server depends on — cannot be created here.
          */
         post: operations["createResourceServer"];
@@ -533,20 +600,24 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** Read one API. */
+        /** Get an API */
         get: operations["getResourceServer"];
         put?: never;
         post?: never;
         /**
-         * Delete an API, its permissions and every client grant on it.
-         * @description Refused for a system API (409). Every role stops granting its permissions.
+         * Delete an API
+         * @description Delete an API, its permissions and every client grant on it.
+         *
+         *     Refused for a system API (409). Every role stops granting its permissions.
          */
         delete: operations["deleteResourceServer"];
         options?: never;
         head?: never;
         /**
-         * Rename an API, or replace the permissions it defines.
-         * @description The identifier never changes: it is the `aud` of every token already issued.
+         * Update an API
+         * @description Rename an API, or replace the permissions it defines.
+         *
+         *     The identifier never changes: it is the `aud` of every token already issued.
          *     A system API may be renamed, but its permissions are the server's own (409).
          */
         patch: operations["updateResourceServer"];
@@ -559,12 +630,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List roles, newest first, optionally searching the name and the description. */
+        /**
+         * List roles
+         * @description List roles, newest first, optionally searching the name and the description.
+         */
         get: operations["listRoles"];
         put?: never;
         /**
-         * Define a role, and the permissions it grants.
-         * @description A permission an API does not define is refused (422).
+         * Create a role
+         * @description Define a role, and the permissions it grants.
+         *
+         *     A permission an API does not define is refused (422).
          */
         post: operations["createRole"];
         delete?: never;
@@ -582,20 +658,27 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** Read one role, with the permissions it grants. */
+        /**
+         * Get a role
+         * @description Read one role, with the permissions it grants.
+         */
         get: operations["getRole"];
         put?: never;
         post?: never;
         /**
-         * Delete a role, and every assignment of it.
-         * @description Its holders lose what it granted at their next token.
+         * Delete a role
+         * @description Delete a role, and every assignment of it.
+         *
+         *     Its holders lose what it granted at their next token.
          */
         delete: operations["deleteRole"];
         options?: never;
         head?: never;
         /**
-         * Rename a role, describe it, or replace the permissions it grants.
-         * @description `permissions`, when present, is the whole new set. Takes effect on the next token
+         * Update a role
+         * @description Rename a role, describe it, or replace the permissions it grants.
+         *
+         *     `permissions`, when present, is the whole new set. Takes effect on the next token
          *     each holder obtains: roles are read at issuance, never trusted from a token.
          */
         patch: operations["updateRole"];
@@ -610,12 +693,17 @@ export type paths = {
             };
             cookie?: never;
         };
-        /** The users holding a role, most recently given first. */
+        /**
+         * List a role's users
+         * @description The users holding a role, most recently given first.
+         */
         get: operations["listRoleUsers"];
         put?: never;
         /**
-         * Give a role to some users.
-         * @description Idempotent: giving it to somebody who holds it changes nothing. Refused whole (404)
+         * Assign a role
+         * @description Give a role to some users.
+         *
+         *     Idempotent: giving it to somebody who holds it changes nothing. Refused whole (404)
          *     when one of the users does not exist.
          */
         post: operations["assignRole"];
@@ -639,8 +727,10 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Take a role from a user.
-         * @description Idempotent — the user does not hold the role afterwards, whether they did or not.
+         * Unassign a role
+         * @description Take a role from a user.
+         *
+         *     Idempotent — the user does not hold the role afterwards, whether they did or not.
          */
         delete: operations["unassignRole"];
         options?: never;
@@ -656,8 +746,10 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * The signing keys, newest first.
-         * @description The active key, and every retired one with when it stopped signing and how long it stays
+         * List signing keys
+         * @description The signing keys, newest first.
+         *
+         *     The active key, and every retired one with when it stopped signing and how long it stays
          *     published. A retired key stays in the JWKS until every token it signed has expired.
          */
         get: operations["listSigningKeys"];
@@ -679,7 +771,7 @@ export type paths = {
         get?: never;
         put?: never;
         /**
-         * Replace the active signing key.
+         * Rotate the signing key
          * @description A new key signs from now on. The one it replaces stops signing at once and stays in the
          *     JWKS for the grace period — twice the longest token lifetime, plus a day — so every
          *     token it signed keeps verifying until it expires. Relying parties that refetch the JWKS
@@ -700,13 +792,15 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * List initial access tokens, newest first, optionally searching the description.
-         * @description Never a token's value, which is not kept.
+         * List initial access tokens
+         * @description List initial access tokens, newest first, optionally searching the description.
+         *
+         *     Never a token's value, which is not kept.
          */
         get: operations["listInitialAccessTokens"];
         put?: never;
         /**
-         * Issue an initial access token.
+         * Issue an initial access token
          * @description The answer carries the token, once: store it or hand it over now, it cannot be read
          *     again. Registration must also be switched on (`CLAVIA_CLIENT_REGISTRATION=token`) for the
          *     token to register anything. Recorded as `initial_access_token.issued`.
@@ -731,7 +825,7 @@ export type paths = {
         put?: never;
         post?: never;
         /**
-         * Revoke an initial access token.
+         * Revoke an initial access token
          * @description It registers nothing more, at once. The clients it registered keep working. Revoking a
          *     revoked token changes nothing. Recorded as `initial_access_token.revoked`.
          */
@@ -749,8 +843,10 @@ export type paths = {
             cookie?: never;
         };
         /**
-         * Read the audit trail, newest first.
-         * @description Every filter given must hold. `client_id` matches the application that acted or that
+         * List audit events
+         * @description Read the audit trail, newest first.
+         *
+         *     Every filter given must hold. `client_id` matches the application that acted or that
          *     a person acted through; `target_type` and `target_id` go together.
          */
         get: operations["listAuditEvents"];
