@@ -165,4 +165,51 @@ describe("ClaviaManagementApi", () => {
     expect(failure).toBeInstanceOf(ManagementError);
     expect(failure).toMatchObject({ kind: "unavailable" });
   });
+
+  describe("signing keys", () => {
+    const retired = {
+      kid: "old",
+      algorithm: "RS256",
+      status: "retired",
+      published: true,
+      created_at: "2026-01-01T00:00:00Z",
+      retired_at: "2026-02-01T00:00:00Z",
+      published_until: "2026-03-01T00:00:00Z",
+    };
+
+    it("lists the keys the API names, never asking for more than the list", async () => {
+      const { requests, api } = server(() => json([{ ...retired, kid: "new", status: "active" }, retired]));
+
+      const keys = await api.signingKeys.list();
+
+      expect(requests[0]?.method).toBe("GET");
+      expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/signing-keys");
+      expect(keys.map((key) => key.kid)).toEqual(["new", "old"]);
+    });
+
+    it("rotates with a POST and returns the new key beside the one it replaced", async () => {
+      const { requests, api } = server(() => json({ active: { ...retired, kid: "new", status: "active" }, retired }));
+
+      const rotation = await api.signingKeys.rotate();
+
+      expect(requests[0]?.method).toBe("POST");
+      expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/signing-keys/rotate");
+      expect(rotation.active.kid).toBe("new");
+      expect(rotation.retired?.kid).toBe("old");
+    });
+
+    it("says so when the keys live at another provider", async () => {
+      const { api } = server(() =>
+        json(
+          { type: "about:blank", title: "Conflict", status: 409, detail: "The keys are kept by the provider." },
+          409,
+        ),
+      );
+
+      await expect(api.signingKeys.list()).rejects.toMatchObject({
+        kind: "conflict",
+        message: "The keys are kept by the provider.",
+      });
+    });
+  });
 });
