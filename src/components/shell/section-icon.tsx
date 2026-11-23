@@ -1,6 +1,7 @@
 import {
   AppWindowIcon,
   BoxesIcon,
+  KeyRoundIcon,
   LayoutDashboardIcon,
   type LucideProps,
   PlugIcon,
@@ -18,6 +19,7 @@ const ICONS = {
   apis: BoxesIcon,
   roles: ShieldCheckIcon,
   connections: PlugIcon,
+  keys: KeyRoundIcon,
   audit: ScrollTextIcon,
 } as const;
 

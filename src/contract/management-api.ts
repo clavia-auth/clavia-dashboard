@@ -648,6 +648,50 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/signing-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signing keys, newest first.
+         * @description The active key, and every retired one with when it stopped signing and how long it stays
+         *     published. A retired key stays in the JWKS until every token it signed has expired.
+         */
+        get: operations["listSigningKeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/signing-keys/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replace the active signing key.
+         * @description A new key signs from now on. The one it replaces stops signing at once and stays in the
+         *     JWKS for the grace period — twice the longest token lifetime, plus a day — so every
+         *     token it signed keeps verifying until it expires. Relying parties that refetch the JWKS
+         *     on an unknown `kid` find the new key straight away. Recorded as `signing_key.rotated`.
+         */
+        post: operations["rotateSigningKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events": {
         parameters: {
             query?: never;
@@ -673,6 +717,43 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        SigningKey: {
+            /** @description The RFC 7638 thumbprint of the public key, as the JWKS and token headers name it. */
+            kid: string;
+            /** @enum {string} */
+            algorithm: "RS256";
+            /** @enum {string} */
+            status: "active" | "retired";
+            /** @description Whether the key is in the JWKS now. */
+            published: boolean;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            retired_at: string | null;
+            /**
+             * Format: date-time
+             * @description When a retired key leaves the JWKS; null for the active key.
+             */
+            published_until: string | null;
+        };
+        SigningKeyRotation: {
+            active: components["schemas"]["SigningKey"];
+            /** @description The key that was active, now retired; null when there was none. */
+            retired: {
+                kid: string;
+                /** @enum {string} */
+                algorithm: "RS256";
+                /** @enum {string} */
+                status: "retired";
+                published: boolean;
+                /** Format: date-time */
+                created_at: string;
+                /** Format: date-time */
+                retired_at: string;
+                /** Format: date-time */
+                published_until: string;
+            } | null;
+        };
         /** @description An RFC 9457 problem document. */
         Problem: {
             /** @description Always `about:blank`; `title` is the HTTP status phrase. */
@@ -893,6 +974,12 @@ export type components = {
              */
             require_pkce: boolean;
             mfa_policy: components["schemas"]["MfaPolicy"];
+            /**
+             * @description Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+             *     `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+             *     refused with `invalid_request`.
+             */
+            require_pushed_authorization_requests: boolean;
             /** Format: date-time */
             created_at: string;
         };
@@ -933,6 +1020,12 @@ export type components = {
              */
             require_pkce: boolean;
             mfa_policy: components["schemas"]["MfaPolicy"];
+            /**
+             * @description Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+             *     `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+             *     refused with `invalid_request`.
+             */
+            require_pushed_authorization_requests: boolean;
             /** Format: date-time */
             created_at: string;
             /** @description Null for a public client, which has none. */
@@ -981,6 +1074,12 @@ export type components = {
              */
             require_pkce?: boolean;
             mfa_policy?: components["schemas"]["MfaPolicy"];
+            /**
+             * @description Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+             *     `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+             *     refused with `invalid_request`.
+             */
+            require_pushed_authorization_requests?: boolean;
         };
         /**
          * @description `client_type` and `is_first_party` are identity, not configuration: neither can change
@@ -1006,6 +1105,12 @@ export type components = {
              */
             require_pkce?: boolean;
             mfa_policy?: components["schemas"]["MfaPolicy"];
+            /**
+             * @description Whether its authorization requests must be pushed to `/oauth2/par` first and reach
+             *     `/oauth2/authorize` by `request_uri` (RFC 9126 §6). A request sent any other way is
+             *     refused with `invalid_request`.
+             */
+            require_pushed_authorization_requests?: boolean;
         };
         Permission: {
             value: string;
@@ -2730,6 +2835,55 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
+        };
+    };
+    listSigningKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The keys. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKey"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    rotateSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The key that signs now, and the one it replaced. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKeyRotation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     listAuditEvents: {

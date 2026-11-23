@@ -20,6 +20,8 @@ import type {
   RoleCreate,
   RoleUpdate,
   RoleWithPermissions,
+  SigningKey,
+  SigningKeyRotation,
   User,
   UserConsent,
   UserCreate,
@@ -41,6 +43,7 @@ export interface ManagementApi {
   readonly resourceServers: ResourceServersApi;
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
+  readonly signingKeys: SigningKeysApi;
   readonly auditEvents: AuditEventsApi;
 }
 
@@ -87,6 +90,18 @@ export interface ResourceServersApi {
   create(resourceServer: ResourceServerCreate): Promise<ResourceServer>;
   update(resourceServerId: string, changes: ResourceServerUpdate): Promise<ResourceServer>;
   delete(resourceServerId: string): Promise<void>;
+}
+
+/**
+ * The keys tokens are signed with: never key material, only what identifies each key and when
+ * it signed. Both operations answer a `conflict` where the keys live at another provider and
+ * are rotated there.
+ */
+export interface SigningKeysApi {
+  /** The active key and every retired one, newest first. */
+  list(): Promise<SigningKey[]>;
+  /** A new key signs from now on; the one it replaces stays published for the grace period. */
+  rotate(): Promise<SigningKeyRotation>;
 }
 
 export interface RolesApi {

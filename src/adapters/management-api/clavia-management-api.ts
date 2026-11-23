@@ -13,6 +13,7 @@ import type {
   ManagementApi,
   ResourceServersApi,
   RolesApi,
+  SigningKeysApi,
   UsersApi,
 } from "@/core/management/management-api";
 
@@ -31,6 +32,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly resourceServers: ResourceServersApi;
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
+  readonly signingKeys: SigningKeysApi;
   readonly auditEvents: AuditEventsApi;
 
   constructor(baseUrl: string, accessToken: string, fetcher: typeof fetch = fetch) {
@@ -168,6 +170,11 @@ export class ClaviaManagementApi implements ManagementApi {
       update: (name, changes) =>
         read(http.PATCH("/api/v1/connections/{name}", { params: { path: { name } }, body: changes })),
       delete: (name) => done(http.DELETE("/api/v1/connections/{name}", { params: { path: { name } } })),
+    };
+
+    this.signingKeys = {
+      list: () => read(http.GET("/api/v1/signing-keys")),
+      rotate: () => read(http.POST("/api/v1/signing-keys/rotate")),
     };
 
     this.auditEvents = {

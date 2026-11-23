@@ -8,6 +8,7 @@ const SECTIONS = [
   { path: "apis", heading: "APIs" },
   { path: "roles", heading: "Roles" },
   { path: "connections", heading: "Connections" },
+  { path: "signing-keys", heading: "Signing keys" },
   { path: "audit", heading: "Audit log" },
 ];
 
