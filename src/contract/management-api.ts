@@ -696,7 +696,7 @@ export type components = {
          */
         BearerError: {
             /** @enum {string} */
-            error?: "invalid_request" | "invalid_token" | "insufficient_scope";
+            error?: "invalid_request" | "invalid_token" | "insufficient_scope" | "insufficient_user_authentication";
             error_description?: string;
         };
         /** @description One page of users, newest first. */
@@ -731,7 +731,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -817,8 +817,10 @@ export type components = {
             connection?: string;
             email: string;
             /**
-             * @description At least 8 characters, at most 72 bytes once encoded. Omit it to create the
-             *     account without one; it is then invited with `POST /users/{user_id}/password-reset`.
+             * @description At least 8 characters, at most 72 bytes once encoded. With
+             *     `CLAVIA_BREACHED_PASSWORD_CHECK` on, a password found in Have I Been Pwned's Pwned
+             *     Passwords is refused (422). Omit it to create the account without one; it is then
+             *     invited with `POST /users/{user_id}/password-reset`.
              */
             password?: string;
             /** @default false */
@@ -836,6 +838,7 @@ export type components = {
         };
         UserUpdate: {
             email?: string;
+            /** @description A new password, under the same rules as at creation. */
             password?: string;
             email_verified?: boolean;
             is_active?: boolean;
@@ -889,6 +892,7 @@ export type components = {
              *     omit it (OAuth 2.1 §7.5.1).
              */
             require_pkce: boolean;
+            mfa_policy: components["schemas"]["MfaPolicy"];
             /** Format: date-time */
             created_at: string;
         };
@@ -928,6 +932,7 @@ export type components = {
              *     omit it (OAuth 2.1 §7.5.1).
              */
             require_pkce: boolean;
+            mfa_policy: components["schemas"]["MfaPolicy"];
             /** Format: date-time */
             created_at: string;
             /** @description Null for a public client, which has none. */
@@ -975,6 +980,7 @@ export type components = {
              *     to true.
              */
             require_pkce?: boolean;
+            mfa_policy?: components["schemas"]["MfaPolicy"];
         };
         /**
          * @description `client_type` and `is_first_party` are identity, not configuration: neither can change
@@ -999,6 +1005,7 @@ export type components = {
              *     carry a `nonce` (OAuth 2.1 §7.5.1); a public client is refused (422).
              */
             require_pkce?: boolean;
+            mfa_policy?: components["schemas"]["MfaPolicy"];
         };
         Permission: {
             value: string;
@@ -1020,6 +1027,8 @@ export type components = {
             is_system: boolean;
             enforce_policies: components["schemas"]["EnforcePolicies"];
             allow_skipping_consent: components["schemas"]["AllowSkippingConsent"];
+            access_token_format: components["schemas"]["AccessTokenFormat"];
+            mfa_policy: components["schemas"]["MfaPolicy"];
             /** Format: date-time */
             created_at: string;
         };
@@ -1036,6 +1045,37 @@ export type components = {
          *     system API, which no third-party application reaches.
          */
         AllowSkippingConsent: boolean;
+        /**
+         * @description Whether people must sign in with more than one factor to be let in: through this
+         *     application, or to be issued a token for this API. Required on either one is required.
+         *
+         *     - `optional`: what the authorization request asks with `acr_values`, and nothing more.
+         *       A person who enrolled a second factor is asked for it anyway.
+         *     - `required`: more than one factor (the `acr`
+         *       `http://schemas.openid.net/pape/policies/2007/06/multi-factor`). A signed-in person
+         *       who used one gives another without signing in again; someone with no second factor
+         *       sets one up on the way, if their address is verified.
+         *
+         *     It applies from the next authorization on: tokens already issued keep working.
+         * @default optional
+         * @enum {string}
+         */
+        MfaPolicy: "optional" | "required";
+        /**
+         * @description The form of the access tokens issued for this API, from the next token on.
+         *
+         *     - `opaque`: a random string the API resolves at the introspection endpoint
+         *       (RFC 7662), which reports a revocation the moment it happens.
+         *     - `jwt`: a JWT access token (RFC 9068, `typ: at+jwt`) signed with the keys published
+         *       at the JWKS, which the API validates on its own. Revocation cannot reach it: a
+         *       revoked JWT is accepted by an API that validates it locally until it expires, so the
+         *       access token lifetime bounds how long that lasts. This server still refuses it
+         *       wherever it is presented here (introspection, userinfo, this API).
+         *
+         *     A token naming no API is always opaque.
+         * @enum {string}
+         */
+        AccessTokenFormat: "opaque" | "jwt";
         ResourceServerCreate: {
             /** @description An absolute URI without a fragment, on a domain you own. Never dereferenced. */
             identifier: string;
@@ -1052,6 +1092,13 @@ export type components = {
              * @default true
              */
             allow_skipping_consent: boolean;
+            /**
+             * @description See `ResourceServer.access_token_format`.
+             * @default opaque
+             * @enum {string}
+             */
+            access_token_format: "opaque" | "jwt";
+            mfa_policy?: components["schemas"]["MfaPolicy"];
         };
         /**
          * @description A system API may be renamed and nothing else: its permissions are the server's own,
@@ -1063,6 +1110,8 @@ export type components = {
             permissions?: components["schemas"]["PermissionInput"][];
             enforce_policies?: boolean;
             allow_skipping_consent?: boolean;
+            access_token_format?: components["schemas"]["AccessTokenFormat"];
+            mfa_policy?: components["schemas"]["MfaPolicy"];
         };
         /** @description Lower-case letters, digits and dashes, starting with a letter; at most 32. */
         ConnectionName: string;
@@ -1318,6 +1367,12 @@ export type components = {
          * @description No usable token: none at all (a bare `Bearer` challenge and `{}`), or one that
          *     is unknown, expired, revoked, issued for another API or for an account that cannot
          *     be used (`invalid_token`).
+         *
+         *     Or a token acting for a person who signed in with one factor, while this API's own
+         *     `mfa_policy` is `required` (`insufficient_user_authentication`, RFC 9470 §3): the
+         *     challenge names the `acr_values` to ask for, and the client sends the person back to
+         *     `/oauth2/authorize` with them to step up. Checked after the audience and before the
+         *     scope. A token a client obtained as itself is never refused for this.
          */
         Unauthorized: {
             headers: {

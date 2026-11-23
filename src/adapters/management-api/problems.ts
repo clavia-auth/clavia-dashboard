@@ -14,8 +14,20 @@ export function managementError(response: Response, body: unknown): ManagementEr
         : response.statusText || `The Management API answered ${response.status}.`;
 
   switch (response.status) {
-    case 401:
+    case 401: {
+      const challenge = response.headers.get("WWW-Authenticate");
+      if (challengeError(challenge) === "insufficient_user_authentication") {
+        return new ManagementError(
+          "step_up_required",
+          "The Management API asks for a second factor. Sign in again to give one.",
+          [],
+          null,
+          challengeParameter(challenge, "acr_values"),
+        );
+      }
+
       return new ManagementError("unauthenticated", "Your session at Clavia has ended. Sign in again.");
+    }
     case 403:
       return new ManagementError(
         "forbidden",
@@ -54,7 +66,19 @@ function fieldsOf(errors: unknown): FieldProblem[] {
 
 /** The scope an `insufficient_scope` challenge names (RFC 6750 §3). */
 function scopeOf(challenge: string | null): string | null {
-  return challenge?.match(/scope="([^"]*)"/)?.[1] ?? null;
+  return challengeParameter(challenge, "scope");
+}
+
+/** The `error` a Bearer challenge carries (RFC 6750 §3). */
+function challengeError(challenge: string | null): string | null {
+  return challengeParameter(challenge, "error");
+}
+
+/** One quoted auth-param of a challenge, such as `acr_values` (RFC 9470 §3). */
+function challengeParameter(challenge: string | null, name: string): string | null {
+  const value = challenge?.match(new RegExp(`(?:^|[\\s,])${name}="([^"]*)"`))?.[1];
+
+  return value === undefined || value === "" ? null : value;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -7,6 +7,7 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "authentication.succeeded": { label: "Signed in", group: "Sign-in", tone: "neutral" },
   "authentication.failed": { label: "Sign-in refused", group: "Sign-in", tone: "warning" },
   "session.ended": { label: "Session ended", group: "Sign-in", tone: "neutral" },
+  "session.stepped_up": { label: "Second factor given", group: "Sign-in", tone: "positive" },
   "mfa.enrolled": { label: "Two-factor turned on", group: "Sign-in", tone: "positive" },
   "mfa.removed": { label: "Two-factor turned off", group: "Sign-in", tone: "warning" },
   "consent.given": { label: "Consent given", group: "Consent", tone: "neutral" },

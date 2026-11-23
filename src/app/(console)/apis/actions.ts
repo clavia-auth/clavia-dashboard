@@ -26,7 +26,7 @@ export async function createApi(_: ActionState, form: FormData): Promise<ActionS
   }
   let created: string | undefined;
   const state = await perform(async ({ api }) => {
-    created = (await api.resourceServers.create({ ...parsed.data, permissions: [] })).id;
+    created = (await api.resourceServers.create({ ...parsed.data, permissions: [], access_token_format: "opaque" })).id;
 
     return `Created ${parsed.data.name}.`;
   });
@@ -41,6 +41,7 @@ const settingsSchema = z.object({
   name: z.string().trim().min(1, "Give it a name.").max(200),
   enforce_policies: z.boolean().optional(),
   allow_skipping_consent: z.boolean().optional(),
+  mfa_policy: z.enum(["optional", "required"]),
 });
 
 export async function updateApi(apiId: string, system: boolean, _: ActionState, form: FormData): Promise<ActionState> {
@@ -49,6 +50,7 @@ export async function updateApi(apiId: string, system: boolean, _: ActionState, 
     // A system API's policies are the server's: they are not sent at all.
     enforce_policies: system ? undefined : form.get("enforce_policies") === "on",
     allow_skipping_consent: system ? undefined : form.get("allow_skipping_consent") === "on",
+    mfa_policy: form.get("mfa_policy") === "on" ? "required" : "optional",
   });
   if (!parsed.ok) {
     return parsed.state;

@@ -144,11 +144,14 @@ export class FakeIdentityProvider implements IdentityProvider {
     };
   }
 
-  async authorize(scopes: readonly string[]) {
+  async authorize(scopes: readonly string[], acrValues?: string) {
     const n = this.nextAttempt++;
     const url = new URL("https://auth.clavia.test/oauth2/authorize");
     url.searchParams.set("scope", scopes.join(" "));
     url.searchParams.set("state", `state-${n}`);
+    if (acrValues !== undefined) {
+      url.searchParams.set("acr_values", acrValues);
+    }
 
     return { url, pending: { state: `state-${n}`, nonce: `nonce-${n}`, codeVerifier: `verifier-${n}` } };
   }

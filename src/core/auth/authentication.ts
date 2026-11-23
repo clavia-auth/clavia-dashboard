@@ -1,3 +1,4 @@
+import { safeAcrValues } from "./acr-values";
 import type { Clock, IdentityProvider, PendingSignInStore, SessionStore } from "./ports";
 import { SignInRefused } from "./ports";
 import { safeReturnTo } from "./return-to";
@@ -39,9 +40,16 @@ export class Authentication {
     private readonly settings: AuthenticationSettings,
   ) {}
 
-  /** Start a sign-in: where to send the browser, and the state it must bring back. */
-  async beginSignIn(returnTo: string | null | undefined): Promise<{ authorizationUrl: URL; state: string }> {
-    const { url, pending } = await this.provider.authorize(this.settings.scopes);
+  /**
+   * Start a sign-in: where to send the browser, and the state it must bring back.
+   * `acrValues` is the level a step-up challenge asked for (RFC 9470): Clavia then raises
+   * the person's session with one more factor instead of asking for their password again.
+   */
+  async beginSignIn(
+    returnTo: string | null | undefined,
+    acrValues?: string | null,
+  ): Promise<{ authorizationUrl: URL; state: string }> {
+    const { url, pending } = await this.provider.authorize(this.settings.scopes, safeAcrValues(acrValues) ?? undefined);
     await this.attempts.put({ ...pending, returnTo: safeReturnTo(returnTo) }, SIGN_IN_ATTEMPT_LIFETIME);
 
     return { authorizationUrl: url, state: pending.state };

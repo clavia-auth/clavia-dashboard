@@ -6,7 +6,7 @@ import type { z } from "zod";
 import { isManagementError } from "@/core/management/errors";
 
 import type { ActionState } from "./action-state";
-import { signedIn, type SignedIn } from "./operator";
+import { signedIn, type SignedIn, stepUp } from "./operator";
 
 export { type ActionState, IDLE } from "./action-state";
 
@@ -26,6 +26,9 @@ export async function perform(work: (context: SignedIn) => Promise<string>): Pro
     }
     if (error.kind === "unauthenticated") {
       redirect("/auth/sign-in");
+    }
+    if (error.kind === "step_up_required") {
+      await stepUp(error);
     }
     const fields: Record<string, string> = {};
     for (const field of error.fields) {

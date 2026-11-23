@@ -10,6 +10,11 @@ export type FieldProblem = Readonly<{ pointer: string | null; parameter: string 
 export type ManagementErrorKind =
   /** The token is gone or no longer accepted: the operator must sign in again. */
   | "unauthenticated"
+  /**
+   * The token came from a sign-in that fell short of what the API asks (RFC 9470): the
+   * operator signs in again with the `acrValues` the challenge names.
+   */
+  | "step_up_required"
   /** The operator's token lacks the scope this needs; `scope` names it. */
   | "forbidden"
   | "not_found"
@@ -32,6 +37,8 @@ export class ManagementError extends Error {
     message: string,
     readonly fields: readonly FieldProblem[] = [],
     readonly scope: string | null = null,
+    /** For `step_up_required`: the `acr_values` to sign in again with. */
+    readonly acrValues: string | null = null,
     options?: ErrorOptions,
   ) {
     super(message, options);

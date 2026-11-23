@@ -47,7 +47,10 @@ export class ClaviaIdentityProvider implements IdentityProvider {
     this.authentication = oauth.ClientSecretBasic(settings.clientSecret);
   }
 
-  async authorize(scopes: readonly string[]): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }> {
+  async authorize(
+    scopes: readonly string[],
+    acrValues?: string,
+  ): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }> {
     const as = await this.server();
     if (as.authorization_endpoint === undefined) {
       throw new Error("Clavia's discovery document names no authorization endpoint.");
@@ -57,7 +60,7 @@ export class ClaviaIdentityProvider implements IdentityProvider {
     const nonce = oauth.generateRandomNonce();
 
     const url = new URL(as.authorization_endpoint);
-    url.search = new URLSearchParams({
+    const parameters = new URLSearchParams({
       response_type: "code",
       client_id: this.settings.clientId,
       redirect_uri: this.settings.redirectUri,
@@ -67,7 +70,11 @@ export class ClaviaIdentityProvider implements IdentityProvider {
       nonce,
       code_challenge: await oauth.calculatePKCECodeChallenge(codeVerifier),
       code_challenge_method: "S256",
-    }).toString();
+    });
+    if (acrValues !== undefined) {
+      parameters.set("acr_values", acrValues);
+    }
+    url.search = parameters.toString();
 
     return { url, pending: { state, nonce, codeVerifier } };
   }
