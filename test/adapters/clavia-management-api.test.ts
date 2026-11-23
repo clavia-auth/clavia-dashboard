@@ -212,4 +212,38 @@ describe("ClaviaManagementApi", () => {
       });
     });
   });
+
+  describe("DPoP on an application", () => {
+    it("sends the requirement as the contract names it, and nothing else of the client", async () => {
+      const { requests, api } = server(() => json({ client_id: "spa", dpop_bound_access_tokens: true }));
+
+      const client = await api.clients.update("spa", { dpop_bound_access_tokens: true });
+
+      expect(requests[0]?.method).toBe("PATCH");
+      expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/clients/spa");
+      expect(await requests[0]?.json()).toEqual({ dpop_bound_access_tokens: true });
+      expect(client.dpop_bound_access_tokens).toBe(true);
+    });
+
+    it("lets Clavia refuse it where it cannot be honoured, and names the field", async () => {
+      const { api } = server(() =>
+        json(
+          {
+            title: "Unprocessable Content",
+            status: 422,
+            detail: "The request was refused.",
+            errors: [
+              { pointer: "/dpop_bound_access_tokens", detail: "A public client cannot be required to use DPoP." },
+            ],
+          },
+          422,
+        ),
+      );
+
+      await expect(api.clients.update("spa", { dpop_bound_access_tokens: true })).rejects.toMatchObject({
+        kind: "invalid",
+        fields: [{ pointer: "/dpop_bound_access_tokens" }],
+      });
+    });
+  });
 });

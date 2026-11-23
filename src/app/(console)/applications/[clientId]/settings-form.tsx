@@ -23,7 +23,16 @@ const GRANT_HELP: Record<string, string> = {
 };
 
 /** Everything about how the application signs people in and out. */
-export function SettingsForm({ client, editable }: { client: Client; editable: boolean }) {
+export function SettingsForm({
+  client,
+  editable,
+  dashboard,
+}: {
+  client: Client;
+  editable: boolean;
+  /** Whether this is the dashboard's own application, which cannot present DPoP proofs. */
+  dashboard: boolean;
+}) {
   const confidential = client.client_type === "confidential";
   const [state, action, pending] = useActionState(updateApplication.bind(null, client.client_id, confidential), IDLE);
   useActionFeedback(state);
@@ -119,6 +128,24 @@ export function SettingsForm({ client, editable }: { client: Client; editable: b
                 label="Require a second factor"
                 description="Whoever signs in through this application must give more than one factor. Someone signed in with one is asked for another without typing their password again; someone with none sets one up on the way, if their address is verified. It applies from the next sign-in."
                 defaultChecked={client.mfa_policy === "required"}
+              />
+              <SwitchField
+                name="dpop_bound_access_tokens"
+                label="Require DPoP"
+                description={
+                  dashboard ? (
+                    "This is the dashboard's own application. It sends no DPoP proofs, so requiring them would lock every operator out."
+                  ) : (
+                    <>
+                      Every token it is issued is bound to a key it holds (RFC 9449): a token request without a{" "}
+                      <code className="font-mono text-xs">DPoP</code> proof is refused, and a stolen token is useless
+                      without that key. The application must send a proof with each token request and each API call.
+                      Tokens already issued keep working.
+                    </>
+                  )
+                }
+                defaultChecked={client.dpop_bound_access_tokens}
+                disabled={dashboard}
               />
               {confidential ? (
                 <SwitchField

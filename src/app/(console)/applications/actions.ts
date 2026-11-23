@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import type { GrantType } from "@/contract";
 import { type ActionState, parse, perform } from "@/server/actions";
+import { config } from "@/server/config";
 
 import { KINDS } from "./kinds";
 
@@ -87,6 +88,7 @@ const settingsSchema = z.object({
   backchannel_logout_session_required: z.boolean(),
   require_pkce: z.boolean().optional(),
   mfa_policy: z.enum(["optional", "required"]),
+  dpop_bound_access_tokens: z.boolean().optional(),
 });
 
 export async function updateApplication(
@@ -105,6 +107,10 @@ export async function updateApplication(
     backchannel_logout_session_required: form.get("backchannel_logout_session_required") === "on",
     require_pkce: confidential ? form.get("require_pkce") === "on" : undefined,
     mfa_policy: form.get("mfa_policy") === "on" ? "required" : "optional",
+    // The dashboard sends no DPoP proofs: requiring them of its own application would lock every
+    // operator out, so that switch is never sent, whatever the form says.
+    dpop_bound_access_tokens:
+      clientId === config().clientId ? undefined : form.get("dpop_bound_access_tokens") === "on",
   });
   if (!parsed.ok) {
     return parsed.state;
