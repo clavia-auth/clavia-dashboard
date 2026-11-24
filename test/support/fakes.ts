@@ -169,6 +169,10 @@ export class FakeIdentityProvider implements IdentityProvider {
     return { ...this.operator, subject };
   }
 
+  async discovery() {
+    return { issuer: "https://auth.clavia.test" };
+  }
+
   async refresh(tokens: TokenSet): Promise<TokenSet | null> {
     this.refreshes++;
     // Let concurrent callers interleave, as a real round trip would.

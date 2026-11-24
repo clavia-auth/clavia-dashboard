@@ -72,7 +72,7 @@ src/
   contract/      generated types and the list of management scopes; index.ts names them
   core/          rules and ports: no Next.js, no fetch, no Redis
     auth/          Authentication (sign-in, session, refresh, sign-out, back-channel logout),
-                   Operator, ports, safeReturnTo
+                   Operator, ports, safeReturnTo, endpointsOverview (the Endpoints page's addresses)
     management/    the ManagementApi port and ManagementError
   adapters/      the ports' implementations
     oidc/          ClaviaIdentityProvider (oauth4webapi, jose)

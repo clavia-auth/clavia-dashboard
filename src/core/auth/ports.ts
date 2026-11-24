@@ -1,3 +1,4 @@
+import type { ProviderMetadata } from "./endpoints";
 import type { DashboardSession, OperatorIdentity, PendingSignIn, TokenSet } from "./session";
 
 /**
@@ -28,6 +29,8 @@ export interface IdentityProvider {
   endSessionUrl(idToken: string, postLogoutRedirectUri: string): Promise<URL>;
   /** The session a back-channel logout token names, once it has been verified; null if it does not verify. */
   verifyLogoutToken(token: string): Promise<{ subject: string | null; sid: string | null } | null>;
+  /** The provider's discovery document, as published. */
+  discovery(): Promise<ProviderMetadata>;
 }
 
 export interface SessionStore {

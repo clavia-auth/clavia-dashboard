@@ -1,6 +1,7 @@
 import {
   AppWindowIcon,
   BoxesIcon,
+  GlobeIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
   type LucideProps,
@@ -23,6 +24,7 @@ const ICONS = {
   keys: KeyRoundIcon,
   tokens: TicketIcon,
   audit: ScrollTextIcon,
+  endpoints: GlobeIcon,
 } as const;
 
 export function SectionIcon({ icon, ...props }: { icon: Section["icon"] } & LucideProps) {

@@ -53,6 +53,15 @@ describe("ClaviaIdentityProvider", () => {
     });
   });
 
+  describe("discovery", () => {
+    it("hands back the document Clavia published", async () => {
+      const document = await provider.discovery();
+
+      expect(document.issuer).toBe(ISSUER);
+      expect(document.authorization_endpoint).toBe(`${ISSUER}/oauth2/authorize`);
+    });
+  });
+
   describe("redeem", () => {
     const pending = { state: "s", nonce: "n", codeVerifier: "v".repeat(43), returnTo: "/" };
     const callback = (query: string) => new URL(`${REDIRECT_URI}?${query}&iss=${encodeURIComponent(ISSUER)}`);
