@@ -1801,8 +1801,9 @@ paths:
         Each line is a JSON object: `email` (required), `email_verified`, `is_active`, `name`,
         `given_name`, `family_name`, `nickname`, `picture`, `locale`, and `password_hash`, which must
         be in a format this server verifies: PBKDF2-HMAC-SHA-256, `$pbkdf2-sha256$i=…$salt$key`, at
-        any count from 1,000 (replaced at today's count at the account's first sign-in). A plaintext
-        `password`, or any other member, refuses the line.
+        any count from 1,000 (replaced at today's count at the account's first sign-in). `user_id`,
+        `connection`, `created_at` and `updated_at`, which an export writes, are ignored, so an
+        export imports as it is. A plaintext `password`, or any other member, refuses the line.
 
         An import only creates. A line is refused, and the rest carry on, when it cannot be read,
         holds a field the API would refuse, or names an address already in the pool; the job's
@@ -1851,6 +1852,97 @@ paths:
           $ref: '#/components/responses/NotFound'
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/jobs/users-exports:
+    post:
+      tags: [users]
+      operationId: exportUsers
+      summary: Export users
+      description: |
+        Queue an export of the accounts of one connection, of any kind, run by `clavia jobs:run`;
+        download it from `/api/v1/jobs/{job_id}/output` once the job is `completed`.
+
+        The output is NDJSON, one account per line, in the shape an import takes: `email`,
+        `email_verified`, `is_active`, the profile fields that are set, and `user_id`, `connection`,
+        `created_at` and `updated_at`, which an import ignores. **Never a password hash**, nor
+        anything of a second factor, a passkey, a linked identity or a session: an account moved by
+        an export chooses its password again where it lands. The job's `summary.total` is the
+        accounts written. The export is recorded in the audit trail as `user.exported`, by the
+        caller who queued it, and kept, like the job, for seven days.
+      security:
+        - managementToken: [read:users]
+      parameters:
+        - name: connection
+          in: query
+          description: The connection whose accounts are exported; the default pool when absent.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9-]{0,31}$'
+      responses:
+        '202':
+          description: Queued. Follow it at the `Location`.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserJob'
+              examples:
+                UserExportQueued:
+                  $ref: '#/components/examples/UserExportQueued'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/jobs/{job_id}/output:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [users]
+      operationId: getJobOutput
+      summary: Download an export
+      description: |
+        What a completed export wrote: NDJSON, one account per line, never a password hash. `409`
+        while the export is queued or running, or when it failed; `404` for an import, which writes
+        nothing. Kept until the job is deleted, seven days after it finished.
+      security:
+        - managementToken: [read:users]
+      responses:
+        '200':
+          description: The accounts, as an attachment.
+          headers:
+            Content-Disposition:
+              description: '`attachment; filename="users-{job_id}.ndjson"`.'
+              schema:
+                type: string
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                format: binary
+              examples:
+                UserExport:
+                  $ref: '#/components/examples/UserExport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
 
@@ -2249,6 +2341,27 @@ components:
           failed: 0
         errors: []
         failure: null
+    UserExportQueued:
+      summary: An export, waiting for `clavia jobs:run`
+      value:
+        id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+        type: "users_export"
+        status: "queued"
+        connection: "password"
+        created_at: "2026-03-04T09:00:00Z"
+        started_at: null
+        finished_at: null
+        summary:
+          total: 0
+          created: 0
+          failed: 0
+        errors: []
+        failure: null
+    UserExport:
+      summary: Two accounts, never a password hash
+      value: |
+        {"user_id":"3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f","connection":"password","email":"ada@example.com","email_verified":true,"is_active":true,"name":"Ada Lovelace","created_at":"2026-01-10T08:30:00Z","updated_at":"2026-02-01T12:00:00Z"}
+        {"user_id":"7c6b5a4d-3e2f-4a1b-9c8d-7e6f5a4b3c2d","connection":"password","email":"grace@example.com","email_verified":false,"is_active":true,"created_at":"2026-01-12T09:00:00Z","updated_at":"2026-01-12T09:00:00Z"}
     UserJobCompleted:
       summary: An import done, two lines refused
       value:
@@ -3081,7 +3194,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked]
         occurred_at:
           type: string
           format: date-time
@@ -3264,7 +3377,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [users_import]
+          enum: [users_import, users_export]
         status:
           type: string
           enum: [queued, running, completed, failed]
@@ -3292,7 +3405,7 @@ components:
             total:
               type: integer
               minimum: 0
-              description: Lines read so far, blank ones aside.
+              description: An import's lines read so far, blank ones aside; an export's accounts written.
             created:
               type: integer
               minimum: 0

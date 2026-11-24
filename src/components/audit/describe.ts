@@ -33,6 +33,7 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "user.email_verified": { label: "Address verified", group: "Users", tone: "positive" },
   "user.password_reset": { label: "Password reset", group: "Users", tone: "warning" },
   "user.password_link_sent": { label: "Password link sent", group: "Users", tone: "neutral" },
+  "user.exported": { label: "Users exported", group: "Users", tone: "warning" },
   "passkey.registered": { label: "Passkey added", group: "Passkeys", tone: "positive" },
   "passkey.renamed": { label: "Passkey renamed", group: "Passkeys", tone: "neutral" },
   "passkey.removed": { label: "Passkey removed", group: "Passkeys", tone: "warning" },
