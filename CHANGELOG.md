@@ -7,6 +7,17 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+### Added
+
+- **An Endpoints section**, open to every operator: the addresses an application or an API needs to
+  work with Clavia, each with its host and a copy button, and the specification that defines it,
+  linked to the RFC Editor or openid.net. It lists the issuer and its OpenID configuration, the
+  endpoints Clavia's discovery document names (authorization, token, userinfo, JWKS, end session,
+  revocation, introspection, registration and the others it offers), the Management API's base
+  address, this dashboard's redirect, back-channel logout and post-logout addresses, and what
+  Clavia says it supports (scopes, grant types, PKCE methods, signing algorithms). If discovery
+  cannot be read, the page says so and lists what the dashboard's settings give.
+
 ## [0.3.0] - 2026-11-23
 
 Tokens and policies, for the console of Clavia 0.3.0: MFA policies and the step-up challenge,
