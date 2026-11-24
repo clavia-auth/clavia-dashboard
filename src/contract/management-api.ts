@@ -835,6 +835,62 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/users-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import users
+         * @description Queue an import of accounts into one pool, run by `clavia jobs:run` (every minute, by a
+         *     scheduler): the body is NDJSON, one account per line, at most 10,000 lines and 5 MiB.
+         *
+         *     Each line is a JSON object: `email` (required), `email_verified`, `is_active`, `name`,
+         *     `given_name`, `family_name`, `nickname`, `picture`, `locale`, and `password_hash`, which must
+         *     be in a format this server verifies: PBKDF2-HMAC-SHA-256, `$pbkdf2-sha256$i=…$salt$key`, at
+         *     any count from 1,000 (replaced at today's count at the account's first sign-in). A plaintext
+         *     `password`, or any other member, refuses the line.
+         *
+         *     An import only creates. A line is refused, and the rest carry on, when it cannot be read,
+         *     holds a field the API would refuse, or names an address already in the pool; the job's
+         *     report lists each by number and reason, never by content. The input, hashes included, is
+         *     let go when the job ends. Each account made is recorded in the audit trail as `user.created`,
+         *     by the caller who queued the job.
+         */
+        post: operations["importUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: components["parameters"]["JobId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a job
+         * @description A bulk job, where it stands, and its report. A finished job is kept for seven days, then
+         *     deleted by `clavia jobs:run`.
+         */
+        get: operations["getJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events": {
         parameters: {
             query?: never;
@@ -1049,6 +1105,40 @@ export type components = {
          * @enum {string}
          */
         InitialAccessTokenState: "active" | "expired" | "used_up" | "revoked";
+        /** @description A bulk job on the users, and its report. Never its input. */
+        UserJob: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "users_import";
+            /**
+             * @description `queued` until `clavia jobs:run` takes it; `failed` when it stopped as a whole (its
+             *     worker died), with `failure` saying why.
+             * @enum {string}
+             */
+            status: "queued" | "running" | "completed" | "failed";
+            connection: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            started_at: string | null;
+            /** Format: date-time */
+            finished_at: string | null;
+            summary: {
+                /** @description Lines read so far, blank ones aside. */
+                total: number;
+                created: number;
+                failed: number;
+            };
+            /** @description The refused lines, the first thousand. */
+            errors: {
+                line: number;
+                /** @enum {string} */
+                error: "invalid_connection" | "invalid_json" | "invalid_field" | "unsupported_hash" | "already_exists";
+                detail: string;
+            }[];
+            failure: string | null;
+        };
         /** @description One page of roles, newest first. */
         RolePage: {
             items: components["schemas"]["Role"][];
@@ -1105,7 +1195,7 @@ export type components = {
             connection?: string;
             email: string;
             /**
-             * @description At least 8 characters, at most 72 bytes once encoded. With
+             * @description At least 8 characters, at most 256 (1,024 bytes once encoded). With
              *     `CLAVIA_BREACHED_PASSWORD_CHECK` on, a password found in Have I Been Pwned's Pwned
              *     Passwords is refused (422). Omit it to create the account without one; it is then
              *     invited with `POST /users/{user_id}/password-reset`.
@@ -1832,6 +1922,7 @@ export type components = {
         Sid: string;
         ClientId: string;
         ResourceServerId: string;
+        JobId: string;
         InitialAccessTokenId: string;
         RoleId: string;
         ConnectionNameParameter: components["schemas"]["ConnectionName"];
@@ -3233,6 +3324,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    importUsers: {
+        parameters: {
+            query?: {
+                /** @description The pool the accounts go into; the default pool when absent. */
+                connection?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-ndjson": string;
+            };
+        };
+        responses: {
+            /** @description Queued. Follow it at the `Location`. */
+            202: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserJob"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: components["parameters"]["JobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The job. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserJob"];
+                };
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
