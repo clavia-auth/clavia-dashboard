@@ -9,6 +9,7 @@ import {
 } from "jose";
 import * as oauth from "oauth4webapi";
 
+import type { ProviderMetadata } from "@/core/auth/endpoints";
 import type { IdentityProvider } from "@/core/auth/ports";
 import { SignInRefused } from "@/core/auth/ports";
 import type { OperatorIdentity, PendingSignIn, TokenSet } from "@/core/auth/session";
@@ -223,6 +224,10 @@ export class ClaviaIdentityProvider implements IdentityProvider {
       }
       throw error;
     }
+  }
+
+  discovery(): Promise<ProviderMetadata> {
+    return this.server();
   }
 
   private server(): Promise<oauth.AuthorizationServer> {

@@ -1,4 +1,5 @@
 import { safeAcrValues } from "./acr-values";
+import type { ProviderMetadata } from "./endpoints";
 import type { Clock, IdentityProvider, PendingSignInStore, SessionStore } from "./ports";
 import { SignInRefused } from "./ports";
 import { safeReturnTo } from "./return-to";
@@ -149,6 +150,11 @@ export class Authentication {
     }
 
     return this.provider.endSessionUrl(session.tokens.idToken, postLogoutRedirectUri);
+  }
+
+  /** Clavia's discovery document, as published. */
+  providerMetadata(): Promise<ProviderMetadata> {
+    return this.provider.discovery();
   }
 
   /**
