@@ -60,3 +60,18 @@ describe("endpointsOverview", () => {
     expect(found["Revocation"]).toBeUndefined();
   });
 });
+
+describe("endpointsOverview specifications", () => {
+  it("links each specification to where it is published, and none to somewhere unnamed", () => {
+    const overview = endpointsOverview(settings, { token_endpoint: "https://auth.clavia.test/oauth2/token" });
+    const specs = overview.groups.flatMap((group) => group.endpoints).flatMap((endpoint) => endpoint.specs);
+
+    expect(specs.find((spec) => spec.label === "RFC 6749 §3.2")?.url).toBe(
+      "https://www.rfc-editor.org/rfc/rfc6749#section-3.2",
+    );
+    expect(specs.find((spec) => spec.label.startsWith("OpenID Connect Discovery"))?.url).toMatch(
+      /^https:\/\/openid\.net\/specs\/openid-connect-discovery-1_0\.html/,
+    );
+    expect(specs.every((spec) => spec.url === null || spec.url.startsWith("https://"))).toBe(true);
+  });
+});

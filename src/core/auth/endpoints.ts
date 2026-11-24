@@ -1,12 +1,15 @@
 /** Clavia's discovery document, as it was published: names and values this code does not control. */
 export type ProviderMetadata = Readonly<Record<string, unknown>>;
 
+/** A specification, named as it is cited, and where it is published (null when it is not public). */
+export type Spec = Readonly<{ label: string; url: string | null }>;
+
 export type Endpoint = Readonly<{
   name: string;
   /** Absolute, with its host: what an application is configured with. */
   url: string;
-  /** The specification that defines it. */
-  spec: string;
+  /** The specifications that define it. */
+  specs: readonly Spec[];
   /** Whether a browser can fetch it as it is, so it is worth a link. */
   open: boolean;
 }>;
@@ -22,18 +25,41 @@ export type EndpointsOverview = Readonly<{
   discovered: boolean;
 }>;
 
+const rfc = (number: number, section?: number | string): Spec => ({
+  label: section === undefined ? `RFC ${number}` : `RFC ${number} §${section}`,
+  url: `https://www.rfc-editor.org/rfc/rfc${number}${section === undefined ? "" : `#section-${section}`}`,
+});
+
+const OIDC = "https://openid.net/specs";
+const CORE = (section: string, anchor = ""): Spec => ({
+  label: `OpenID Connect Core §${section}`,
+  url: `${OIDC}/openid-connect-core-1_0.html${anchor}`,
+});
+const DISCOVERY = (section: string, anchor = ""): Spec => ({
+  label: `OpenID Connect Discovery §${section}`,
+  url: `${OIDC}/openid-connect-discovery-1_0.html${anchor}`,
+});
+const LOGOUT: Spec = {
+  label: "OpenID Connect RP-Initiated Logout 1.0",
+  url: `${OIDC}/openid-connect-rpinitiated-1_0.html`,
+};
+const BACKCHANNEL: Spec = {
+  label: "OpenID Connect Back-Channel Logout 1.0",
+  url: `${OIDC}/openid-connect-backchannel-1_0.html`,
+};
+
 /** What the provider's metadata names, in the order an integrator reaches for them. */
-const PROVIDER_ENDPOINTS: readonly (readonly [key: string, name: string, spec: string, open: boolean])[] = [
-  ["authorization_endpoint", "Authorization", "RFC 6749 §3.1", false],
-  ["token_endpoint", "Token", "RFC 6749 §3.2", false],
-  ["userinfo_endpoint", "UserInfo", "OpenID Connect Core §5.3", false],
-  ["jwks_uri", "JSON Web Key Set (JWKS)", "RFC 7517 · OpenID Connect Discovery §3", true],
-  ["end_session_endpoint", "End session", "OpenID Connect RP-Initiated Logout 1.0", false],
-  ["revocation_endpoint", "Revocation", "RFC 7009", false],
-  ["introspection_endpoint", "Introspection", "RFC 7662", false],
-  ["registration_endpoint", "Dynamic client registration", "RFC 7591", false],
-  ["device_authorization_endpoint", "Device authorization", "RFC 8628", false],
-  ["pushed_authorization_request_endpoint", "Pushed authorization request", "RFC 9126", false],
+const PROVIDER_ENDPOINTS: readonly (readonly [key: string, name: string, specs: readonly Spec[], open: boolean])[] = [
+  ["authorization_endpoint", "Authorization", [rfc(6749, "3.1")], false],
+  ["token_endpoint", "Token", [rfc(6749, "3.2")], false],
+  ["userinfo_endpoint", "UserInfo", [CORE("5.3", "#UserInfo")], false],
+  ["jwks_uri", "JSON Web Key Set (JWKS)", [rfc(7517), DISCOVERY("3", "#ProviderMetadata")], true],
+  ["end_session_endpoint", "End session", [LOGOUT], false],
+  ["revocation_endpoint", "Revocation", [rfc(7009)], false],
+  ["introspection_endpoint", "Introspection", [rfc(7662)], false],
+  ["registration_endpoint", "Dynamic client registration", [rfc(7591)], false],
+  ["device_authorization_endpoint", "Device authorization", [rfc(8628)], false],
+  ["pushed_authorization_request_endpoint", "Pushed authorization request", [rfc(9126)], false],
 ];
 
 const CAPABILITIES: readonly (readonly [key: string, name: string])[] = [
@@ -61,19 +87,19 @@ export function endpointsOverview(
   const published = metadata ?? {};
 
   const discovery: Endpoint[] = [
-    { name: "Issuer", url: issuer, spec: "OpenID Connect Core §2 · RFC 8414 §2", open: false },
+    { name: "Issuer", url: issuer, specs: [CORE("2", "#IDToken"), rfc(8414, 2)], open: false },
     {
       name: "OpenID configuration",
       url: `${issuer}/.well-known/openid-configuration`,
-      spec: "OpenID Connect Discovery 1.0 §4",
+      specs: [DISCOVERY("4", "#ProviderConfig")],
       open: true,
     },
   ];
 
-  const provider = PROVIDER_ENDPOINTS.flatMap(([key, name, spec, open]): Endpoint[] => {
+  const provider = PROVIDER_ENDPOINTS.flatMap(([key, name, specs, open]): Endpoint[] => {
     const url = httpUrl(published[key]);
 
-    return url === null ? [] : [{ name, url, spec, open }];
+    return url === null ? [] : [{ name, url, specs, open }];
   });
 
   const dashboard = settings.dashboardUrl;
@@ -92,24 +118,29 @@ export function endpointsOverview(
       title: "Management API",
       description: "What this dashboard calls. The base address is also the audience of its access tokens.",
       endpoints: [
-        { name: "Base address", url: settings.managementApi.href, spec: "Clavia Management API", open: false },
+        {
+          name: "Base address",
+          url: settings.managementApi.href,
+          specs: [{ label: "Clavia Management API", url: null }],
+          open: false,
+        },
       ],
     },
     {
       title: "This dashboard",
       description: "The addresses Clavia knows it by, registered with its application.",
       endpoints: [
-        { name: "Redirect URI", url: `${dashboard}/auth/callback`, spec: "RFC 6749 §3.1.2", open: false },
+        { name: "Redirect URI", url: `${dashboard}/auth/callback`, specs: [rfc(6749, "3.1.2")], open: false },
         {
           name: "Back-channel logout URI",
           url: `${dashboard}/auth/backchannel-logout`,
-          spec: "OpenID Connect Back-Channel Logout 1.0",
+          specs: [BACKCHANNEL],
           open: false,
         },
         {
           name: "Post-logout redirect URI",
           url: `${dashboard}/signed-out`,
-          spec: "OpenID Connect RP-Initiated Logout 1.0 §3",
+          specs: [{ ...LOGOUT, label: "OpenID Connect RP-Initiated Logout §3" }],
           open: false,
         },
       ],

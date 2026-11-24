@@ -78,7 +78,26 @@ export default async function EndpointsPage() {
                       <CopyButton value={endpoint.url} label={`Copy the ${endpoint.name} address`} />
                     </span>
                   </TableCell>
-                  <TableCell className="pr-6 whitespace-normal text-muted-foreground">{endpoint.spec}</TableCell>
+                  <TableCell className="pr-6 whitespace-normal">
+                    <span className="flex flex-col gap-0.5 text-muted-foreground">
+                      {endpoint.specs.map((spec) =>
+                        spec.url === null ? (
+                          <span key={spec.label}>{spec.label}</span>
+                        ) : (
+                          <a
+                            key={spec.label}
+                            href={spec.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline-offset-4 hover:text-foreground hover:underline"
+                          >
+                            {spec.label}
+                            <span className="sr-only"> (opens in a new tab)</span>
+                          </a>
+                        ),
+                      )}
+                    </span>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
