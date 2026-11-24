@@ -68,7 +68,7 @@ export default async function EndpointsPage() {
                           href={endpoint.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-mono text-xs break-all underline-offset-4 hover:underline"
+                          className="font-mono text-xs break-all text-primary underline-offset-4 hover:underline"
                         >
                           {endpoint.url}
                         </a>
@@ -79,17 +79,19 @@ export default async function EndpointsPage() {
                     </span>
                   </TableCell>
                   <TableCell className="pr-6 whitespace-normal">
-                    <span className="flex flex-col gap-0.5 text-muted-foreground">
+                    <span className="flex flex-col gap-0.5">
                       {endpoint.specs.map((spec) =>
                         spec.url === null ? (
-                          <span key={spec.label}>{spec.label}</span>
+                          <span key={spec.label} className="text-muted-foreground">
+                            {spec.label}
+                          </span>
                         ) : (
                           <a
                             key={spec.label}
                             href={spec.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="underline-offset-4 hover:text-foreground hover:underline"
+                            className="text-primary underline-offset-4 hover:underline"
                           >
                             {spec.label}
                             <span className="sr-only"> (opens in a new tab)</span>
