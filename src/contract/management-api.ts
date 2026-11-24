@@ -852,8 +852,9 @@ export type paths = {
          *     Each line is a JSON object: `email` (required), `email_verified`, `is_active`, `name`,
          *     `given_name`, `family_name`, `nickname`, `picture`, `locale`, and `password_hash`, which must
          *     be in a format this server verifies: PBKDF2-HMAC-SHA-256, `$pbkdf2-sha256$i=…$salt$key`, at
-         *     any count from 1,000 (replaced at today's count at the account's first sign-in). A plaintext
-         *     `password`, or any other member, refuses the line.
+         *     any count from 1,000 (replaced at today's count at the account's first sign-in). `user_id`,
+         *     `connection`, `created_at` and `updated_at`, which an export writes, are ignored, so an
+         *     export imports as it is. A plaintext `password`, or any other member, refuses the line.
          *
          *     An import only creates. A line is refused, and the rest carry on, when it cannot be read,
          *     holds a field the API would refuse, or names an address already in the pool; the job's
@@ -862,6 +863,59 @@ export type paths = {
          *     by the caller who queued the job.
          */
         post: operations["importUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/users-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export users
+         * @description Queue an export of the accounts of one connection, of any kind, run by `clavia jobs:run`;
+         *     download it from `/api/v1/jobs/{job_id}/output` once the job is `completed`.
+         *
+         *     The output is NDJSON, one account per line, in the shape an import takes: `email`,
+         *     `email_verified`, `is_active`, the profile fields that are set, and `user_id`, `connection`,
+         *     `created_at` and `updated_at`, which an import ignores. **Never a password hash**, nor
+         *     anything of a second factor, a passkey, a linked identity or a session: an account moved by
+         *     an export chooses its password again where it lands. The job's `summary.total` is the
+         *     accounts written. The export is recorded in the audit trail as `user.exported`, by the
+         *     caller who queued it, and kept, like the job, for seven days.
+         */
+        post: operations["exportUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}/output": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: components["parameters"]["JobId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download an export
+         * @description What a completed export wrote: NDJSON, one account per line, never a password hash. `409`
+         *     while the export is queued or running, or when it failed; `404` for an import, which writes
+         *     nothing. Kept until the job is deleted, seven days after it finished.
+         */
+        get: operations["getJobOutput"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1013,7 +1067,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -1110,7 +1164,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "users_import";
+            type: "users_import" | "users_export";
             /**
              * @description `queued` until `clavia jobs:run` takes it; `failed` when it stopped as a whole (its
              *     worker died), with `failure` saying why.
@@ -1125,7 +1179,7 @@ export type components = {
             /** Format: date-time */
             finished_at: string | null;
             summary: {
-                /** @description Lines read so far, blank ones aside. */
+                /** @description An import's lines read so far, blank ones aside; an export's accounts written. */
                 total: number;
                 created: number;
                 failed: number;
@@ -3363,6 +3417,65 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    exportUsers: {
+        parameters: {
+            query?: {
+                /** @description The connection whose accounts are exported; the default pool when absent. */
+                connection?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Queued. Follow it at the `Location`. */
+            202: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserJob"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getJobOutput: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: components["parameters"]["JobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The accounts, as an attachment. */
+            200: {
+                headers: {
+                    /** @description `attachment; filename="users-{job_id}.ndjson"`. */
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             422: components["responses"]["Unprocessable"];
         };
     };
