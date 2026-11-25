@@ -63,6 +63,8 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "webhook.updated": { label: "Webhook changed", group: "Webhooks", tone: "neutral" },
   "webhook.deleted": { label: "Webhook deleted", group: "Webhooks", tone: "warning" },
   "webhook.secret_rotated": { label: "Webhook secret rotated", group: "Webhooks", tone: "warning" },
+  "webhook.tested": { label: "Webhook tested", group: "Webhooks", tone: "neutral" },
+  "webhook.disabled": { label: "Webhook switched off", group: "Webhooks", tone: "danger" },
 };
 
 export type Tone = "neutral" | "positive" | "warning" | "danger";

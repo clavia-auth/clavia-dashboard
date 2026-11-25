@@ -63,7 +63,26 @@ tags:
       Endpoints that receive the audit events they subscribe to, as `GET /api/v1/audit-events`
       renders them, signed per the Standard Webhooks specification with a secret this server
       generates, shows once and keeps sealed. Registering one, or changing where it points or what
-      it hears, also needs `read:audit_events`: streaming the trail is reading it.
+      it hears, testing it, or reading its delivery log, also needs `read:audit_events`: streaming
+      the trail is reading it.
+
+      **What a receiver gets.** A `POST` whose body is a `WebhookPayload` (`type`, `timestamp`,
+      and `data`, the `AuditEvent`), with three headers from the
+      [Standard Webhooks](https://www.standardwebhooks.com/) specification: `webhook-id` (the audit
+      event's id, the same across retries: use it to drop duplicates), `webhook-timestamp` (Unix
+      seconds, when this attempt was signed) and `webhook-signature`.
+
+      **Verifying it.** Take the secret's bytes (the base64 after `whsec_`), compute HMAC-SHA256
+      over `{webhook-id}.{webhook-timestamp}.{body}` with the body exactly as received, and compare
+      its base64, in constant time, with each space-separated `v1,…` value of `webhook-signature`:
+      during a rotation there are two, one per secret. Refuse a `webhook-timestamp` more than five
+      minutes from your clock, so a recorded delivery cannot be replayed. Any Standard Webhooks
+      library does all of this.
+
+      **Answering it.** Any 2xx within ten seconds is a delivery; anything else, a redirect
+      included, is retried after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h, then abandoned. An
+      endpoint every delivery to which has failed for five days is switched off
+      (`webhook.disabled`, `disabled_reason: failing`) until it is switched on again.
   - name: resource-servers
     x-displayName: APIs
     description: The APIs tokens are issued for, and the permissions each defines.
@@ -2016,6 +2035,74 @@ paths:
         '422':
           $ref: '#/components/responses/Unprocessable'
 
+  /api/v1/webhooks/{webhook_id}/test:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    post:
+      tags: [webhooks]
+      operationId: testWebhook
+      summary: Send a test event
+      description: |
+        Records `webhook.tested`, which goes to this endpoint and no other, through the same queue,
+        envelope and signature as every event; `webhooks:deliver` sends it within the minute, and
+        `GET …/deliveries` shows how it went. Also needs `read:audit_events` (403 without it). A
+        switched-off endpoint is 409: nothing would be sent.
+      security:
+        - managementToken: [update:webhooks]
+      responses:
+        '202':
+          description: Queued.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/webhooks/{webhook_id}/deliveries:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    get:
+      tags: [webhooks]
+      operationId: listWebhookDeliveries
+      summary: List webhook deliveries
+      description: |
+        The endpoint's deliveries, newest first, kept seven days after they end: what was sent, how
+        many attempts, and the last one's status code, duration and failure category. Never a body,
+        sent or received: neither is kept. It names the audit events sent, so it also needs
+        `read:audit_events` (403 without it).
+      security:
+        - managementToken: [read:webhooks]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: A page of deliveries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDeliveryPage'
+              examples:
+                WebhookDeliveryPage:
+                  $ref: '#/components/examples/WebhookDeliveryPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
   /api/v1/jobs/users-imports:
     post:
       tags: [users]
@@ -3174,6 +3261,8 @@ components:
         description: "SIEM"
         events: ["user.created", "user.deleted", "user.updated"]
         is_enabled: true
+        disabled_reason: null
+        failing_since: null
         previous_secret_until: null
         created_at: "2026-03-04T09:00:00Z"
         updated_at: "2026-03-04T09:00:00Z"
@@ -3185,6 +3274,8 @@ components:
           description: "SIEM"
           events: ["user.created", "user.deleted", "user.updated"]
           is_enabled: true
+          disabled_reason: null
+          failing_since: null
           previous_secret_until: null
           created_at: "2026-03-04T09:00:00Z"
           updated_at: "2026-03-04T09:00:00Z"
@@ -3193,6 +3284,8 @@ components:
           description: "Security alerts"
           events: ["*"]
           is_enabled: false
+          disabled_reason: "operator"
+          failing_since: null
           previous_secret_until: "2026-03-06T10:00:00Z"
           created_at: "2026-03-04T10:00:00Z"
           updated_at: "2026-03-05T10:00:00Z"
@@ -3204,6 +3297,8 @@ components:
         description: "SIEM"
         events: ["user.created", "user.deleted", "user.updated"]
         is_enabled: true
+        disabled_reason: null
+        failing_since: null
         previous_secret_until: null
         created_at: "2026-03-04T09:00:00Z"
         updated_at: "2026-03-04T09:00:00Z"
@@ -3231,6 +3326,35 @@ components:
         state: "active"
         revoked_at: null
         token: "example-initial-access-token-not-real-00000"
+    WebhookDeliveryPage:
+      summary: A delivery made, one being retried
+      value:
+        items:
+          - id: "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f"
+            event_id: "8e7d6c5b-4a39-4281-9f0e-1d2c3b4a5968"
+            event_type: "user.updated"
+            status: "pending"
+            attempts: 2
+            next_attempt_at: "2026-03-04T10:05:30Z"
+            last_status_code: 503
+            last_duration_ms: 84
+            last_failure: "status"
+            created_at: "2026-03-04T10:00:00Z"
+            ended_at: null
+          - id: "0b1c2d3e-4f5a-4b6c-9d8e-7f6a5b4c3d2e"
+            event_id: "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d"
+            event_type: "webhook.tested"
+            status: "succeeded"
+            attempts: 1
+            next_attempt_at: null
+            last_status_code: 204
+            last_duration_ms: 112
+            last_failure: null
+            created_at: "2026-03-04T09:30:00Z"
+            ended_at: "2026-03-04T09:30:01Z"
+        total: 2
+        page: 1
+        per_page: 50
     AuditEventPage:
       summary: A page of the trail
       value:
@@ -3519,7 +3643,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated, webhook.tested, webhook.disabled]
         occurred_at:
           type: string
           format: date-time
@@ -3652,7 +3776,7 @@ components:
     Webhook:
       type: object
       additionalProperties: false
-      required: [id, url, description, events, is_enabled, previous_secret_until, created_at, updated_at]
+      required: [id, url, description, events, is_enabled, disabled_reason, failing_since, previous_secret_until, created_at, updated_at]
       properties:
         id:
           type: string
@@ -3667,6 +3791,20 @@ components:
         is_enabled:
           type: boolean
           description: Whether deliveries are made. A disabled endpoint keeps its settings.
+        disabled_reason:
+          type: string
+          enum: [operator, failing]
+          nullable: true
+          description: |
+            Why it is off: an `operator` switched it off, or it was `failing` every delivery for five
+            days. Null while it is on.
+        failing_since:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            When the deliveries that have all failed since began; null once one succeeds. Five days
+            of it switch the endpoint off. Switching it on or off starts it over.
         previous_secret_until:
           type: string
           format: date-time
@@ -3679,11 +3817,126 @@ components:
           type: string
           format: date-time
 
+    WebhookDelivery:
+      description: One audit event's delivery to one endpoint, through its attempts. Never a body.
+      type: object
+      additionalProperties: false
+      required: [id, event_id, event_type, status, attempts, next_attempt_at, last_status_code,
+        last_duration_ms, last_failure, created_at, ended_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+          description: The audit event sent, and the `webhook-id` header it was sent with.
+        event_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, succeeded, abandoned]
+          description: |
+            `pending` until a 2xx (`succeeded`), or until the retries run out or it can no longer be
+            sent (`abandoned`).
+        attempts:
+          type: integer
+          minimum: 0
+        next_attempt_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When it is tried next; null once it ended.
+        last_status_code:
+          type: integer
+          nullable: true
+          description: What the receiver answered last; null when it was not reached.
+        last_duration_ms:
+          type: integer
+          nullable: true
+        last_failure:
+          type: string
+          enum: [status, connection, refused_url, disabled, event_purged]
+          nullable: true
+          description: |
+            Why the last attempt failed: a non-2xx `status`; no answer in time (`connection`); a
+            URL that now resolves somewhere private (`refused_url`); or, ended without an attempt,
+            an endpoint switched off (`disabled`) or an event purged (`event_purged`).
+        created_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    WebhookDeliveryPage:
+      type: object
+      additionalProperties: false
+      required: [items, total, page, per_page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDelivery'
+        total:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        per_page:
+          type: integer
+          minimum: 1
+
+    WebhookPayload:
+      description: |
+        The body of every webhook delivery: an envelope in the Standard Webhooks form around the
+        audit event, exactly as `GET /api/v1/audit-events` returns it. Not an operation of this
+        API: what this server posts to an endpoint.
+
+        The example was posted with `webhook-id: 9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d`,
+        `webhook-timestamp: 1772616600` and
+        `webhook-signature: v1,nS1KX8YY7AzTQPivOXvcPeb+CAokxqbo2vgMk2MqvEY=`, signed with the
+        secret of the `WebhookWithSecret` example (not a real one), over the example encoded as
+        compact JSON in the order shown.
+      type: object
+      additionalProperties: false
+      required: [type, timestamp, data]
+      properties:
+        type:
+          type: string
+          description: The audit event's type, as in `data.type`.
+        timestamp:
+          type: string
+          format: date-time
+          description: When this attempt was made; `webhook-timestamp` says the same in Unix seconds.
+        data:
+          $ref: '#/components/schemas/AuditEvent'
+      example:
+        type: "webhook.tested"
+        timestamp: "2026-03-04T09:30:00.000Z"
+        data:
+          id: "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d"
+          type: "webhook.tested"
+          occurred_at: "2026-03-04T09:30:00Z"
+          outcome: "success"
+          actor:
+            kind: "person"
+            user_id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"
+            client_id: "Dsh8Kq2Wm5Np9Rt3Vx6Zb1Cf4Gj7Ln0Ps"
+          target:
+            type: "webhook"
+            id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c"
+          details: {}
+          client_address: "203.0.113.42"
+          user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15"
+
     WebhookWithSecret:
       description: An endpoint, with the only copy of its new secret there will ever be.
       type: object
       additionalProperties: false
-      required: [id, url, description, events, is_enabled, previous_secret_until, created_at, updated_at, secret]
+      required: [id, url, description, events, is_enabled, disabled_reason, failing_since, previous_secret_until, created_at, updated_at, secret]
       properties:
         id:
           type: string
@@ -3698,6 +3951,20 @@ components:
         is_enabled:
           type: boolean
           description: Whether deliveries are made. A disabled endpoint keeps its settings.
+        disabled_reason:
+          type: string
+          enum: [operator, failing]
+          nullable: true
+          description: |
+            Why it is off: an `operator` switched it off, or it was `failing` every delivery for five
+            days. Null while it is on.
+        failing_since:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            When the deliveries that have all failed since began; null once one succeeds. Five days
+            of it switch the endpoint off. Switching it on or off starts it over.
         previous_secret_until:
           type: string
           format: date-time
@@ -3726,6 +3993,7 @@ components:
       description: |
         The audit event types delivered (each one `GET /api/v1/audit-events` can report), or
         `["*"]` for all. An unknown type is refused, so a typo is never a silent "never".
+        `webhook.tested` is not one to name: a test goes to the endpoint tested, and no other.
 
     WebhookCreate:
       type: object
