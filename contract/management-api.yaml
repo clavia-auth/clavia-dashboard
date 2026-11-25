@@ -3212,7 +3212,7 @@ components:
           family_name_attribute: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
           sign_requests: true
           require_encryption: false
-          require_gcm: false
+          require_gcm: true
           service_provider:
             entity_id: "https://auth.example.com/auth/saml/acme-entra"
             acs_url: "https://auth.example.com/auth/saml/acme-entra/acs"
@@ -5418,7 +5418,11 @@ components:
           description: Whether a plain assertion is refused.
         require_gcm:
           type: boolean
-          description: Whether an assertion encrypted with AES-CBC is refused.
+          description: |
+            Whether an assertion encrypted with AES-CBC is refused: on unless turned off. CBC is
+            unauthenticated, and accepting it weakens GCM too (the algorithm an assertion names is not
+            authenticated), so turn it off only for an identity provider that encrypts with CBC, as
+            ADFS does by default.
         service_provider:
           type: object
           additionalProperties: false
@@ -5492,7 +5496,10 @@ components:
           default: false
         require_gcm:
           type: boolean
-          default: false
+          default: true
+          description: |
+            On by default: AES-CBC refused. Turn it off only for an identity provider that encrypts
+            with CBC (ADFS's default).
 
     ConnectionDisplayName:
       type: string
