@@ -19,6 +19,9 @@ import type {
   ResourceServer,
   ResourceServerCreate,
   ResourceServerUpdate,
+  ProvisioningToken,
+  ProvisioningTokenCreate,
+  IssuedProvisioningToken,
   Role,
   RoleCreate,
   RoleUpdate,
@@ -56,6 +59,7 @@ export interface ManagementApi {
   readonly signingKeys: SigningKeysApi;
   readonly samlKeys: SamlKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
+  readonly provisioningTokens: ProvisioningTokensApi;
   readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
 }
@@ -138,6 +142,19 @@ export interface InitialAccessTokensApi {
   list(query?: ListQuery): Promise<Page<InitialAccessToken>>;
   issue(token: InitialAccessTokenCreate): Promise<IssuedInitialAccessToken>;
   /** Stop it registering more. The clients it registered keep working. */
+  revoke(tokenId: string): Promise<void>;
+}
+
+/**
+ * What lets a directory (Entra ID, Okta) provision a connection's accounts through SCIM: a bearer
+ * token an operator hands to it. Its value, and the base URL to give the directory, are shown once,
+ * when it is issued, and never read again.
+ */
+export interface ProvisioningTokensApi {
+  /** Newest first; `connection` keeps one connection's tokens. Never a token's value. */
+  list(query?: ListQuery & { connection?: string }): Promise<Page<ProvisioningToken>>;
+  issue(token: ProvisioningTokenCreate): Promise<IssuedProvisioningToken>;
+  /** The directory holding it reaches SCIM no more, at once. The accounts it provisioned stay. */
   revoke(tokenId: string): Promise<void>;
 }
 

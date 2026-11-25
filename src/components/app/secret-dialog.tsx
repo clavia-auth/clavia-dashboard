@@ -20,6 +20,7 @@ import { CopyButton } from "./copy-button";
  */
 export function SecretDialog({
   clientId,
+  also = [],
   secret,
   title = "Copy the client secret now",
   label = "Client secret",
@@ -28,6 +29,8 @@ export function SecretDialog({
   onDone,
 }: {
   clientId?: string;
+  /** Other values to hand over with it, shown above it: an address to give with a token. */
+  also?: readonly { label: string; value: string }[];
   secret: string;
   title?: string;
   label?: string;
@@ -48,6 +51,9 @@ export function SecretDialog({
         </DialogHeader>
         <dl className="space-y-3 text-sm">
           {clientId !== undefined ? <Credential label="Client ID" value={clientId} /> : null}
+          {also.map((item) => (
+            <Credential key={item.label} label={item.label} value={item.value} />
+          ))}
           <Credential label={label} value={secret} />
         </dl>
         <DialogFooter>

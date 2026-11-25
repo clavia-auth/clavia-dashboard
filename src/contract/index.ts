@@ -58,6 +58,11 @@ export type InitialAccessToken = Schemas["InitialAccessToken"];
 export type InitialAccessTokenCreate = Schemas["InitialAccessTokenCreate"];
 export type IssuedInitialAccessToken = Schemas["IssuedInitialAccessToken"];
 export type InitialAccessTokenState = Schemas["InitialAccessTokenState"];
+export type ProvisioningToken = Schemas["ProvisioningToken"];
+export type ProvisioningTokenCreate = Schemas["ProvisioningTokenCreate"];
+export type IssuedProvisioningToken = Schemas["IssuedProvisioningToken"];
+export type ProvisioningTokenState = Schemas["ProvisioningTokenState"];
+export type ProvisioningSubjectAttribute = Schemas["ProvisioningSubjectAttribute"];
 
 export type AuditEvent = Schemas["AuditEvent"];
 export type AuditEventType = AuditEvent["type"];

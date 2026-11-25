@@ -19,6 +19,7 @@ import { SelfServiceFields } from "../self-service-fields";
 export function ConnectionForm({ connection, editable }: { connection: Connection; editable: boolean }) {
   const oidc = connection.strategy === "oidc";
   const pool = connection.strategy === "database";
+  const enterprise = oidc || connection.strategy === "saml";
   const [state, action, pending] = useActionState(
     updateConnection.bind(null, connection.name, connection.strategy),
     IDLE,
@@ -64,6 +65,17 @@ export function ConnectionForm({ connection, editable }: { connection: Connectio
                   <SelfServiceFields
                     allowSignUp={connection.allow_sign_up}
                     requireVerifiedEmail={connection.require_verified_email}
+                  />
+                </>
+              ) : null}
+              {enterprise ? (
+                <>
+                  <FieldSeparator />
+                  <SwitchField
+                    name="require_provisioning"
+                    label="Only people a directory provisioned"
+                    description="Nobody else's account is created by signing in, and somebody the directory removes cannot come back. Set up the directory first, below: until it has provisioned people, nobody signs in."
+                    defaultChecked={connection.require_provisioning}
                   />
                 </>
               ) : null}

@@ -10,6 +10,7 @@ import { RelativeTime } from "@/components/app/relative-time";
 import { Restricted } from "@/components/app/restricted";
 import { SearchField } from "@/components/app/search-field";
 import { TableSkeleton } from "@/components/app/table-skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { load } from "@/server/load";
@@ -78,7 +79,14 @@ async function RolesTable({ search, page }: { search: string | undefined; page: 
             <TableRow key={role.id} className="group relative">
               <TableCell className="pl-4">
                 <Link href={`/roles/${role.id}` as Route} className="after:absolute after:inset-0">
-                  <span className="block font-medium">{role.name}</span>
+                  <span className="block font-medium">
+                    {role.name}
+                    {role.provisionable ? (
+                      <Badge variant="secondary" className="ml-2 align-middle">
+                        Provisionable
+                      </Badge>
+                    ) : null}
+                  </span>
                   {role.description !== "" ? (
                     <span className="block text-xs text-muted-foreground">{role.description}</span>
                   ) : null}
