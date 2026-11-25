@@ -19,15 +19,17 @@ import {
 import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { fieldError, IDLE } from "@/server/action-state";
 
 import { createConnection } from "./actions";
+import { SamlFields } from "./saml-fields";
 import { SelfServiceFields } from "./self-service-fields";
 import { STRATEGIES } from "./strategy";
 
-type Creatable = "database" | "oidc";
+type Creatable = "database" | "oidc" | "saml";
 
-/** A new pool of password accounts, or an OpenID Connect provider found from its issuer. */
+/** A new pool of password accounts, an OpenID Connect provider found from its issuer, or a SAML identity provider read from its metadata. */
 export function CreateConnectionDialog() {
   const [open, setOpen] = useState(false);
   const [strategy, setStrategy] = useState<Creatable>("database");
@@ -41,7 +43,9 @@ export function CreateConnectionDialog() {
           <PlusIcon aria-hidden /> Create connection
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className={cn("max-h-[90dvh] overflow-y-auto", strategy === "saml" ? "sm:max-w-3xl" : "sm:max-w-lg")}
+      >
         <form action={action}>
           <DialogHeader>
             <DialogTitle>Create a connection</DialogTitle>
@@ -54,9 +58,9 @@ export function CreateConnectionDialog() {
                 name="strategy"
                 value={strategy}
                 onValueChange={(value) => setStrategy(value as Creatable)}
-                className="grid gap-2 sm:grid-cols-2"
+                className="grid gap-2 sm:grid-cols-3"
               >
-                {(["database", "oidc"] as const).map((value) => (
+                {(["database", "oidc", "saml"] as const).map((value) => (
                   <label
                     key={value}
                     className="flex cursor-pointer gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
@@ -75,7 +79,7 @@ export function CreateConnectionDialog() {
                 name="name"
                 label="Name"
                 required
-                placeholder={strategy === "oidc" ? "okta" : "staff"}
+                placeholder={strategy === "database" ? "staff" : strategy === "oidc" ? "okta" : "acme-entra"}
                 description="In URLs and the API; never changed."
                 error={fieldError(state, "name")}
               />
@@ -83,7 +87,7 @@ export function CreateConnectionDialog() {
                 name="display_name"
                 label="Display name"
                 required
-                placeholder={strategy === "oidc" ? "Okta" : "Staff accounts"}
+                placeholder={strategy === "database" ? "Staff accounts" : strategy === "oidc" ? "Okta" : "Acme staff"}
                 description="What the login page shows."
                 error={fieldError(state, "display_name")}
               />
@@ -124,6 +128,8 @@ export function CreateConnectionDialog() {
                   error={fieldError(state, "oidc_scope")}
                 />
               </>
+            ) : strategy === "saml" ? (
+              <SamlFields state={state} />
             ) : (
               <SelfServiceFields />
             )}

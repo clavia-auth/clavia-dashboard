@@ -9,6 +9,18 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Added
 
+- **SAML connections.** Create a connection to a SAML identity provider from its metadata URL or an
+  uploaded document, choosing which attribute names the person, which carries the address (and
+  whether the provider verifies it), and the profile attributes, starting from a preset for Microsoft
+  Entra ID, Okta, ADFS or Google Workspace. Signing requests, requiring encryption and requiring
+  AES-GCM are options; the ADFS preset turns the GCM requirement off, since ADFS encrypts with CBC by
+  default. The connection's page gives what the identity provider's administrator needs (entity ID,
+  ACS URL, metadata URL, each with a copy button), shows the provider's certificates with their
+  fingerprints and expiry, and refreshes the metadata when the provider rolls a certificate over. A
+  SAML connection's options are fixed when it is registered, as Clavia has no way to change them.
+- **SAML keys, beside the signing keys.** This server's keys as a SAML service provider, by
+  certificate: what each is for, its place in the rotation (current, next, retired) and when the
+  certificate expires, with a button for the next step of the rotation. Needs Clavia 0.4.0 or later.
 - **A Webhooks section.** Register the addresses that receive Clavia's audit events, signed as
   Standard Webhooks: add one (its secret is shown once, with a copy button), change its URL, events
   and description, switch it on or off, rotate its secret (the old one still signs for 24 hours),

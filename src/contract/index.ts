@@ -47,6 +47,10 @@ export type ConnectionCreate = Schemas["ConnectionCreate"];
 export type ConnectionUpdate = Schemas["ConnectionUpdate"];
 export type ConnectionStrategy = Schemas["ConnectionStrategy"];
 
+export type SamlConnection = NonNullable<Schemas["SamlConnection"]>;
+export type SamlConnectionCreate = Schemas["SamlConnectionCreate"];
+export type SamlKey = Schemas["SamlKey"];
+export type SamlKeyRotation = Schemas["SamlKeyRotation"];
 export type SigningKey = Schemas["SigningKey"];
 export type SigningKeyRotation = Schemas["SigningKeyRotation"];
 
