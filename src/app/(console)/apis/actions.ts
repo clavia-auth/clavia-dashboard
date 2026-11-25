@@ -5,7 +5,9 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import type { ClaimMapping } from "@/contract";
 import { type ActionState, parse, perform } from "@/server/actions";
+import { saveClaims } from "@/server/claims";
 
 const createSchema = z.object({
   name: z.string().trim().min(1, "Give it a name.").max(200),
@@ -96,6 +98,13 @@ export async function savePermissions(
 
     return "Permissions saved.";
   });
+}
+
+/** Replace the API's custom claims with the editor's rows. */
+export async function saveApiClaims(apiId: string, drafts: unknown): Promise<ActionState> {
+  return saveClaims(drafts, false, (api, claims) =>
+    api.resourceServers.update(apiId, { claims: claims as ClaimMapping[] }),
+  );
 }
 
 export async function deleteApi(apiId: string): Promise<ActionState> {

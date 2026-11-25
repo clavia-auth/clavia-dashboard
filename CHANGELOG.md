@@ -9,6 +9,17 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Added
 
+- **Application metadata, on the user page.** A JSON editor for the facts operators keep about an
+  account (a tenant, a plan, a department), which claim mappings copy into tokens. Saving replaces
+  it whole, and Clavia's refusals (too large, too deep, a bad key) are shown with the key they name.
+  Writing it takes `update:users_app_metadata` beside `update:users`: without it the editor is
+  read-only and says which scope is missing.
+- **Custom claims, on APIs and applications.** A Claims tab lists what an API's access tokens, or
+  an application's ID tokens and userinfo answers, carry about the person: an email, a profile
+  field, a path in the application metadata, their roles, or a fixed value, and for an application
+  where each goes. Each refusal from Clavia appears on the row it names. A preview shows the claims
+  one person would get from the rows as they stand, before they are saved. The tab is absent where
+  Clavia refuses claims: the Management API, and third-party applications.
 - **An Endpoints section**, open to every operator: the addresses an application or an API needs to
   work with Clavia, each with its host and a copy button, and the specification that defines it,
   linked to the RFC Editor or openid.net. It lists the issuer and its OpenID configuration, the
@@ -17,6 +28,12 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
   address, this dashboard's redirect, back-channel logout and post-logout addresses, and what
   Clavia says it supports (scopes, grant types, PKCE methods, signing algorithms). If discovery
   cannot be read, the page says so and lists what the dashboard's settings give.
+
+### Changed
+
+- **Needs Clavia 0.4.0 or later** (the version that adds custom claims), and a new scope,
+  `update:users_app_metadata`. A role must grant it for an operator to edit application metadata;
+  a session opened before it was granted has to sign in again to carry it. Nothing else to set up.
 
 ## [0.3.0] - 2026-11-23
 

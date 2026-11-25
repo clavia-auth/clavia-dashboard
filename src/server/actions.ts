@@ -32,9 +32,15 @@ export async function perform(work: (context: SignedIn) => Promise<string>): Pro
     }
     const fields: Record<string, string> = {};
     for (const field of error.fields) {
-      const name = field.pointer?.replace(/^\//, "").split("/")[0] ?? field.parameter;
+      const pointer = field.pointer?.replace(/^\//, "") ?? null;
+      const name = pointer?.split("/")[0] ?? field.parameter;
       if (name !== null && name !== undefined && name !== "" && fields[name] === undefined) {
         fields[name] = field.detail;
+      }
+      // A refusal of one entry of a list or one key of an object (`claims/2`) is kept under its
+      // whole pointer too, for the editor that shows it where it happened.
+      if (pointer !== null && pointer.includes("/") && fields[pointer] === undefined) {
+        fields[pointer] = field.detail;
       }
     }
     const message =

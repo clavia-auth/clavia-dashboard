@@ -52,6 +52,10 @@ export default async function ApiLayout({ params, children }: Props) {
         tabs={[
           { label: "Settings", href: base as Route },
           { label: "Permissions", href: `${base}/permissions` as Route, count: resourceServer.permissions.length },
+          // The Management API's tokens are read by the server alone: no claims to add.
+          ...(resourceServer.is_system
+            ? []
+            : [{ label: "Claims", href: `${base}/claims` as Route, count: resourceServer.claims.length }]),
         ]}
       />
       <div className="flex flex-col gap-6">{children}</div>

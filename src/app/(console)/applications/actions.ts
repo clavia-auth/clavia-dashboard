@@ -5,8 +5,9 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import type { GrantType } from "@/contract";
+import type { ApplicationClaimMapping, GrantType } from "@/contract";
 import { type ActionState, parse, perform } from "@/server/actions";
+import { saveClaims } from "@/server/claims";
 import { config } from "@/server/config";
 
 import { KINDS } from "./kinds";
@@ -165,4 +166,11 @@ export async function deleteApplication(clientId: string): Promise<ActionState> 
   }
 
   return state;
+}
+
+/** Replace the application's custom claims with the editor's rows. */
+export async function saveApplicationClaims(clientId: string, drafts: unknown): Promise<ActionState> {
+  return saveClaims(drafts, true, (api, claims) =>
+    api.clients.update(clientId, { claims: claims as ApplicationClaimMapping[] }),
+  );
 }
