@@ -19,6 +19,7 @@ import {
 import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { fieldError, IDLE } from "@/server/action-state";
 
 import { createConnection } from "./actions";
@@ -42,7 +43,9 @@ export function CreateConnectionDialog() {
           <PlusIcon aria-hidden /> Create connection
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className={cn("max-h-[90dvh] overflow-y-auto", strategy === "saml" ? "sm:max-w-3xl" : "sm:max-w-lg")}
+      >
         <form action={action}>
           <DialogHeader>
             <DialogTitle>Create a connection</DialogTitle>
