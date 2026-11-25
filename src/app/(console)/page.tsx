@@ -5,7 +5,9 @@ import { Suspense } from "react";
 
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
+import { dayBuckets, type DayCounts } from "@/components/audit/activity";
 import { AuditTable } from "@/components/audit/audit-table";
+import { SignInChart } from "@/components/audit/sign-in-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,6 +90,24 @@ export default async function OverviewPage() {
         </div>
       ) : null}
       {canAudit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign-in activity</CardTitle>
+            <CardDescription>Sign-ins and refusals over the last {ACTIVITY_DAYS} days.</CardDescription>
+            <CardAction>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/audit?type=authentication.succeeded&period=7d">See the sign-ins</Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <Suspense fallback={<Skeleton className="h-56 w-full" />}>
+              <SignInActivity />
+            </Suspense>
+          </CardContent>
+        </Card>
+      ) : null}
+      {canAudit ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -123,6 +143,28 @@ export default async function OverviewPage() {
       ) : null}
     </>
   );
+}
+
+const ACTIVITY_DAYS = 7;
+
+/**
+ * The audit API has no aggregation, so each day is one count query per kind: a page of one event,
+ * read for its `total`. Fourteen cheap requests, in parallel, for a week.
+ */
+async function SignInActivity() {
+  const { api } = await signedIn();
+  const days: DayCounts[] = await Promise.all(
+    dayBuckets(new Date(), ACTIVITY_DAYS).map(async ({ since, until }) => {
+      const [signedIn, refused] = await Promise.all([
+        load(api.auditEvents.list({ perPage: 1, types: ["authentication.succeeded"], since, until })),
+        load(api.auditEvents.list({ perPage: 1, types: ["authentication.failed"], since, until })),
+      ]);
+
+      return { day: since, signedIn: signedIn.total, refused: refused.total };
+    }),
+  );
+
+  return <SignInChart days={days} />;
 }
 
 async function Count({ stat }: { stat: Stat }) {

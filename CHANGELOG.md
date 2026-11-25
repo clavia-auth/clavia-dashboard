@@ -9,6 +9,10 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Added
 
+- **Sign-in activity on the overview.** A chart of the last seven days' sign-ins and refused
+  sign-ins, by day (UTC), in light and dark, with the numbers on the bars and in a table for screen
+  readers. Drawn without a chart library, from the audit log's counts, and shown to those who may
+  read it (`read:audit_events`).
 - **Export the audit log as CSV.** The audit log's "Export CSV" button downloads every event matching
   the filters on screen, not just the page shown. The file is streamed from Clavia page by page, so a
   long log never sits in memory, and it stops at the moment the export began. Values a spreadsheet
