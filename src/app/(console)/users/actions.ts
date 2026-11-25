@@ -5,6 +5,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { parseMetadata } from "@/core/claims/claims";
 import { isManagementError, ManagementError } from "@/core/management/errors";
 import { type ActionState, parse, perform } from "@/server/actions";
 
@@ -84,6 +85,29 @@ export async function updateProfile(userId: string, _: ActionState, form: FormDa
     refresh();
 
     return "Profile saved.";
+  });
+}
+
+const metadataSchema = z.object({
+  app_metadata: z
+    .string()
+    .max(64 * 1024, "That is far over the 16 KiB Clavia keeps.")
+    .refine((text) => parseMetadata(text) !== null, 'Enter a JSON object, such as {"plan": "enterprise"}.')
+    .transform((text) => parseMetadata(text) ?? {}),
+});
+
+/** Replace the account's application metadata whole: a key is removed by leaving it out. */
+export async function updateAppMetadata(userId: string, _: ActionState, form: FormData): Promise<ActionState> {
+  const parsed = parse(metadataSchema, { app_metadata: form.get("app_metadata") ?? "" });
+  if (!parsed.ok) {
+    return parsed.state;
+  }
+
+  return perform(async ({ api }) => {
+    await api.users.update(userId, { app_metadata: parsed.data.app_metadata });
+    refresh();
+
+    return "Application metadata saved.";
   });
 }
 

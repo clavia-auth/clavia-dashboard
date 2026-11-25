@@ -11,6 +11,7 @@ type Schemas = components["schemas"];
 export type Page<T> = { items: T[]; total: number; page: number; per_page: number };
 
 export type User = Schemas["User"];
+export type AppMetadata = Schemas["AppMetadata"];
 export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type UserSession = Schemas["UserSession"];
@@ -24,6 +25,8 @@ export type Client = Schemas["Client"];
 export type ClientWithSecret = Schemas["ClientWithSecret"];
 export type ClientCreate = Schemas["ClientCreate"];
 export type ClientUpdate = Schemas["ClientUpdate"];
+export type ClaimMapping = Schemas["ClaimMapping"];
+export type ApplicationClaimMapping = Schemas["ApplicationClaimMapping"];
 export type ClientType = Schemas["ClientType"];
 export type AuthMethod = Schemas["AuthMethod"];
 export type GrantType = Schemas["GrantType"];

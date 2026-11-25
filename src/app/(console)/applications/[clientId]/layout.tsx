@@ -32,6 +32,10 @@ export default async function ApplicationLayout({ params, children }: Props) {
     ...(client.grant_types.includes("authorization_code")
       ? [{ label: "Connections", href: `${base}/connections` as Route }]
       : []),
+    // A third-party application is shown what it is given, and no consent screen names a claim.
+    ...(client.is_first_party
+      ? [{ label: "Claims", href: `${base}/claims` as Route, count: client.claims.length }]
+      : []),
     ...(operator.can("read:audit_events") ? [{ label: "Activity", href: `${base}/activity` as Route }] : []),
   ];
 
