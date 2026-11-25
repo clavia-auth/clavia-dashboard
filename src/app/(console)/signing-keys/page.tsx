@@ -11,12 +11,13 @@ import { ActiveBadge } from "@/components/app/status-badges";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { SigningKey } from "@/contract";
+import type { SamlKey, SigningKey } from "@/contract";
 import { isManagementError } from "@/core/management/errors";
 import { load } from "@/server/load";
 import { signedIn } from "@/server/operator";
 
 import { RotateKey } from "./rotate-key";
+import { RotateSamlKeys } from "./rotate-saml-keys";
 
 export const metadata: Metadata = { title: "Signing keys" };
 
@@ -92,6 +93,91 @@ export default async function SigningKeysPage() {
                   </TableCell>
                   <TableCell className="pr-4 text-muted-foreground">
                     {key.published_until === null ? "—" : <RelativeTime value={key.published_until} />}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+      <SamlKeys canRotate={operator.can("create:signing_keys")} />
+    </>
+  );
+}
+
+const SAML_STATUS = { current: "Current", next: "Next, not used yet", retired: "Retired" } as const;
+
+/**
+ * This server's keys as a SAML service provider, beside the token keys: the certificates identity
+ * providers pin, and each pair's place in the rotation. Never key material.
+ */
+async function SamlKeys({ canRotate }: { canRotate: boolean }) {
+  const { api } = await signedIn();
+  let keys: SamlKey[] | null = null;
+  let elsewhere = "";
+  try {
+    keys = await load(api.samlKeys.list());
+  } catch (error) {
+    unstable_rethrow(error);
+    if (!isManagementError(error, "conflict")) {
+      throw error;
+    }
+    elsewhere = error.message;
+  }
+
+  return (
+    <>
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-3xl space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight">SAML keys</h2>
+          <p className="text-sm text-muted-foreground">
+            This server&apos;s keys as a SAML service provider: one signs its requests, one receives the assertions
+            identity providers encrypt. Each is published as a self-signed certificate in the metadata an identity
+            provider reads; the private half never leaves its backend.
+          </p>
+        </div>
+        {keys !== null && canRotate ? <RotateSamlKeys first={keys.length === 0} /> : null}
+      </div>
+      <Card className="gap-0 py-0">
+        {keys === null ? (
+          <EmptyState icon={LockKeyholeIcon} title="SAML keys are kept elsewhere" description={elsewhere} />
+        ) : keys.length === 0 ? (
+          <EmptyState
+            icon={KeyRoundIcon}
+            title="No SAML key yet"
+            description="Without one, requests to identity providers are unsigned and assertions cannot be encrypted."
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Certificate (SHA-256)</TableHead>
+                <TableHead>Use</TableHead>
+                <TableHead>Place</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="pr-4">Certificate expires</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {keys.map((key) => (
+                <TableRow key={key.kid}>
+                  <TableCell className="pl-4">
+                    <span className="flex items-center gap-1">
+                      <code className="font-mono text-xs break-all">{key.certificate_sha256}</code>
+                      <CopyButton value={key.certificate_sha256} label="Copy the fingerprint" />
+                    </span>
+                  </TableCell>
+                  <TableCell>{key.usage === "signing" ? "Signs requests" : "Receives encrypted assertions"}</TableCell>
+                  <TableCell>
+                    <Badge variant={key.status === "current" ? "secondary" : "outline"}>
+                      {SAML_STATUS[key.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <RelativeTime value={key.created_at} />
+                  </TableCell>
+                  <TableCell className="pr-4 text-muted-foreground">
+                    <RelativeTime value={key.valid_until} />
                   </TableCell>
                 </TableRow>
               ))}

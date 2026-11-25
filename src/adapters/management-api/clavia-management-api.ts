@@ -14,6 +14,7 @@ import type {
   ManagementApi,
   ResourceServersApi,
   RolesApi,
+  SamlKeysApi,
   SigningKeysApi,
   UsersApi,
   WebhooksApi,
@@ -35,6 +36,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
+  readonly samlKeys: SamlKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
   readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
@@ -174,11 +176,18 @@ export class ClaviaManagementApi implements ManagementApi {
       update: (name, changes) =>
         read(http.PATCH("/api/v1/connections/{name}", { params: { path: { name } }, body: changes })),
       delete: (name) => done(http.DELETE("/api/v1/connections/{name}", { params: { path: { name } } })),
+      refreshMetadata: (name) =>
+        read(http.POST("/api/v1/connections/{name}/refresh-metadata", { params: { path: { name } } })),
     };
 
     this.signingKeys = {
       list: () => read(http.GET("/api/v1/signing-keys")),
       rotate: () => read(http.POST("/api/v1/signing-keys/rotate")),
+    };
+
+    this.samlKeys = {
+      list: () => read(http.GET("/api/v1/saml-keys")),
+      rotate: () => read(http.POST("/api/v1/saml-keys/rotate")),
     };
 
     this.initialAccessTokens = {

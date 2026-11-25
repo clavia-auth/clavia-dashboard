@@ -23,6 +23,8 @@ import type {
   RoleCreate,
   RoleUpdate,
   RoleWithPermissions,
+  SamlKey,
+  SamlKeyRotation,
   SigningKey,
   SigningKeyRotation,
   User,
@@ -52,6 +54,7 @@ export interface ManagementApi {
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
+  readonly samlKeys: SamlKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
   readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
@@ -115,6 +118,17 @@ export interface SigningKeysApi {
 }
 
 /**
+ * This server's own keys as a SAML service provider: certificates, never key material. Both
+ * operations answer a `conflict` where the keys live in a KMS and are rotated there.
+ */
+export interface SamlKeysApi {
+  /** The current pair, the next one if a rotation is under way, and the retired ones still kept. */
+  list(): Promise<SamlKey[]>;
+  /** One step of the rollover: generate, introduce a next pair, wait, or promote it. */
+  rotate(): Promise<SamlKeyRotation>;
+}
+
+/**
  * What lets software register itself as a client (RFC 7591): a token an operator hands to a
  * partner, good for a number of registrations until a date. Its value is shown once, when it is
  * issued, and never read again.
@@ -164,6 +178,8 @@ export interface ConnectionsApi {
   create(connection: ConnectionCreate): Promise<Connection>;
   update(name: string, changes: ConnectionUpdate): Promise<Connection>;
   delete(name: string): Promise<void>;
+  /** Read a SAML connection's metadata URL again, after its identity provider rolled a certificate over. */
+  refreshMetadata(name: string): Promise<Connection>;
 }
 
 /** Filters on the audit trail; they combine. `types` are matched as any of them. */

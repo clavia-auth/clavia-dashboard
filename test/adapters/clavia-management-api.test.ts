@@ -402,4 +402,79 @@ describe("ClaviaManagementApi", () => {
       });
     });
   });
+
+  describe("SAML", () => {
+    const base = "https://management.clavia.test/api/v1";
+
+    it("registers a SAML connection with the identity provider's metadata URL and options", async () => {
+      const { requests, api } = server(() => json({ name: "acme" }, 201));
+
+      await api.connections.create({
+        name: "acme",
+        display_name: "Acme",
+        strategy: "saml",
+        is_enabled: true,
+        is_domain_connection: false,
+        allow_sign_up: false,
+        require_verified_email: false,
+        saml: {
+          metadata_url: "https://idp.example/metadata",
+          name_id_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+          email_trusted: true,
+          sign_requests: true,
+          require_encryption: false,
+          require_gcm: false,
+        },
+      });
+
+      expect(await requests[0]?.json()).toMatchObject({
+        strategy: "saml",
+        saml: { metadata_url: "https://idp.example/metadata", email_trusted: true, require_gcm: false },
+      });
+    });
+
+    it("reads the metadata again, by connection name", async () => {
+      const { requests, api } = server(() => json({ name: "acme" }));
+
+      await api.connections.refreshMetadata("acme");
+
+      expect(requests[0]?.method).toBe("POST");
+      expect(requests[0]?.url).toBe(`${base}/connections/acme/refresh-metadata`);
+    });
+
+    it("points at the metadata URL when the identity provider's metadata is refused", async () => {
+      const { api } = server(() =>
+        json(
+          {
+            title: "Unprocessable Content",
+            status: 422,
+            detail: "The request was refused.",
+            errors: [{ pointer: "/saml/metadata_url", detail: "It must be https." }],
+          },
+          422,
+        ),
+      );
+
+      await expect(api.connections.refreshMetadata("acme")).rejects.toMatchObject({
+        kind: "invalid",
+        fields: [{ pointer: "/saml/metadata_url" }],
+      });
+    });
+
+    it("lists and rotates the service provider keys, and says so when they live in a KMS", async () => {
+      const { requests, api } = server((request) =>
+        request.method === "POST"
+          ? json({ type: "about:blank", title: "Conflict", status: 409, detail: "The keys are kept in a KMS." }, 409)
+          : json([]),
+      );
+
+      await expect(api.samlKeys.list()).resolves.toEqual([]);
+      await expect(api.samlKeys.rotate()).rejects.toMatchObject({ kind: "conflict" });
+
+      expect(requests.map((request) => `${request.method} ${new URL(request.url).pathname}`)).toEqual([
+        "GET /api/v1/saml-keys",
+        "POST /api/v1/saml-keys/rotate",
+      ]);
+    });
+  });
 });

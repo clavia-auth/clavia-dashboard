@@ -13,6 +13,32 @@ const optional = z
   .trim()
   .transform((value) => (value === "" ? undefined : value));
 
+/** An attribute name or a URL left empty is not sent, so Clavia's default stands. */
+const attribute = optional.pipe(z.string().max(255, "At most 255 characters.").optional());
+
+const PERSISTENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent";
+
+const samlSchema = z
+  .object({
+    metadata_url: optional.pipe(z.url("An https URL.").max(2048).optional()),
+    metadata: optional.pipe(z.string().max(1_048_576, "At most 1 MiB.").optional()),
+    subject_attribute: attribute,
+    // Persistent is Clavia's default, and the only format a subject should come from.
+    name_id_format: z.literal(PERSISTENT),
+    email_attribute: attribute,
+    email_trusted: z.boolean(),
+    name_attribute: attribute,
+    given_name_attribute: attribute,
+    family_name_attribute: attribute,
+    sign_requests: z.boolean(),
+    require_encryption: z.boolean(),
+    require_gcm: z.boolean(),
+  })
+  .refine((saml) => (saml.metadata_url === undefined) !== (saml.metadata === undefined), {
+    message: "Give the identity provider's metadata, as a URL or as a document, not both.",
+    path: ["metadata_url"],
+  });
+
 const createSchema = z.discriminatedUnion("strategy", [
   z.object({
     strategy: z.literal("database"),
@@ -41,6 +67,18 @@ const createSchema = z.discriminatedUnion("strategy", [
     allow_sign_up: z.literal(false),
     require_verified_email: z.literal(false),
   }),
+  z.object({
+    strategy: z.literal("saml"),
+    name: z
+      .string()
+      .trim()
+      .regex(/^[a-z0-9][a-z0-9-]{0,62}$/, "Lowercase letters, digits and dashes, such as acme-entra."),
+    display_name: z.string().trim().min(1, "Give it a name people read.").max(100),
+    is_domain_connection: z.boolean(),
+    saml: samlSchema,
+    allow_sign_up: z.literal(false),
+    require_verified_email: z.literal(false),
+  }),
 ]);
 
 export async function createConnection(_: ActionState, form: FormData): Promise<ActionState> {
@@ -55,6 +93,20 @@ export async function createConnection(_: ActionState, form: FormData): Promise<
     oidc_client_id: form.get("oidc_client_id") ?? "",
     oidc_client_secret: form.get("oidc_client_secret") ?? "",
     oidc_scope: form.get("oidc_scope") ?? "",
+    saml: {
+      metadata_url: form.get("saml_metadata_url") ?? "",
+      metadata: form.get("saml_metadata") ?? "",
+      subject_attribute: form.get("saml_subject_attribute") ?? "",
+      name_id_format: PERSISTENT,
+      email_attribute: form.get("saml_email_attribute") ?? "",
+      email_trusted: form.get("saml_email_trusted") === "on",
+      name_attribute: form.get("saml_name_attribute") ?? "",
+      given_name_attribute: form.get("saml_given_name_attribute") ?? "",
+      family_name_attribute: form.get("saml_family_name_attribute") ?? "",
+      sign_requests: form.get("saml_sign_requests") === "on",
+      require_encryption: form.get("saml_require_encryption") === "on",
+      require_gcm: form.get("saml_require_gcm") === "on",
+    },
   });
   if (!parsed.ok) {
     return parsed.state;
@@ -120,6 +172,16 @@ export async function updateConnection(
     refresh();
 
     return "Connection saved.";
+  });
+}
+
+/** Read a SAML connection's metadata URL again, after its identity provider rolled a certificate over. */
+export async function refreshSamlMetadata(name: string): Promise<ActionState> {
+  return perform(async ({ api }) => {
+    await api.connections.refreshMetadata(name);
+    refresh();
+
+    return "Metadata read again.";
   });
 }
 

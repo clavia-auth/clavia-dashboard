@@ -8,6 +8,7 @@ import { signedIn } from "@/server/operator";
 
 import { STRATEGIES } from "../strategy";
 import { ConnectionForm, DeleteConnectionButton } from "./connection-form";
+import { SamlPanel } from "./saml-panel";
 
 type Props = { params: Promise<{ name: string }> };
 
@@ -29,7 +30,7 @@ export default async function ConnectionPage({ params }: Props) {
     connection.strategy === "social" || connection.strategy === "passwordless" || connection.name === "password";
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <PageHeader
         title={connection.display_name}
         description={
@@ -52,6 +53,9 @@ export default async function ConnectionPage({ params }: Props) {
         }
       />
       <ConnectionForm connection={connection} editable={operator.can("update:connections")} />
-    </>
+      {connection.saml !== null ? (
+        <SamlPanel name={connection.name} saml={connection.saml} canRefresh={operator.can("update:connections")} />
+      ) : null}
+    </div>
   );
 }
