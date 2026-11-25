@@ -59,6 +59,16 @@ test("the audit log exports as CSV", async ({ page }) => {
   expect((await response.text()).replace("\uFEFF", "")).toMatch(/^id,occurred_at,type,outcome,/);
 });
 
+test("the overview charts the week's sign-ins", async ({ page }) => {
+  const errors = watchForErrors(page);
+
+  await page.goto("./");
+
+  await expect(page.getByText("Sign-in activity", { exact: true })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Sign-ins and refused sign-ins by day" })).toBeAttached();
+  expect(errors).toEqual([]);
+});
+
 test("the command menu jumps to a section", async ({ page }) => {
   await page.goto("./");
   await page.keyboard.press("ControlOrMeta+k");
