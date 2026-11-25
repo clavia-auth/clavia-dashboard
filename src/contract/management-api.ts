@@ -2229,7 +2229,12 @@ export type components = {
             sign_requests: boolean;
             /** @description Whether a plain assertion is refused. */
             require_encryption: boolean;
-            /** @description Whether an assertion encrypted with AES-CBC is refused. */
+            /**
+             * @description Whether an assertion encrypted with AES-CBC is refused: on unless turned off. CBC is
+             *     unauthenticated, and accepting it weakens GCM too (the algorithm an assertion names is not
+             *     authenticated), so turn it off only for an identity provider that encrypts with CBC, as
+             *     ADFS does by default.
+             */
             require_gcm: boolean;
             /** @description What to give the identity provider's administrator. */
             service_provider: {
@@ -2267,7 +2272,11 @@ export type components = {
             sign_requests: boolean;
             /** @default false */
             require_encryption: boolean;
-            /** @default false */
+            /**
+             * @description On by default: AES-CBC refused. Turn it off only for an identity provider that encrypts
+             *     with CBC (ADFS's default).
+             * @default true
+             */
             require_gcm: boolean;
         };
         ConnectionDisplayName: string;
