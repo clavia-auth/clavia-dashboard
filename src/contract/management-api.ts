@@ -924,6 +924,63 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/provisioning-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List provisioning tokens
+         * @description List provisioning tokens, newest first, optionally those of one connection, optionally
+         *     searching the description.
+         *
+         *     Never a token's value, which is not kept.
+         */
+        get: operations["listProvisioningTokens"];
+        put?: never;
+        /**
+         * Issue a provisioning token
+         * @description The answer carries the token, once, and the base URL to give the directory with it: store
+         *     the token or hand it over now, it cannot be read again. The connection must be a pool or an
+         *     enterprise connection (OpenID Connect, SAML); anything else is `422`. Recorded as
+         *     `provisioning_token.issued`.
+         */
+        post: operations["issueProvisioningToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/provisioning-tokens/{provisioning_token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provisioning_token_id: components["parameters"]["ProvisioningTokenId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a provisioning token
+         * @description The token's state and options. Never its value, which is not kept.
+         */
+        get: operations["getProvisioningToken"];
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a provisioning token
+         * @description The directory holding it reaches `/scim/v2` no more, at once. The accounts it provisioned
+         *     stay. Revoking a revoked token changes nothing. Recorded as `provisioning_token.revoked`.
+         */
+        delete: operations["revokeProvisioningToken"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/webhooks": {
         parameters: {
             query?: never;
@@ -1294,20 +1351,26 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "saml_key.generated" | "saml_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "saml_key.generated" | "saml_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "provisioning_token.issued" | "provisioning_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
             /**
              * @description Who acted: a `person` (with the application they acted through, if any), an
-             *     `application` as itself, the `system` console, or `anonymous` — nobody known yet.
+             *     `application` as itself, a directory through its `provisioning` token (SCIM), the `system`
+             *     console, or `anonymous` — nobody known yet.
              */
             actor: {
                 /** @enum {string} */
-                kind: "person" | "application" | "system" | "anonymous";
+                kind: "person" | "application" | "provisioning" | "system" | "anonymous";
                 /** Format: uuid */
                 user_id: string | null;
                 client_id: string | null;
+                /**
+                 * Format: uuid
+                 * @description The provisioning token a directory acted with; set for `provisioning` only.
+                 */
+                provisioning_token_id: string | null;
             };
             target: {
                 type: components["schemas"]["AuditTargetType"];
@@ -1323,7 +1386,7 @@ export type components = {
         /** @enum {string} */
         AuditOutcome: "success" | "failure";
         /** @enum {string} */
-        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "saml_key" | "initial_access_token" | "webhook";
+        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "saml_key" | "initial_access_token" | "provisioning_token" | "webhook";
         /** @description A SAML service provider key, by its certificate; never its private half. */
         SamlKey: {
             /** @description The RFC 7638 thumbprint of the public key. */
@@ -1486,7 +1549,7 @@ export type components = {
          *
          *     The example was posted with `webhook-id: 9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d`,
          *     `webhook-timestamp: 1772616600` and
-         *     `webhook-signature: v1,nS1KX8YY7AzTQPivOXvcPeb+CAokxqbo2vgMk2MqvEY=`, signed with the
+         *     `webhook-signature: v1,68MpbkTCRDhYK+2J3FjqldjIIqgDCOUQWa5Nl1GaTAM=`, signed with the
          *     secret of the `WebhookWithSecret` example (not a real one), over the example encoded as
          *     compact JSON in the order shown.
          * @example {
@@ -1500,7 +1563,8 @@ export type components = {
          *         "actor": {
          *           "kind": "person",
          *           "user_id": "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f",
-         *           "client_id": "Dsh8Kq2Wm5Np9Rt3Vx6Zb1Cf4Gj7Ln0Ps"
+         *           "client_id": "Dsh8Kq2Wm5Np9Rt3Vx6Zb1Cf4Gj7Ln0Ps",
+         *           "provisioning_token_id": null
          *         },
          *         "target": {
          *           "type": "webhook",
@@ -1597,6 +1661,103 @@ export type components = {
              */
             token: string;
         };
+        /** @description One page of provisioning tokens, newest first. */
+        ProvisioningTokenPage: {
+            items: components["schemas"]["ProvisioningToken"][];
+            total: components["schemas"]["Total"];
+            page: components["schemas"]["PageNumber"];
+            per_page: components["schemas"]["PerPage"];
+        };
+        ProvisioningTokenCreate: {
+            connection: components["schemas"]["ConnectionName"];
+            /** @description Which directory it is for. The token itself is never shown again, so this is how it is told apart. */
+            description: string;
+            /**
+             * @description Seconds until it expires, from a day to two years. A year by default.
+             * @default 31536000
+             */
+            expires_in: number;
+            subject_attribute?: components["schemas"]["ProvisioningSubjectAttribute"];
+            /**
+             * @description Whether the addresses the directory sends are taken as verified. Off by default: only an
+             *     operator's word makes a directory's address trusted, so a directory cannot verify an address
+             *     it does not own and reach an existing account through it.
+             * @default false
+             */
+            addresses_trusted: boolean;
+            /**
+             * @description Whether a SCIM `DELETE` deactivates the account instead of deleting it, for operators who
+             *     must keep accounts. Off by default, as RFC 7644 §3.6 says delete.
+             * @default false
+             */
+            delete_deactivates: boolean;
+        };
+        ProvisioningToken: {
+            /** Format: uuid */
+            id: string;
+            connection: components["schemas"]["ConnectionName"];
+            description: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            /**
+             * @description Whether an active token expires within thirty days: issue the next one, and give it to the
+             *     directory, before provisioning stops.
+             */
+            expiring_soon: boolean;
+            state: components["schemas"]["ProvisioningTokenState"];
+            /** Format: date-time */
+            revoked_at: string | null;
+            subject_attribute: components["schemas"]["ProvisioningSubjectAttribute"];
+            addresses_trusted: boolean;
+            delete_deactivates: boolean;
+        };
+        /** @description A token just issued, with its value, which is never shown again, and where to send it. */
+        IssuedProvisioningToken: {
+            /** Format: uuid */
+            id: string;
+            connection: components["schemas"]["ConnectionName"];
+            description: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            /**
+             * @description Whether an active token expires within thirty days: issue the next one, and give it to the
+             *     directory, before provisioning stops.
+             */
+            expiring_soon: boolean;
+            state: components["schemas"]["ProvisioningTokenState"];
+            /** Format: date-time */
+            revoked_at: string | null;
+            subject_attribute: components["schemas"]["ProvisioningSubjectAttribute"];
+            addresses_trusted: boolean;
+            delete_deactivates: boolean;
+            /**
+             * @description The value the directory sends as `Authorization: Bearer` (Entra ID's "Secret Token", Okta's
+             *     HTTP header). Only its digest is kept.
+             */
+            token: string;
+            /**
+             * Format: uri
+             * @description The SCIM base URL to give the directory (Entra ID's "Tenant URL", Okta's "SCIM connector base URL").
+             */
+            base_url: string;
+        };
+        /**
+         * @description `active` reaches `/scim/v2`; `revoked` was stopped by an operator, `expired` passed its date.
+         * @enum {string}
+         */
+        ProvisioningTokenState: "active" | "expired" | "revoked";
+        /**
+         * @description The SCIM attribute naming a person to an enterprise connection: their first SAML or OpenID
+         *     Connect sign-in is found by it. Entra ID sends `externalId` (map it from the object id, which
+         *     its SAML `objectidentifier` claim carries); Okta sends its login as `userName`. Unused for a pool.
+         * @default externalId
+         * @enum {string}
+         */
+        ProvisioningSubjectAttribute: "externalId" | "userName";
         /**
          * @description `active` registers clients; `revoked` was stopped by an operator, `expired` passed its
          *     date, `used_up` registered as many clients as it allows.
@@ -2583,6 +2744,7 @@ export type components = {
         ResourceServerId: string;
         JobId: string;
         InitialAccessTokenId: string;
+        ProvisioningTokenId: string;
         WebhookId: string;
         RoleId: string;
         ConnectionNameParameter: components["schemas"]["ConnectionName"];
@@ -4049,6 +4211,121 @@ export interface operations {
             header?: never;
             path: {
                 initial_access_token_id: components["parameters"]["InitialAccessTokenId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listProvisioningTokens: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page. */
+                per_page?: components["parameters"]["PerPage"];
+                /** @description A case-insensitive substring, taken literally (`%` and `_` are not wildcards). */
+                q?: components["parameters"]["Search"];
+                /** @description Only this connection's tokens. A connection that does not exist has none. */
+                connection?: components["schemas"]["ConnectionName"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of provisioning tokens. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvisioningTokenPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    issueProvisioningToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProvisioningTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description The token, with its value and the SCIM base URL. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedProvisioningToken"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getProvisioningToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provisioning_token_id: components["parameters"]["ProvisioningTokenId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvisioningToken"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    revokeProvisioningToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provisioning_token_id: components["parameters"]["ProvisioningTokenId"];
             };
             cookie?: never;
         };

@@ -61,6 +61,16 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
     group: "Initial access tokens",
     tone: "warning",
   },
+  "provisioning_token.issued": {
+    label: "Provisioning token issued",
+    group: "Provisioning tokens",
+    tone: "positive",
+  },
+  "provisioning_token.revoked": {
+    label: "Provisioning token revoked",
+    group: "Provisioning tokens",
+    tone: "warning",
+  },
   "webhook.created": { label: "Webhook created", group: "Webhooks", tone: "positive" },
   "webhook.updated": { label: "Webhook changed", group: "Webhooks", tone: "neutral" },
   "webhook.deleted": { label: "Webhook deleted", group: "Webhooks", tone: "warning" },
@@ -83,7 +93,7 @@ export function isEventType(value: string): value is AuditEventType {
 
 /**
  * Where an event's target lives in the dashboard; null for what has no page (a signing key, an
- * initial access token).
+ * initial access token, a provisioning token).
  */
 export function targetHref(type: AuditTargetType, id: string): Route | null {
   const path = {
@@ -95,6 +105,7 @@ export function targetHref(type: AuditTargetType, id: string): Route | null {
     signing_key: null,
     saml_key: null,
     initial_access_token: null,
+    provisioning_token: null,
     webhook: "/webhooks",
   }[type];
 
@@ -110,6 +121,7 @@ export const TARGET_TYPES: Readonly<Record<AuditTargetType, string>> = {
   signing_key: "Signing key",
   saml_key: "SAML key",
   initial_access_token: "Initial access token",
+  provisioning_token: "Provisioning token",
   webhook: "Webhook",
 };
 
@@ -120,6 +132,8 @@ export function actorLabel(actor: AuditEvent["actor"]): string {
       return "User";
     case "application":
       return "Application";
+    case "provisioning":
+      return "Directory";
     case "system":
       return "System";
     case "anonymous":

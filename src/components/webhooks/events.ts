@@ -24,6 +24,7 @@ const CONFIGURATION = [
   "Signing keys",
   "SAML keys",
   "Initial access tokens",
+  "Provisioning tokens",
   "Webhooks",
   "Passkeys",
 ] as const;
