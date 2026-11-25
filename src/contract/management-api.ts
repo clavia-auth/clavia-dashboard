@@ -849,6 +849,94 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List webhooks
+         * @description Every endpoint, oldest first; there are at most twenty. Never a secret.
+         */
+        get: operations["listWebhooks"];
+        put?: never;
+        /**
+         * Create a webhook
+         * @description Register an endpoint. Also needs `read:audit_events` (403 without it).
+         *
+         *     The URL is https and held to the outbound URL policy now (422 naming why, never the
+         *     address it resolved to) and again before every delivery. Each event type must be one the
+         *     audit trail records (422 otherwise), or `["*"]` for all. At most twenty endpoints (409).
+         *
+         *     The answer carries the `secret`, once: store it now, it cannot be read again. Recorded as
+         *     `webhook.created`, with the URL's host only. Nothing is delivered yet by this server
+         *     release: deliveries come with the next one.
+         */
+        post: operations["createWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/{webhook_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a webhook
+         * @description An endpoint, never its secret.
+         */
+        get: operations["getWebhook"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a webhook
+         * @description Nothing more is sent to it. Recorded as `webhook.deleted`.
+         */
+        delete: operations["deleteWebhook"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a webhook
+         * @description Change what is sent; absent fields are left alone. Changing `url` or `events` also needs
+         *     `read:audit_events` (403 without it), and the URL is checked as at creation. Recorded as
+         *     `webhook.updated`, naming the fields changed.
+         */
+        patch: operations["updateWebhook"];
+        trace?: never;
+    };
+    "/api/v1/webhooks/{webhook_id}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a webhook secret
+         * @description A new secret, returned once. The previous one keeps signing beside it for 24 hours
+         *     (`previous_secret_until`), so a receiver can switch without missing a delivery. Recorded as
+         *     `webhook.secret_rotated`.
+         */
+        post: operations["rotateWebhookSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/users-imports": {
         parameters: {
             query?: never;
@@ -1081,7 +1169,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -1110,7 +1198,7 @@ export type components = {
         /** @enum {string} */
         AuditOutcome: "success" | "failure";
         /** @enum {string} */
-        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "initial_access_token";
+        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "initial_access_token" | "webhook";
         /** @description One page of initial access tokens, newest first. */
         InitialAccessTokenPage: {
             items: components["schemas"]["InitialAccessToken"][];
@@ -1146,6 +1234,67 @@ export type components = {
             state: components["schemas"]["InitialAccessTokenState"];
             /** Format: date-time */
             revoked_at: string | null;
+        };
+        Webhook: {
+            /** Format: uuid */
+            id: string;
+            /** @description Where deliveries go. https; its address is checked before every delivery. */
+            url: string;
+            description: string;
+            events: components["schemas"]["WebhookEvents"];
+            /** @description Whether deliveries are made. A disabled endpoint keeps its settings. */
+            is_enabled: boolean;
+            /**
+             * Format: date-time
+             * @description Until when the secret before the last rotation still signs beside the current one.
+             */
+            previous_secret_until: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** @description An endpoint, with the only copy of its new secret there will ever be. */
+        WebhookWithSecret: {
+            /** Format: uuid */
+            id: string;
+            /** @description Where deliveries go. https; its address is checked before every delivery. */
+            url: string;
+            description: string;
+            events: components["schemas"]["WebhookEvents"];
+            /** @description Whether deliveries are made. A disabled endpoint keeps its settings. */
+            is_enabled: boolean;
+            /**
+             * Format: date-time
+             * @description Until when the secret before the last rotation still signs beside the current one.
+             */
+            previous_secret_until: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /**
+             * @description `whsec_` and the base64 of 32 random bytes (Standard Webhooks). A receiver verifies each
+             *     delivery's `webhook-signature` with the decoded bytes. Never shown again.
+             */
+            secret: string;
+        };
+        /**
+         * @description The audit event types delivered (each one `GET /api/v1/audit-events` can report), or
+         *     `["*"]` for all. An unknown type is refused, so a typo is never a silent "never".
+         */
+        WebhookEvents: string[];
+        WebhookCreate: {
+            url: string;
+            /** @default  */
+            description: string;
+            events: components["schemas"]["WebhookEvents"];
+        };
+        WebhookUpdate: {
+            url?: string;
+            description?: string;
+            events?: components["schemas"]["WebhookEvents"];
+            is_enabled?: boolean;
         };
         /** @description A token just issued, with its value, which is never shown again. */
         IssuedInitialAccessToken: {
@@ -2061,6 +2210,7 @@ export type components = {
         ResourceServerId: string;
         JobId: string;
         InitialAccessTokenId: string;
+        WebhookId: string;
         RoleId: string;
         ConnectionNameParameter: components["schemas"]["ConnectionName"];
         PasskeyId: string;
@@ -3461,6 +3611,172 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The endpoints. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    createWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookCreate"];
+            };
+        };
+        responses: {
+            /** @description The endpoint, with its secret. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookWithSecret"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The endpoint. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    deleteWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    updateWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookUpdate"];
+            };
+        };
+        responses: {
+            /** @description The endpoint, as updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    rotateWebhookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The endpoint, with its new secret. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookWithSecret"];
+                };
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];

@@ -57,6 +57,13 @@ tags:
       token an operator hands to a partner, good for a number of registrations until a date,
       revocable. A client registered with one is always third-party, so it never reaches a system
       API. The token is shown once, when it is issued; only its digest is kept.
+  - name: webhooks
+    x-displayName: Webhooks
+    description: |
+      Endpoints that receive the audit events they subscribe to, as `GET /api/v1/audit-events`
+      renders them, signed per the Standard Webhooks specification with a secret this server
+      generates, shows once and keeps sealed. Registering one, or changing where it points or what
+      it hears, also needs `read:audit_events`: streaming the trail is reading it.
   - name: resource-servers
     x-displayName: APIs
     description: The APIs tokens are issued for, and the permissions each defines.
@@ -1803,6 +1810,212 @@ paths:
         '422':
           $ref: '#/components/responses/Unprocessable'
 
+  /api/v1/webhooks:
+    get:
+      tags: [webhooks]
+      operationId: listWebhooks
+      summary: List webhooks
+      description: Every endpoint, oldest first; there are at most twenty. Never a secret.
+      security:
+        - managementToken: [read:webhooks]
+      responses:
+        '200':
+          description: The endpoints.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 20
+                items:
+                  $ref: '#/components/schemas/Webhook'
+              examples:
+                WebhookList:
+                  $ref: '#/components/examples/WebhookList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    post:
+      tags: [webhooks]
+      operationId: createWebhook
+      summary: Create a webhook
+      description: |
+        Register an endpoint. Also needs `read:audit_events` (403 without it).
+
+        The URL is https and held to the outbound URL policy now (422 naming why, never the
+        address it resolved to) and again before every delivery. Each event type must be one the
+        audit trail records (422 otherwise), or `["*"]` for all. At most twenty endpoints (409).
+
+        The answer carries the `secret`, once: store it now, it cannot be read again. Recorded as
+        `webhook.created`, with the URL's host only. Nothing is delivered yet by this server
+        release: deliveries come with the next one.
+      security:
+        - managementToken: [create:webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreate'
+            examples:
+              WebhookCreate:
+                $ref: '#/components/examples/WebhookCreate'
+      responses:
+        '201':
+          description: The endpoint, with its secret.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookWithSecret'
+              examples:
+                WebhookWithSecret:
+                  $ref: '#/components/examples/WebhookWithSecret'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/webhooks/{webhook_id}:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    get:
+      tags: [webhooks]
+      operationId: getWebhook
+      summary: Get a webhook
+      description: An endpoint, never its secret.
+      security:
+        - managementToken: [read:webhooks]
+      responses:
+        '200':
+          description: The endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+              examples:
+                Webhook:
+                  $ref: '#/components/examples/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    patch:
+      tags: [webhooks]
+      operationId: updateWebhook
+      summary: Update a webhook
+      description: |
+        Change what is sent; absent fields are left alone. Changing `url` or `events` also needs
+        `read:audit_events` (403 without it), and the URL is checked as at creation. Recorded as
+        `webhook.updated`, naming the fields changed.
+      security:
+        - managementToken: [update:webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdate'
+            examples:
+              WebhookUpdate:
+                $ref: '#/components/examples/WebhookUpdate'
+      responses:
+        '200':
+          description: The endpoint, as updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+              examples:
+                Webhook:
+                  $ref: '#/components/examples/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags: [webhooks]
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      description: Nothing more is sent to it. Recorded as `webhook.deleted`.
+      security:
+        - managementToken: [delete:webhooks]
+      responses:
+        '204':
+          description: Deleted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/webhooks/{webhook_id}/rotate-secret:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    post:
+      tags: [webhooks]
+      operationId: rotateWebhookSecret
+      summary: Rotate a webhook secret
+      description: |
+        A new secret, returned once. The previous one keeps signing beside it for 24 hours
+        (`previous_secret_until`), so a receiver can switch without missing a delivery. Recorded as
+        `webhook.secret_rotated`.
+      security:
+        - managementToken: [update:webhooks]
+      responses:
+        '200':
+          description: The endpoint, with its new secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookWithSecret'
+              examples:
+                WebhookWithSecret:
+                  $ref: '#/components/examples/WebhookWithSecret'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
   /api/v1/jobs/users-imports:
     post:
       tags: [users]
@@ -2112,6 +2325,10 @@ components:
             read:initial_access_tokens: View the initial access tokens issued
             create:initial_access_tokens: Issue initial access tokens, which register third-party clients
             delete:initial_access_tokens: Revoke initial access tokens
+            read:webhooks: View the endpoints audit events are sent to
+            create:webhooks: Create the endpoints audit events are sent to
+            update:webhooks: Modify the endpoints audit events are sent to
+            delete:webhooks: Delete the endpoints audit events are sent to
 
   headers:
     Location:
@@ -2183,6 +2400,13 @@ components:
         format: uuid
     InitialAccessTokenId:
       name: initial_access_token_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WebhookId:
+      name: webhook_id
       in: path
       required: true
       schema:
@@ -2942,6 +3166,59 @@ components:
       value:
         description: "Partner Analytics onboarding"
         max_uses: 5
+    Webhook:
+      summary: An endpoint for user changes
+      value:
+        id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c"
+        url: "https://siem.acme.example/hooks/clavia"
+        description: "SIEM"
+        events: ["user.created", "user.deleted", "user.updated"]
+        is_enabled: true
+        previous_secret_until: null
+        created_at: "2026-03-04T09:00:00Z"
+        updated_at: "2026-03-04T09:00:00Z"
+    WebhookList:
+      summary: Two endpoints
+      value:
+        - id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c"
+          url: "https://siem.acme.example/hooks/clavia"
+          description: "SIEM"
+          events: ["user.created", "user.deleted", "user.updated"]
+          is_enabled: true
+          previous_secret_until: null
+          created_at: "2026-03-04T09:00:00Z"
+          updated_at: "2026-03-04T09:00:00Z"
+        - id: "8c1f6d0b-3a5e-4b2f-8c4d-9e0f1a2b3c4d"
+          url: "https://alerts.acme.example/clavia"
+          description: "Security alerts"
+          events: ["*"]
+          is_enabled: false
+          previous_secret_until: "2026-03-06T10:00:00Z"
+          created_at: "2026-03-04T10:00:00Z"
+          updated_at: "2026-03-05T10:00:00Z"
+    WebhookWithSecret:
+      summary: An endpoint, with its secret, once
+      value:
+        id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c"
+        url: "https://siem.acme.example/hooks/clavia"
+        description: "SIEM"
+        events: ["user.created", "user.deleted", "user.updated"]
+        is_enabled: true
+        previous_secret_until: null
+        created_at: "2026-03-04T09:00:00Z"
+        updated_at: "2026-03-04T09:00:00Z"
+        secret: "whsec_bm90LWEtcmVhbC1zZWNyZXQtanVzdC1hbi1leGFtcGxlISE="
+    WebhookCreate:
+      summary: An endpoint for user changes
+      value:
+        url: "https://siem.acme.example/hooks/clavia"
+        description: "SIEM"
+        events: ["user.created", "user.updated", "user.deleted"]
+    WebhookUpdate:
+      summary: Every event, paused for now
+      value:
+        events: ["*"]
+        is_enabled: false
     IssuedInitialAccessToken:
       summary: The token, shown once
       value:
@@ -3242,7 +3519,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated]
         occurred_at:
           type: string
           format: date-time
@@ -3300,7 +3577,7 @@ components:
 
     AuditTargetType:
       type: string
-      enum: [user, client, resource_server, role, connection, signing_key, initial_access_token]
+      enum: [user, client, resource_server, role, connection, signing_key, initial_access_token, webhook]
 
     InitialAccessTokenPage:
       description: One page of initial access tokens, newest first.
@@ -3371,6 +3648,117 @@ components:
           type: string
           format: date-time
           nullable: true
+
+    Webhook:
+      type: object
+      additionalProperties: false
+      required: [id, url, description, events, is_enabled, previous_secret_until, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          description: Where deliveries go. https; its address is checked before every delivery.
+        description:
+          type: string
+        events:
+          $ref: '#/components/schemas/WebhookEvents'
+        is_enabled:
+          type: boolean
+          description: Whether deliveries are made. A disabled endpoint keeps its settings.
+        previous_secret_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Until when the secret before the last rotation still signs beside the current one.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WebhookWithSecret:
+      description: An endpoint, with the only copy of its new secret there will ever be.
+      type: object
+      additionalProperties: false
+      required: [id, url, description, events, is_enabled, previous_secret_until, created_at, updated_at, secret]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          description: Where deliveries go. https; its address is checked before every delivery.
+        description:
+          type: string
+        events:
+          $ref: '#/components/schemas/WebhookEvents'
+        is_enabled:
+          type: boolean
+          description: Whether deliveries are made. A disabled endpoint keeps its settings.
+        previous_secret_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Until when the secret before the last rotation still signs beside the current one.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        secret:
+          type: string
+          description: |
+            `whsec_` and the base64 of 32 random bytes (Standard Webhooks). A receiver verifies each
+            delivery's `webhook-signature` with the decoded bytes. Never shown again.
+
+    WebhookEvents:
+      type: array
+      minItems: 1
+      maxItems: 100
+      items:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: |
+        The audit event types delivered (each one `GET /api/v1/audit-events` can report), or
+        `["*"]` for all. An unknown type is refused, so a typo is never a silent "never".
+
+    WebhookCreate:
+      type: object
+      additionalProperties: false
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          minLength: 9
+          maxLength: 2048
+        description:
+          type: string
+          maxLength: 120
+          default: ''
+        events:
+          $ref: '#/components/schemas/WebhookEvents'
+
+    WebhookUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        url:
+          type: string
+          minLength: 9
+          maxLength: 2048
+        description:
+          type: string
+          maxLength: 120
+        events:
+          $ref: '#/components/schemas/WebhookEvents'
+        is_enabled:
+          type: boolean
 
     IssuedInitialAccessToken:
       description: A token just issued, with its value, which is never shown again.

@@ -30,6 +30,10 @@ export const MANAGEMENT_SCOPES = {
   "read:initial_access_tokens": "View the initial access tokens issued",
   "create:initial_access_tokens": "Issue initial access tokens, which register third-party clients",
   "delete:initial_access_tokens": "Revoke initial access tokens",
+  "read:webhooks": "View the endpoints audit events are sent to",
+  "create:webhooks": "Create the endpoints audit events are sent to",
+  "update:webhooks": "Modify the endpoints audit events are sent to",
+  "delete:webhooks": "Delete the endpoints audit events are sent to",
 } as const;
 
 export type ManagementScope = keyof typeof MANAGEMENT_SCOPES;

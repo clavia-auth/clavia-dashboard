@@ -141,6 +141,7 @@ function Target({ type, id, names }: { type: keyof typeof TARGET_TYPES; id: stri
     connection: id,
     signing_key: undefined,
     initial_access_token: undefined,
+    webhook: undefined,
   }[type];
 
   return (
