@@ -21,7 +21,8 @@ export async function createRole(_: ActionState, form: FormData): Promise<Action
   }
   let created: string | undefined;
   const state = await perform(async ({ api }) => {
-    created = (await api.roles.create(parsed.data)).id;
+    // Whether a directory's group may grant it is set from the role's page, once SCIM is set up.
+    created = (await api.roles.create({ ...parsed.data, provisionable: false })).id;
 
     return `Created ${parsed.data.name}.`;
   });
