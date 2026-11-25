@@ -860,6 +860,9 @@ paths:
 
         The type is not changeable — switching between public and confidential is a different
         client.
+
+        `claims` replaces the application's custom claims (`ApplicationClaimMapping`); each refusal
+        points at its entry (`/claims/2`), or at `/claims` for the list.
       security:
         - managementToken: [update:clients]
       requestBody:
@@ -2566,6 +2569,10 @@ components:
         mfa_policy: "optional"
         require_pushed_authorization_requests: false
         dpop_bound_access_tokens: false
+        claims:
+          - name: "https://example.com/tenant"
+            source: "app_metadata.tenant.id"
+            in: ["id_token", "userinfo"]
         registration: null
         created_at: "2026-01-15T10:00:00Z"
     SelfRegisteredClient:
@@ -2587,6 +2594,7 @@ components:
         mfa_policy: "optional"
         require_pushed_authorization_requests: false
         dpop_bound_access_tokens: false
+        claims: []
         registration:
           initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
           registered_at: "2026-02-01T09:00:00Z"
@@ -2611,6 +2619,7 @@ components:
             mfa_policy: "optional"
             require_pushed_authorization_requests: false
             dpop_bound_access_tokens: false
+            claims: []
             registration:
               initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
               registered_at: "2026-02-01T09:00:00Z"
@@ -2631,6 +2640,7 @@ components:
             mfa_policy: "optional"
             require_pushed_authorization_requests: false
             dpop_bound_access_tokens: false
+            claims: []
             registration: null
             created_at: "2026-01-15T10:00:00Z"
         total: 2
@@ -2667,6 +2677,7 @@ components:
         mfa_policy: "optional"
         require_pushed_authorization_requests: false
         dpop_bound_access_tokens: false
+        claims: []
         registration: null
         created_at: "2026-01-15T10:00:00Z"
         client_secret: "example-client-secret-not-a-real-one-00000"
@@ -3696,7 +3707,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, registration, created_at]
+        dpop_bound_access_tokens, registration, created_at, claims]
       properties:
         client_id:
           type: string
@@ -3782,6 +3793,19 @@ components:
         created_at:
           type: string
           format: date-time
+        claims:
+          $ref: '#/components/schemas/ApplicationClaims'
+
+    ApplicationClaims:
+      type: array
+      maxItems: 20
+      items:
+        $ref: '#/components/schemas/ApplicationClaimMapping'
+      description: |
+        Custom claims in this application's ID tokens and userinfo answers, beside the protocol's
+        and what the scope releases (see `ClaimMapping`). A first-party application's only: a
+        third-party application has none, and is refused any (422), since no consent screen names
+        them. Dynamic registration never sets them.
 
     IsFirstParty:
       type: boolean
@@ -3798,7 +3822,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, registration, created_at, client_secret]
+        dpop_bound_access_tokens, registration, created_at, claims, client_secret]
       properties:
         client_id:
           type: string
@@ -3884,6 +3908,8 @@ components:
         created_at:
           type: string
           format: date-time
+        claims:
+          $ref: '#/components/schemas/ApplicationClaims'
         client_secret:
           type: string
           nullable: true
@@ -4033,6 +4059,12 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        claims:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/ApplicationClaimMapping'
+          description: Replaces the application's custom claims; refused for a third-party application (422).
 
     Permission:
       type: object
@@ -4133,6 +4165,35 @@ components:
             this API), or `constant`.
         value:
           description: For a `constant` only, and required there; any JSON value but `null`, at most 1 KiB.
+
+    ApplicationClaimMapping:
+      type: object
+      additionalProperties: false
+      required: [name, source, in]
+      description: |
+        A custom claim of an application, as `ClaimMapping` describes one, and where it goes: the
+        ID tokens the application is issued, its userinfo answers, or both. Worked out from the
+        account at each issuance (an ID token) or each request (userinfo). `roles` is not a name
+        an application may use: RFC 9068 defines it for access tokens; the `roles` source gives
+        all of the person's roles here.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        source:
+          type: string
+          minLength: 1
+          maxLength: 330
+        value:
+          description: For a `constant` only, and required there.
+        in:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            type: string
+            enum: [id_token, userinfo]
 
     EnforcePolicies:
       type: boolean

@@ -451,6 +451,9 @@ export type paths = {
          *
          *     The type is not changeable — switching between public and confidential is a different
          *     client.
+         *
+         *     `claims` replaces the application's custom claims (`ApplicationClaimMapping`); each refusal
+         *     points at its entry (`/claims/2`), or at `/claims` for the list.
          */
         patch: operations["updateClient"];
         trace?: never;
@@ -1377,7 +1380,15 @@ export type components = {
             } | null;
             /** Format: date-time */
             created_at: string;
+            claims: components["schemas"]["ApplicationClaims"];
         };
+        /**
+         * @description Custom claims in this application's ID tokens and userinfo answers, beside the protocol's
+         *     and what the scope releases (see `ClaimMapping`). A first-party application's only: a
+         *     third-party application has none, and is refused any (422), since no consent screen names
+         *     them. Dynamic registration never sets them.
+         */
+        ApplicationClaims: components["schemas"]["ApplicationClaimMapping"][];
         /**
          * @description Who runs the application. First-party — the operator's own — skips the consent screen
          *     unless the API it asks for insists. Third-party — somebody else's, its id starting
@@ -1444,6 +1455,7 @@ export type components = {
             } | null;
             /** Format: date-time */
             created_at: string;
+            claims: components["schemas"]["ApplicationClaims"];
             /** @description Null for a public client, which has none. */
             client_secret: string | null;
         };
@@ -1541,6 +1553,8 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens?: boolean;
+            /** @description Replaces the application's custom claims; refused for a third-party application (422). */
+            claims?: components["schemas"]["ApplicationClaimMapping"][];
         };
         Permission: {
             value: string;
@@ -1597,6 +1611,20 @@ export type components = {
             source: string;
             /** @description For a `constant` only, and required there; any JSON value but `null`, at most 1 KiB. */
             value?: unknown;
+        };
+        /**
+         * @description A custom claim of an application, as `ClaimMapping` describes one, and where it goes: the
+         *     ID tokens the application is issued, its userinfo answers, or both. Worked out from the
+         *     account at each issuance (an ID token) or each request (userinfo). `roles` is not a name
+         *     an application may use: RFC 9068 defines it for access tokens; the `roles` source gives
+         *     all of the person's roles here.
+         */
+        ApplicationClaimMapping: {
+            name: string;
+            source: string;
+            /** @description For a `constant` only, and required there. */
+            value?: unknown;
+            in: ("id_token" | "userinfo")[];
         };
         /**
          * @description Whether a token issued on a person's behalf carries only the permissions their roles
