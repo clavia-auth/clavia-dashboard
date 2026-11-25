@@ -3112,6 +3112,7 @@ components:
         - id: "rol_S4f9Gh2Jk7Lp3Qa1"
           name: "Report editor"
           description: "Reads and writes reports."
+          provisionable: false
           created_at: "2026-01-15T10:00:00Z"
     RoleIds:
       summary: Exactly these roles
@@ -3493,6 +3494,7 @@ components:
           - id: "rol_S4f9Gh2Jk7Lp3Qa1"
             name: "Report editor"
             description: "Reads and writes reports."
+            provisionable: false
             created_at: "2026-01-15T10:00:00Z"
         total: 1
         page: 1
@@ -3503,6 +3505,7 @@ components:
         id: "rol_S4f9Gh2Jk7Lp3Qa1"
         name: "Report editor"
         description: "Reads and writes reports."
+        provisionable: false
         created_at: "2026-01-15T10:00:00Z"
         permissions:
           - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
@@ -3518,6 +3521,7 @@ components:
       value:
         name: "Report editor"
         description: "Reads and writes reports."
+        provisionable: false
         permissions:
           - resource_server_id: "rs_A7d2Kq9Lm4Xp1Zt8"
             value: "read:reports"
@@ -6114,7 +6118,7 @@ components:
     Role:
       type: object
       additionalProperties: false
-      required: [id, name, description, created_at]
+      required: [id, name, description, provisionable, created_at]
       properties:
         id:
           type: string
@@ -6122,6 +6126,12 @@ components:
           type: string
         description:
           type: string
+        provisionable:
+          type: boolean
+          description: |
+            Whether a directory may grant it through SCIM: a group whose `displayName` is the role's
+            name gives it to its members. A provisionable role never holds a permission on a system API
+            (the Management API), whichever is asked first: `422`.
         created_at:
           type: string
           format: date-time
@@ -6130,7 +6140,7 @@ components:
       description: A role, with what it grants.
       type: object
       additionalProperties: false
-      required: [id, name, description, created_at, permissions]
+      required: [id, name, description, provisionable, created_at, permissions]
       properties:
         id:
           type: string
@@ -6138,6 +6148,12 @@ components:
           type: string
         description:
           type: string
+        provisionable:
+          type: boolean
+          description: |
+            Whether a directory may grant it through SCIM: a group whose `displayName` is the role's
+            name gives it to its members. A provisionable role never holds a permission on a system API
+            (the Management API), whichever is asked first: `422`.
         created_at:
           type: string
           format: date-time
@@ -6214,6 +6230,10 @@ components:
           $ref: '#/components/schemas/RoleName'
         description:
           $ref: '#/components/schemas/RoleDescription'
+        provisionable:
+          type: boolean
+          default: false
+          description: Whether a directory's group may grant it; refused for a role holding a system API's permission.
         permissions:
           type: array
           maxItems: 500
@@ -6229,6 +6249,9 @@ components:
           $ref: '#/components/schemas/RoleName'
         description:
           $ref: '#/components/schemas/RoleDescription'
+        provisionable:
+          type: boolean
+          description: Whether a directory's group may grant it; refused for a role holding a system API's permission.
         permissions:
           type: array
           maxItems: 500

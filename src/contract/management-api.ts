@@ -2585,6 +2585,12 @@ export type components = {
             id: string;
             name: string;
             description: string;
+            /**
+             * @description Whether a directory may grant it through SCIM: a group whose `displayName` is the role's
+             *     name gives it to its members. A provisionable role never holds a permission on a system API
+             *     (the Management API), whichever is asked first: `422`.
+             */
+            provisionable: boolean;
             /** Format: date-time */
             created_at: string;
         };
@@ -2593,6 +2599,12 @@ export type components = {
             id: string;
             name: string;
             description: string;
+            /**
+             * @description Whether a directory may grant it through SCIM: a group whose `displayName` is the role's
+             *     name gives it to its members. A provisionable role never holds a permission on a system API
+             *     (the Management API), whichever is asked first: `422`.
+             */
+            provisionable: boolean;
             /** Format: date-time */
             created_at: string;
             /** @description By API identifier, then value. */
@@ -2627,11 +2639,18 @@ export type components = {
         RoleCreate: {
             name: components["schemas"]["RoleName"];
             description?: components["schemas"]["RoleDescription"];
+            /**
+             * @description Whether a directory's group may grant it; refused for a role holding a system API's permission.
+             * @default false
+             */
+            provisionable: boolean;
             permissions?: components["schemas"]["PermissionReference"][];
         };
         RoleUpdate: {
             name?: components["schemas"]["RoleName"];
             description?: components["schemas"]["RoleDescription"];
+            /** @description Whether a directory's group may grant it; refused for a role holding a system API's permission. */
+            provisionable?: boolean;
             /** @description The whole new set. */
             permissions?: components["schemas"]["PermissionReference"][];
         };
