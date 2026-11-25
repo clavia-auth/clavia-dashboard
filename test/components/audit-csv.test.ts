@@ -36,6 +36,20 @@ describe("csvField", () => {
   );
 });
 
+describe("a reader that splits fields at a semicolon or a tab", () => {
+  it.each([
+    ["x;=cmd()", '"x;\'=cmd()"'],
+    ["x\t+1", '"x\t\'+1"'],
+    ["a;b;@c", '"a;b;\'@c"'],
+  ])("cannot make a formula of the part after the split in %j", (value, expected) => {
+    expect(csvField(value)).toBe(expected);
+  });
+
+  it("quotes a field holding a semicolon, so a reader that honours quotes keeps it whole", () => {
+    expect(csvField("a;b")).toBe('"a;b"');
+  });
+});
+
 describe("the audit CSV", () => {
   it("has a header naming every column, ended by CRLF", () => {
     expect(auditCsvHeader()).toBe(`${AUDIT_CSV_COLUMNS.join(",")}\r\n`);
@@ -58,7 +72,7 @@ describe("the audit CSV", () => {
         "client",
         "app1",
         "203.0.113.42",
-        '"Mozilla/5.0 (X11; Linux)"'.replaceAll('"', ""),
+        '"Mozilla/5.0 (X11; Linux)"',
         '"{""fields"":[""redirect_uris"",""mfa_policy""]}"',
       ].join(",") + "\r\n",
     );

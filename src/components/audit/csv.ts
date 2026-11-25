@@ -18,17 +18,19 @@ export const AUDIT_CSV_COLUMNS = [
 ] as const;
 
 /**
- * One CSV field (RFC 4180): quoted when it holds a comma, a quote or a line break, with quotes doubled.
- * A value a spreadsheet would read as a formula (it starts with `=`, `+`, `-`, `@`, a tab or a return)
- * gets a leading apostrophe, so a hostile user agent or name cannot run in the file's reader.
+ * One CSV field (RFC 4180): quoted when it holds a comma, a quote, a semicolon, a tab or a line
+ * break, with quotes doubled. A value a spreadsheet would read as a formula (it starts with `=`, `+`,
+ * `-`, `@`, a tab or a return) gets an apostrophe first. So does one that would after a split: a reader
+ * set to a semicolon or a tab as its separator (a French or German locale) cuts the field there, and
+ * the part after is a cell of its own. A hostile user agent or name cannot run in the file's reader.
  */
 export function csvField(value: string | null | undefined): string {
   if (value === null || value === undefined || value === "") {
     return "";
   }
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  const safe = value.replace(/(^|[;\t\r\n])(?=[=+\-@\t\r])/g, "$1'");
 
-  return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
+  return /[",;\t\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
 /** The header line, ended as every row is. */
