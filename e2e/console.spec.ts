@@ -11,6 +11,7 @@ const SECTIONS = [
   { path: "initial-access-tokens", heading: "Initial access tokens" },
   { path: "signing-keys", heading: "Signing keys" },
   { path: "audit", heading: "Audit log" },
+  { path: "webhooks", heading: "Webhooks" },
   { path: "endpoints", heading: "Endpoints" },
 ];
 

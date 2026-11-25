@@ -16,6 +16,7 @@ import type {
   RolesApi,
   SigningKeysApi,
   UsersApi,
+  WebhooksApi,
 } from "@/core/management/management-api";
 
 import { managementError } from "./problems";
@@ -35,6 +36,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
+  readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
 
   constructor(baseUrl: string, accessToken: string, fetcher: typeof fetch = fetch) {
@@ -186,6 +188,23 @@ export class ClaviaManagementApi implements ManagementApi {
         done(
           http.DELETE("/api/v1/initial-access-tokens/{initial_access_token_id}", {
             params: { path: { initial_access_token_id: tokenId } },
+          }),
+        ),
+    };
+
+    const webhook = (webhookId: string) => ({ params: { path: { webhook_id: webhookId } } });
+    this.webhooks = {
+      list: () => read(http.GET("/api/v1/webhooks")),
+      get: (webhookId) => read(http.GET("/api/v1/webhooks/{webhook_id}", webhook(webhookId))),
+      create: (body) => read(http.POST("/api/v1/webhooks", { body })),
+      update: (webhookId, body) => read(http.PATCH("/api/v1/webhooks/{webhook_id}", { ...webhook(webhookId), body })),
+      delete: (webhookId) => done(http.DELETE("/api/v1/webhooks/{webhook_id}", webhook(webhookId))),
+      rotateSecret: (webhookId) => read(http.POST("/api/v1/webhooks/{webhook_id}/rotate-secret", webhook(webhookId))),
+      test: (webhookId) => done(http.POST("/api/v1/webhooks/{webhook_id}/test", webhook(webhookId))),
+      deliveries: (webhookId, query) =>
+        read(
+          http.GET("/api/v1/webhooks/{webhook_id}/deliveries", {
+            params: { path: { webhook_id: webhookId }, query: listParameters(query) },
           }),
         ),
     };

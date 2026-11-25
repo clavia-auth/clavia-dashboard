@@ -81,7 +81,7 @@ export function isEventType(value: string): value is AuditEventType {
 
 /**
  * Where an event's target lives in the dashboard; null for what has no page (a signing key, an
- * initial access token, a webhook until #45 gives it one).
+ * initial access token).
  */
 export function targetHref(type: AuditTargetType, id: string): Route | null {
   const path = {
@@ -92,7 +92,7 @@ export function targetHref(type: AuditTargetType, id: string): Route | null {
     connection: "/connections",
     signing_key: null,
     initial_access_token: null,
-    webhook: null,
+    webhook: "/webhooks",
   }[type];
 
   return path === null ? null : (`${path}/${encodeURIComponent(id)}` as Route);

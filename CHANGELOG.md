@@ -9,6 +9,13 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Added
 
+- **A Webhooks section.** Register the addresses that receive Clavia's audit events, signed as
+  Standard Webhooks: add one (its secret is shown once, with a copy button), change its URL, events
+  and description, switch it on or off, rotate its secret (the old one still signs for 24 hours),
+  send it a test and read its delivery log, with why each failed. The event picker offers the
+  configuration and security events first, and says `token.issued` is most of the volume. Needs
+  Clavia 0.4.0 or later and the `*:webhooks` scopes; registering, changing the URL or events,
+  testing and the delivery log also need `read:audit_events`, and the page says so where it is missing.
 - **Application metadata, on the user page.** A JSON editor for the facts operators keep about an
   account (a tenant, a plan, a department), which claim mappings copy into tokens. Saving replaces
   it whole, and Clavia's refusals (too large, too deep, a bad key) are shown with the key they name.
