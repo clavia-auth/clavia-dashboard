@@ -5,6 +5,7 @@ export const MANAGEMENT_SCOPES = {
   "read:users": "View end users",
   "create:users": "Create end users",
   "update:users": "Modify end users",
+  "update:users_app_metadata": "Modify the application metadata of end users",
   "delete:users": "Delete end users",
   "read:clients": "View client applications",
   "create:clients": "Create client applications",

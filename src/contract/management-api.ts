@@ -59,6 +59,12 @@ export type paths = {
          *     A profile field set to `null` is cleared. A new email address is unverified
          *     unless the same request says otherwise. Deactivating an account stops every
          *     session and token it holds from being accepted on their next use.
+         *
+         *     `app_metadata` is replaced whole (a key is removed by leaving it out) and also needs
+         *     `update:users_app_metadata`: claim mappings copy it into tokens and APIs authorize on it,
+         *     so writing it is granting access. Without that scope the request is `403` and nothing
+         *     changes. It holds facts, never secrets: anything in it can end up in a token an
+         *     application reads.
          */
         patch: operations["updateUser"];
         trace?: never;
@@ -1240,6 +1246,17 @@ export type components = {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+            app_metadata: components["schemas"]["AppMetadata"];
+        };
+        /**
+         * @description Facts operators keep about the account (a tenant, a plan, a department), which claim
+         *     mappings can copy into tokens; `{}` when none. Written only through `PATCH
+         *     /api/v1/users/{user_id}` with `update:users_app_metadata`, never by the person or a
+         *     provider. At most 16 KiB encoded, five levels of objects and lists, and keys of 1 to 64
+         *     letters, digits, `_` or `-` at every level. Its keys come back sorted.
+         */
+        AppMetadata: {
+            [key: string]: unknown;
         };
         UserCreate: {
             /**
@@ -1280,6 +1297,7 @@ export type components = {
             nickname?: string | null;
             picture?: string | null;
             locale?: string | null;
+            app_metadata?: components["schemas"]["AppMetadata"];
         };
         /** @enum {string} */
         ClientType: "public" | "confidential";

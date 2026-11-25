@@ -199,6 +199,12 @@ paths:
         A profile field set to `null` is cleared. A new email address is unverified
         unless the same request says otherwise. Deactivating an account stops every
         session and token it holds from being accepted on their next use.
+
+        `app_metadata` is replaced whole (a key is removed by leaving it out) and also needs
+        `update:users_app_metadata`: claim mappings copy it into tokens and APIs authorize on it,
+        so writing it is granting access. Without that scope the request is `403` and nothing
+        changes. It holds facts, never secrets: anything in it can end up in a token an
+        application reads.
       security:
         - managementToken: [update:users]
       requestBody:
@@ -2073,6 +2079,7 @@ components:
             read:users: View end users
             create:users: Create end users
             update:users: Modify end users
+            update:users_app_metadata: Modify the application metadata of end users
             delete:users: Delete end users
             read:clients: View client applications
             create:clients: Create client applications
@@ -2403,6 +2410,9 @@ components:
         locale: "en-GB"
         created_at: "2026-01-15T10:00:00Z"
         updated_at: "2026-02-03T08:30:00Z"
+        app_metadata:
+          department: "engineering"
+          plan: "enterprise"
     UserPage:
       summary: A page of users
       value:
@@ -2423,6 +2433,7 @@ components:
             locale: null
             created_at: "2026-02-10T14:00:00Z"
             updated_at: "2026-02-10T14:00:00Z"
+            app_metadata: {}
           - id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"
             connection: "password"
             email: "ada@example.com"
@@ -2439,6 +2450,9 @@ components:
             locale: "en-GB"
             created_at: "2026-01-15T10:00:00Z"
             updated_at: "2026-02-03T08:30:00Z"
+            app_metadata:
+              department: "engineering"
+              plan: "enterprise"
         total: 2
         page: 1
         per_page: 50
@@ -3470,7 +3484,7 @@ components:
       type: object
       additionalProperties: false
       required: [id, connection, email, email_verified, is_active, has_password, mfa_enrolled, passkey_count,
-        name, given_name, family_name, nickname, picture, locale, created_at, updated_at]
+        name, given_name, family_name, nickname, picture, locale, created_at, updated_at, app_metadata]
       properties:
         id:
           type: string
@@ -3526,6 +3540,18 @@ components:
         updated_at:
           type: string
           format: date-time
+        app_metadata:
+          $ref: '#/components/schemas/AppMetadata'
+
+    AppMetadata:
+      type: object
+      additionalProperties: true
+      description: |
+        Facts operators keep about the account (a tenant, a plan, a department), which claim
+        mappings can copy into tokens; `{}` when none. Written only through `PATCH
+        /api/v1/users/{user_id}` with `update:users_app_metadata`, never by the person or a
+        provider. At most 16 KiB encoded, five levels of objects and lists, and keys of 1 to 64
+        letters, digits, `_` or `-` at every level. Its keys come back sorted.
 
     UserCreate:
       type: object
@@ -3616,6 +3642,8 @@ components:
           type: string
           maxLength: 35
           nullable: true
+        app_metadata:
+          $ref: '#/components/schemas/AppMetadata'
 
     ClientType:
       type: string
