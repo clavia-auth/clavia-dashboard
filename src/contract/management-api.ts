@@ -625,6 +625,11 @@ export type paths = {
          *
          *     The identifier never changes: it is the `aud` of every token already issued.
          *     A system API may be renamed, but its permissions are the server's own (409).
+         *
+         *     `claims` replaces the API's custom claims: what its JWT access tokens carry, and what
+         *     introspection reports, beside the protocol's (see `ClaimMapping`). Refused on a system
+         *     API (409). Each refusal points at its entry (`/claims/2`), or at `/claims` for the list
+         *     (more than twenty, two of a name, two reading the same metadata).
          */
         patch: operations["updateResourceServer"];
         trace?: never;
@@ -1561,6 +1566,37 @@ export type components = {
             mfa_policy: components["schemas"]["MfaPolicy"];
             /** Format: date-time */
             created_at: string;
+            claims: components["schemas"]["ClaimMapping"][];
+        };
+        /**
+         * @description A custom claim of an API: added to its access tokens (the JWT form) and to what
+         *     introspection reports about them, worked out from the account at each issuance (a
+         *     refresh included) and, for introspection, when asked. So a JWT and its introspection can
+         *     part ways after a change: the JWT keeps what was true when it was issued.
+         *
+         *     Left out of a token when its source has no value (never `null`), of a machine token unless
+         *     it is a constant, and of every token issued to a third-party application, which no
+         *     consent screen told about it. Past 32 KiB of custom claims in one token, the token is
+         *     refused (500) rather than cut down.
+         */
+        ClaimMapping: {
+            /**
+             * @description An https URI (at most 255 characters), or 1 to 64 letters, digits, `.`, `_` or `-`.
+             *     Never a registered JWT claim (the IANA registry), an OpenID Connect standard claim,
+             *     an introspection member, or this server's own (`sub`, `aud`, `acr`, `email`,
+             *     `scope`, `client_id`, `cnf`…); `roles` (RFC 9068 §2.2.3.1) is the one exception,
+             *     from the `roles` source.
+             */
+            name: string;
+            /**
+             * @description `email`, `email_verified`, `connection`, `profile.<field>` (`name`, `given_name`,
+             *     `family_name`, `nickname`, `picture`, `locale`), `app_metadata.<path>` (at most five
+             *     keys joined by `.`), `roles` (the names of the person's roles holding a permission on
+             *     this API), or `constant`.
+             */
+            source: string;
+            /** @description For a `constant` only, and required there; any JSON value but `null`, at most 1 KiB. */
+            value?: unknown;
         };
         /**
          * @description Whether a token issued on a person's behalf carries only the permissions their roles
@@ -1642,6 +1678,7 @@ export type components = {
             allow_skipping_consent?: boolean;
             access_token_format?: components["schemas"]["AccessTokenFormat"];
             mfa_policy?: components["schemas"]["MfaPolicy"];
+            claims?: components["schemas"]["ClaimMapping"][];
         };
         /** @description Lower-case letters, digits and dashes, starting with a letter; at most 32. */
         ConnectionName: string;
