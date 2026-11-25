@@ -140,6 +140,7 @@ function Target({ type, id, names }: { type: keyof typeof TARGET_TYPES; id: stri
     resource_server: names.resourceServers[id],
     connection: id,
     signing_key: undefined,
+    saml_key: undefined,
     initial_access_token: undefined,
     webhook: undefined,
   }[type];

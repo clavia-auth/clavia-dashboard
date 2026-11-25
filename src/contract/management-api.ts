@@ -798,6 +798,51 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/saml-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List SAML keys
+         * @description Every service provider key: the current pair, the next one if a rotation is under way, and
+         *     the retired ones still kept.
+         */
+        get: operations["listSamlKeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/saml-keys/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate the SAML keys
+         * @description One step of the rollover. With no keys, the first pair, current at once (`generated`). With
+         *     no next pair, one is published beside the current one (`introduced`), and `promotes_at` says
+         *     when it can be promoted. Before then nothing changes (`waiting`). After, the next pair becomes
+         *     current and the one it replaces is retired (`promoted`). Retired keys past their overlap are
+         *     deleted at every step. Recorded as `saml_key.generated` or `saml_key.rotated`.
+         */
+        post: operations["rotateSamlKeys"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/initial-access-tokens": {
         parameters: {
             query?: never;
@@ -1219,7 +1264,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "saml_key.generated" | "saml_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -1248,7 +1293,52 @@ export type components = {
         /** @enum {string} */
         AuditOutcome: "success" | "failure";
         /** @enum {string} */
-        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "initial_access_token" | "webhook";
+        AuditTargetType: "user" | "client" | "resource_server" | "role" | "connection" | "signing_key" | "saml_key" | "initial_access_token" | "webhook";
+        /** @description A SAML service provider key, by its certificate; never its private half. */
+        SamlKey: {
+            /** @description The RFC 7638 thumbprint of the public key. */
+            kid: string;
+            /**
+             * @description `signing` signs this server's requests (and both certificates of its pair); `encryption` is
+             *     what identity providers encrypt assertions to. One key, one usage.
+             * @enum {string}
+             */
+            usage: "signing" | "encryption";
+            /**
+             * @description `next` is published beside the current key but not used yet; `retired` is no longer
+             *     published, an encryption key still decrypting until it is deleted.
+             * @enum {string}
+             */
+            status: "next" | "current" | "retired";
+            /** @description The self-signed X.509 certificate, DER in base64, as metadata carries it. */
+            certificate: string;
+            /** @description SHA-256 of the certificate's DER, lower-case hex, for an administrator to compare. */
+            certificate_sha256: string;
+            /**
+             * Format: date-time
+             * @description The certificate's `notAfter`; identity providers pin the key and ignore it.
+             */
+            valid_until: string;
+            /** Format: date-time */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description When it became current; null while it is next.
+             */
+            promoted_at: string | null;
+            /** Format: date-time */
+            retired_at: string | null;
+        };
+        SamlKeyRotation: {
+            /** @enum {string} */
+            step: "generated" | "introduced" | "waiting" | "promoted";
+            /**
+             * Format: date-time
+             * @description When the next pair can be promoted; null when there is none.
+             */
+            promotes_at: string | null;
+            keys: components["schemas"]["SamlKey"][];
+        };
         /** @description One page of initial access tokens, newest first. */
         InitialAccessTokenPage: {
             items: components["schemas"]["InitialAccessToken"][];
@@ -3691,6 +3781,53 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listSamlKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The keys. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SamlKey"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    rotateSamlKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The step taken, and every key after it. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SamlKeyRotation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
