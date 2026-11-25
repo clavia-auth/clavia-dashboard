@@ -937,6 +937,56 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/webhooks/{webhook_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test event
+         * @description Records `webhook.tested`, which goes to this endpoint and no other, through the same queue,
+         *     envelope and signature as every event; `webhooks:deliver` sends it within the minute, and
+         *     `GET …/deliveries` shows how it went. Also needs `read:audit_events` (403 without it). A
+         *     switched-off endpoint is 409: nothing would be sent.
+         */
+        post: operations["testWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/{webhook_id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List webhook deliveries
+         * @description The endpoint's deliveries, newest first, kept seven days after they end: what was sent, how
+         *     many attempts, and the last one's status code, duration and failure category. Never a body,
+         *     sent or received: neither is kept. It names the audit events sent, so it also needs
+         *     `read:audit_events` (403 without it).
+         */
+        get: operations["listWebhookDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/users-imports": {
         parameters: {
             query?: never;
@@ -1169,7 +1219,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -1245,6 +1295,18 @@ export type components = {
             /** @description Whether deliveries are made. A disabled endpoint keeps its settings. */
             is_enabled: boolean;
             /**
+             * @description Why it is off: an `operator` switched it off, or it was `failing` every delivery for five
+             *     days. Null while it is on.
+             * @enum {string|null}
+             */
+            disabled_reason: "operator" | "failing" | null;
+            /**
+             * Format: date-time
+             * @description When the deliveries that have all failed since began; null once one succeeds. Five days
+             *     of it switch the endpoint off. Switching it on or off starts it over.
+             */
+            failing_since: string | null;
+            /**
              * Format: date-time
              * @description Until when the secret before the last rotation still signs beside the current one.
              */
@@ -1253,6 +1315,92 @@ export type components = {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        /** @description One audit event's delivery to one endpoint, through its attempts. Never a body. */
+        WebhookDelivery: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The audit event sent, and the `webhook-id` header it was sent with.
+             */
+            event_id: string;
+            event_type: string;
+            /**
+             * @description `pending` until a 2xx (`succeeded`), or until the retries run out or it can no longer be
+             *     sent (`abandoned`).
+             * @enum {string}
+             */
+            status: "pending" | "succeeded" | "abandoned";
+            attempts: number;
+            /**
+             * Format: date-time
+             * @description When it is tried next; null once it ended.
+             */
+            next_attempt_at: string | null;
+            /** @description What the receiver answered last; null when it was not reached. */
+            last_status_code: number | null;
+            last_duration_ms: number | null;
+            /**
+             * @description Why the last attempt failed: a non-2xx `status`; no answer in time (`connection`); a
+             *     URL that now resolves somewhere private (`refused_url`); or, ended without an attempt,
+             *     an endpoint switched off (`disabled`) or an event purged (`event_purged`).
+             * @enum {string|null}
+             */
+            last_failure: "status" | "connection" | "refused_url" | "disabled" | "event_purged" | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            ended_at: string | null;
+        };
+        WebhookDeliveryPage: {
+            items: components["schemas"]["WebhookDelivery"][];
+            total: number;
+            page: number;
+            per_page: number;
+        };
+        /**
+         * @description The body of every webhook delivery: an envelope in the Standard Webhooks form around the
+         *     audit event, exactly as `GET /api/v1/audit-events` returns it. Not an operation of this
+         *     API: what this server posts to an endpoint.
+         *
+         *     The example was posted with `webhook-id: 9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d`,
+         *     `webhook-timestamp: 1772616600` and
+         *     `webhook-signature: v1,nS1KX8YY7AzTQPivOXvcPeb+CAokxqbo2vgMk2MqvEY=`, signed with the
+         *     secret of the `WebhookWithSecret` example (not a real one), over the example encoded as
+         *     compact JSON in the order shown.
+         * @example {
+         *       "type": "webhook.tested",
+         *       "timestamp": "2026-03-04T09:30:00.000Z",
+         *       "data": {
+         *         "id": "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d",
+         *         "type": "webhook.tested",
+         *         "occurred_at": "2026-03-04T09:30:00Z",
+         *         "outcome": "success",
+         *         "actor": {
+         *           "kind": "person",
+         *           "user_id": "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f",
+         *           "client_id": "Dsh8Kq2Wm5Np9Rt3Vx6Zb1Cf4Gj7Ln0Ps"
+         *         },
+         *         "target": {
+         *           "type": "webhook",
+         *           "id": "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c"
+         *         },
+         *         "details": {},
+         *         "client_address": "203.0.113.42",
+         *         "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15"
+         *       }
+         *     }
+         */
+        WebhookPayload: {
+            /** @description The audit event's type, as in `data.type`. */
+            type: string;
+            /**
+             * Format: date-time
+             * @description When this attempt was made; `webhook-timestamp` says the same in Unix seconds.
+             */
+            timestamp: string;
+            data: components["schemas"]["AuditEvent"];
         };
         /** @description An endpoint, with the only copy of its new secret there will ever be. */
         WebhookWithSecret: {
@@ -1264,6 +1412,18 @@ export type components = {
             events: components["schemas"]["WebhookEvents"];
             /** @description Whether deliveries are made. A disabled endpoint keeps its settings. */
             is_enabled: boolean;
+            /**
+             * @description Why it is off: an `operator` switched it off, or it was `failing` every delivery for five
+             *     days. Null while it is on.
+             * @enum {string|null}
+             */
+            disabled_reason: "operator" | "failing" | null;
+            /**
+             * Format: date-time
+             * @description When the deliveries that have all failed since began; null once one succeeds. Five days
+             *     of it switch the endpoint off. Switching it on or off starts it over.
+             */
+            failing_since: string | null;
             /**
              * Format: date-time
              * @description Until when the secret before the last rotation still signs beside the current one.
@@ -1282,6 +1442,7 @@ export type components = {
         /**
          * @description The audit event types delivered (each one `GET /api/v1/audit-events` can report), or
          *     `["*"]` for all. An unknown type is refused, so a typo is never a silent "never".
+         *     `webhook.tested` is not one to name: a test goes to the endpoint tested, and no other.
          */
         WebhookEvents: string[];
         WebhookCreate: {
@@ -3776,6 +3937,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WebhookWithSecret"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    testWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Queued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    listWebhookDeliveries: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page. */
+                per_page?: components["parameters"]["PerPage"];
+            };
+            header?: never;
+            path: {
+                webhook_id: components["parameters"]["WebhookId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of deliveries. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryPage"];
                 };
             };
             400: components["responses"]["BadRequest"];
