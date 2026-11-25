@@ -105,7 +105,8 @@ tags:
       This server's own keys as a SAML service provider: one that signs its requests, one that
       identity providers encrypt assertions to, each published as a self-signed certificate in the
       service provider metadata. Never any key material: certificates are public, the private halves
-      stay in their backend (sealed in PostgreSQL with the `postgres` backend).
+      stay in their backend (sealed in PostgreSQL with the `postgres` backend, or in a KMS, which
+      never lets them out; their certificates are then built once through the KMS and kept).
 
       A rotation is a rollover in steps: a **next** pair is published beside the current one, and
       promoted once identity providers have had `CLAVIA_SAML_KEY_OVERLAP_DAYS` to read it; the pair
@@ -1095,6 +1096,8 @@ paths:
             examples:
               ConnectionCreate:
                 $ref: '#/components/examples/ConnectionCreate'
+              SamlConnectionCreate:
+                $ref: '#/components/examples/SamlConnectionCreate'
       responses:
         '201':
           description: The connection.
@@ -1120,6 +1123,44 @@ paths:
           $ref: '#/components/responses/Conflict'
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/connections/{name}/refresh-metadata:
+    parameters:
+      - $ref: '#/components/parameters/ConnectionNameParameter'
+    post:
+      tags: [connections]
+      operationId: refreshConnectionMetadata
+      summary: Refresh SAML metadata
+      description: |
+        Read a `saml` connection's metadata URL again: its entity ID, single sign-on URL and signing
+        certificates as they are now, after the identity provider rolled a certificate over. Only on
+        demand, never at sign-in. The metadata is held to the rules of registration: a refusal is a
+        422 pointing at `/saml/metadata_url`. A connection of another kind, or one registered from a
+        document, is 409. Recorded as `connection.updated`.
+      security:
+        - managementToken: [update:connections]
+      responses:
+        '200':
+          description: The connection, refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+              examples:
+                SamlConnection:
+                  $ref: '#/components/examples/SamlConnection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
 
@@ -1778,6 +1819,10 @@ paths:
         when it can be promoted. Before then nothing changes (`waiting`). After, the next pair becomes
         current and the one it replaces is retired (`promoted`). Retired keys past their overlap are
         deleted at every step. Recorded as `saml_key.generated` or `saml_key.rotated`.
+
+        With the keys in a KMS (`CLAVIA_SAML_KEY_BACKEND` other than `postgres`) the rotation is the
+        operator's: a new key version made there and named as the next pair, then as the current
+        one, the old encryption key listed as retired. This answers 409.
       security:
         - managementToken: [create:signing_keys]
       responses:
@@ -1796,6 +1841,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
@@ -3092,6 +3139,7 @@ components:
           oidc_issuer: null
           oidc_client_id: null
           oidc_scope: null
+          saml: null
           created_at: "2026-01-15T10:00:00Z"
         - name: "acme-okta"
           display_name: "Acme staff"
@@ -3105,6 +3153,7 @@ components:
           oidc_issuer: "https://acme.okta.example"
           oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
           oidc_scope: "openid email profile"
+          saml: null
           created_at: "2026-01-20T11:00:00Z"
     Connection:
       summary: An OpenID Connect provider
@@ -3121,6 +3170,7 @@ components:
         oidc_issuer: "https://acme.okta.example"
         oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
         oidc_scope: "openid email profile"
+        saml: null
         created_at: "2026-01-20T11:00:00Z"
     ConnectionCreate:
       summary: A company's OpenID Connect provider
@@ -3131,6 +3181,55 @@ components:
         oidc_issuer: "https://acme.okta.example"
         oidc_client_id: "0oa1b2c3d4e5f6g7h8i9"
         oidc_client_secret: "example-provider-secret-not-real"
+    SamlConnection:
+      summary: A company's SAML identity provider
+      value:
+        name: "acme-entra"
+        display_name: "Acme staff"
+        strategy: "saml"
+        is_enabled: true
+        is_domain_connection: false
+        allow_sign_up: false
+        require_verified_email: false
+        configured: false
+        usable: false
+        oidc_issuer: null
+        oidc_client_id: null
+        oidc_scope: null
+        saml:
+          entity_id: "https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/"
+          sso_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/saml2"
+          metadata_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/federationmetadata/2007-06/federationmetadata.xml"
+          certificates:
+            - sha256: "4b1f2c9d6e8a0b3c5d7e9f1a2b4c6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a6b8c"
+              not_after: "2029-01-31T00:00:00Z"
+          subject_attribute: "http://schemas.microsoft.com/identity/claims/objectidentifier"
+          name_id_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+          email_attribute: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+          email_trusted: true
+          name_attribute: "http://schemas.microsoft.com/identity/claims/displayname"
+          given_name_attribute: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+          family_name_attribute: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+          sign_requests: true
+          require_encryption: false
+          require_gcm: false
+          service_provider:
+            entity_id: "https://auth.example.com/auth/saml/acme-entra"
+            acs_url: "https://auth.example.com/auth/saml/acme-entra/acs"
+            metadata_url: "https://auth.example.com/auth/saml/acme-entra/metadata"
+            warning: null
+        created_at: "2026-03-04T09:00:00Z"
+    SamlConnectionCreate:
+      summary: A SAML identity provider, from its metadata URL
+      value:
+        name: "acme-entra"
+        display_name: "Acme staff"
+        strategy: "saml"
+        saml:
+          metadata_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/federationmetadata/2007-06/federationmetadata.xml"
+          subject_attribute: "http://schemas.microsoft.com/identity/claims/objectidentifier"
+          email_attribute: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+          email_trusted: true
     ConnectionUpdate:
       summary: Sign-ups opened, with a verified address
       value:
@@ -3151,6 +3250,7 @@ components:
         oidc_issuer: null
         oidc_client_id: null
         oidc_scope: null
+        saml: null
         created_at: "2026-01-15T10:00:00Z"
     ResourceServer:
       summary: An API
@@ -5181,18 +5281,19 @@ components:
 
     ConnectionStrategy:
       type: string
-      enum: [database, social, oidc, passwordless]
+      enum: [database, social, oidc, passwordless, saml]
       description: |
         `database`: a pool of accounts with passwords, held here. `social`: a provider the
         code implements (Google, GitHub), credentials from the deployment's settings.
-        `oidc`: any OpenID Connect provider, registered from its issuer. `passwordless`:
+        `oidc`: any OpenID Connect provider, registered from its issuer. `saml`: a SAML 2.0
+        identity provider, registered from its metadata. `passwordless`:
         the built-in `email` connection — a code or a link sent by email; never created.
 
     Connection:
       type: object
       additionalProperties: false
       required: [name, display_name, strategy, is_enabled, is_domain_connection, allow_sign_up,
-        require_verified_email, configured, usable, oidc_issuer, oidc_client_id, oidc_scope, created_at]
+        require_verified_email, configured, usable, oidc_issuer, oidc_client_id, oidc_scope, saml, created_at]
       properties:
         name:
           $ref: '#/components/schemas/ConnectionName'
@@ -5238,9 +5339,160 @@ components:
           type: string
           nullable: true
           description: What is asked of the provider. The client secret is never returned.
+        saml:
+          $ref: '#/components/schemas/SamlConnection'
         created_at:
           type: string
           format: date-time
+
+    SamlConnection:
+      description: A `saml` connection's identity provider and options; null for any other kind.
+      type: object
+      nullable: true
+      additionalProperties: false
+      required: [entity_id, sso_url, metadata_url, certificates, subject_attribute, name_id_format,
+        email_attribute, email_trusted, name_attribute, given_name_attribute, family_name_attribute,
+        sign_requests, require_encryption, require_gcm, service_provider]
+      properties:
+        entity_id:
+          type: string
+          description: The identity provider's entity ID, from its metadata; the `Issuer` it must name.
+        sso_url:
+          type: string
+          description: Its HTTP-Redirect single sign-on service, https.
+        metadata_url:
+          type: string
+          nullable: true
+          description: Where its metadata is read again (`refresh-metadata`); null when it was given as a document.
+        certificates:
+          type: array
+          minItems: 1
+          maxItems: 3
+          description: |
+            The certificates its assertions must be signed with, read-only: pinned by key, so the dates
+            they state are shown, never enforced.
+          items:
+            type: object
+            additionalProperties: false
+            required: [sha256, not_after]
+            properties:
+              sha256:
+                type: string
+                description: SHA-256 of the certificate's DER, lower-case hex.
+              not_after:
+                type: string
+                format: date-time
+                nullable: true
+        subject_attribute:
+          type: string
+          nullable: true
+          description: |
+            The attribute that names the person (Entra's `objectidentifier`, ADFS's `objectGUID`);
+            null for the persistent `NameID`. Never the address, which can change hands.
+        name_id_format:
+          type: string
+          description: The `NameIDPolicy` asked for; persistent by default.
+        email_attribute:
+          type: string
+          nullable: true
+          description: Where the address is read; null for the `NameID` when it is an address.
+        email_trusted:
+          type: boolean
+          description: |
+            Whether the identity provider verifies the addresses it sends. Only a trusted address can
+            link to an account that already exists.
+        name_attribute:
+          type: string
+          nullable: true
+        given_name_attribute:
+          type: string
+          nullable: true
+        family_name_attribute:
+          type: string
+          nullable: true
+        sign_requests:
+          type: boolean
+          description: Whether `AuthnRequest`s are signed, when this server has a signing key.
+        require_encryption:
+          type: boolean
+          description: Whether a plain assertion is refused.
+        require_gcm:
+          type: boolean
+          description: Whether an assertion encrypted with AES-CBC is refused.
+        service_provider:
+          type: object
+          additionalProperties: false
+          required: [entity_id, acs_url, metadata_url, warning]
+          description: What to give the identity provider's administrator.
+          properties:
+            entity_id:
+              type: string
+            acs_url:
+              type: string
+              description: The assertion consumer service, HTTP-POST.
+            metadata_url:
+              type: string
+              description: This server's metadata for the connection, with its certificates.
+            warning:
+              type: string
+              nullable: true
+              description: Why requests are unsigned and assertions cannot be encrypted, if they are not.
+
+    SamlConnectionCreate:
+      type: object
+      additionalProperties: false
+      description: |
+        The identity provider's metadata, `metadata` (the document) or `metadata_url` (fetched now,
+        https, never a private address), one of them; then the options, each with its default.
+      properties:
+        metadata:
+          type: string
+          minLength: 1
+          maxLength: 1048576
+          description: |
+            The metadata document: one `EntityDescriptor` (or an aggregate holding exactly one) with
+            one SAML 2.0 `IDPSSODescriptor`, an HTTP-Redirect single sign-on service on https and one
+            to three RSA signing certificates of 2048 bits or more. No `DOCTYPE`.
+        metadata_url:
+          type: string
+          minLength: 9
+          maxLength: 2048
+        subject_attribute:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name_id_format:
+          type: string
+          maxLength: 255
+          default: urn:oasis:names:tc:SAML:2.0:nameid-format:persistent
+        email_attribute:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email_trusted:
+          type: boolean
+          default: false
+        name_attribute:
+          type: string
+          minLength: 1
+          maxLength: 255
+        given_name_attribute:
+          type: string
+          minLength: 1
+          maxLength: 255
+        family_name_attribute:
+          type: string
+          minLength: 1
+          maxLength: 255
+        sign_requests:
+          type: boolean
+          default: true
+        require_encryption:
+          type: boolean
+          default: false
+        require_gcm:
+          type: boolean
+          default: false
 
     ConnectionDisplayName:
       type: string
@@ -5288,6 +5540,8 @@ components:
           type: string
           maxLength: 512
           description: Must include `openid`; `openid profile email` when omitted.
+        saml:
+          $ref: '#/components/schemas/SamlConnectionCreate'
 
     ConnectionUpdate:
       type: object

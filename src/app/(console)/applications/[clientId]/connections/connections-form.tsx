@@ -18,6 +18,7 @@ const STRATEGIES: Record<Connection["strategy"], string> = {
   social: "Social",
   oidc: "OpenID Connect",
   passwordless: "Email code or link",
+  saml: "SAML",
 };
 
 /** Which ways in the application offers — switched one by one, saved together. */

@@ -540,6 +540,32 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/connections/{name}/refresh-metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["ConnectionNameParameter"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh SAML metadata
+         * @description Read a `saml` connection's metadata URL again: its entity ID, single sign-on URL and signing
+         *     certificates as they are now, after the identity provider rolled a certificate over. Only on
+         *     demand, never at sign-in. The metadata is held to the rules of registration: a refusal is a
+         *     422 pointing at `/saml/metadata_url`. A connection of another kind, or one registered from a
+         *     document, is 409. Recorded as `connection.updated`.
+         */
+        post: operations["refreshConnectionMetadata"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/connections/{name}": {
         parameters: {
             query?: never;
@@ -835,6 +861,10 @@ export type paths = {
          *     when it can be promoted. Before then nothing changes (`waiting`). After, the next pair becomes
          *     current and the one it replaces is retired (`promoted`). Retired keys past their overlap are
          *     deleted at every step. Recorded as `saml_key.generated` or `saml_key.rotated`.
+         *
+         *     With the keys in a KMS (`CLAVIA_SAML_KEY_BACKEND` other than `postgres`) the rotation is the
+         *     operator's: a new key version made there and named as the next pair, then as the current
+         *     one, the old encryption key listed as retired. This answers 409.
          */
         post: operations["rotateSamlKeys"];
         delete?: never;
@@ -2116,11 +2146,12 @@ export type components = {
         /**
          * @description `database`: a pool of accounts with passwords, held here. `social`: a provider the
          *     code implements (Google, GitHub), credentials from the deployment's settings.
-         *     `oidc`: any OpenID Connect provider, registered from its issuer. `passwordless`:
+         *     `oidc`: any OpenID Connect provider, registered from its issuer. `saml`: a SAML 2.0
+         *     identity provider, registered from its metadata. `passwordless`:
          *     the built-in `email` connection — a code or a link sent by email; never created.
          * @enum {string}
          */
-        ConnectionStrategy: "database" | "social" | "oidc" | "passwordless";
+        ConnectionStrategy: "database" | "social" | "oidc" | "passwordless" | "saml";
         Connection: {
             name: components["schemas"]["ConnectionName"];
             display_name: string;
@@ -2155,8 +2186,89 @@ export type components = {
             oidc_client_id: string | null;
             /** @description What is asked of the provider. The client secret is never returned. */
             oidc_scope: string | null;
+            saml: components["schemas"]["SamlConnection"];
             /** Format: date-time */
             created_at: string;
+        };
+        /** @description A `saml` connection's identity provider and options; null for any other kind. */
+        SamlConnection: {
+            /** @description The identity provider's entity ID, from its metadata; the `Issuer` it must name. */
+            entity_id: string;
+            /** @description Its HTTP-Redirect single sign-on service, https. */
+            sso_url: string;
+            /** @description Where its metadata is read again (`refresh-metadata`); null when it was given as a document. */
+            metadata_url: string | null;
+            /**
+             * @description The certificates its assertions must be signed with, read-only: pinned by key, so the dates
+             *     they state are shown, never enforced.
+             */
+            certificates: {
+                /** @description SHA-256 of the certificate's DER, lower-case hex. */
+                sha256: string;
+                /** Format: date-time */
+                not_after: string | null;
+            }[];
+            /**
+             * @description The attribute that names the person (Entra's `objectidentifier`, ADFS's `objectGUID`);
+             *     null for the persistent `NameID`. Never the address, which can change hands.
+             */
+            subject_attribute: string | null;
+            /** @description The `NameIDPolicy` asked for; persistent by default. */
+            name_id_format: string;
+            /** @description Where the address is read; null for the `NameID` when it is an address. */
+            email_attribute: string | null;
+            /**
+             * @description Whether the identity provider verifies the addresses it sends. Only a trusted address can
+             *     link to an account that already exists.
+             */
+            email_trusted: boolean;
+            name_attribute: string | null;
+            given_name_attribute: string | null;
+            family_name_attribute: string | null;
+            /** @description Whether `AuthnRequest`s are signed, when this server has a signing key. */
+            sign_requests: boolean;
+            /** @description Whether a plain assertion is refused. */
+            require_encryption: boolean;
+            /** @description Whether an assertion encrypted with AES-CBC is refused. */
+            require_gcm: boolean;
+            /** @description What to give the identity provider's administrator. */
+            service_provider: {
+                entity_id: string;
+                /** @description The assertion consumer service, HTTP-POST. */
+                acs_url: string;
+                /** @description This server's metadata for the connection, with its certificates. */
+                metadata_url: string;
+                /** @description Why requests are unsigned and assertions cannot be encrypted, if they are not. */
+                warning: string | null;
+            };
+        } | null;
+        /**
+         * @description The identity provider's metadata, `metadata` (the document) or `metadata_url` (fetched now,
+         *     https, never a private address), one of them; then the options, each with its default.
+         */
+        SamlConnectionCreate: {
+            /**
+             * @description The metadata document: one `EntityDescriptor` (or an aggregate holding exactly one) with
+             *     one SAML 2.0 `IDPSSODescriptor`, an HTTP-Redirect single sign-on service on https and one
+             *     to three RSA signing certificates of 2048 bits or more. No `DOCTYPE`.
+             */
+            metadata?: string;
+            metadata_url?: string;
+            subject_attribute?: string;
+            /** @default urn:oasis:names:tc:SAML:2.0:nameid-format:persistent */
+            name_id_format: string;
+            email_attribute?: string;
+            /** @default false */
+            email_trusted: boolean;
+            name_attribute?: string;
+            given_name_attribute?: string;
+            family_name_attribute?: string;
+            /** @default true */
+            sign_requests: boolean;
+            /** @default false */
+            require_encryption: boolean;
+            /** @default false */
+            require_gcm: boolean;
         };
         ConnectionDisplayName: string;
         ConnectionCreate: {
@@ -2183,6 +2295,7 @@ export type components = {
             oidc_client_secret?: string;
             /** @description Must include `openid`; `openid profile email` when omitted. */
             oidc_scope?: string;
+            saml?: components["schemas"]["SamlConnectionCreate"];
         };
         ConnectionUpdate: {
             display_name?: components["schemas"]["ConnectionDisplayName"];
@@ -3267,6 +3380,34 @@ export interface operations {
             422: components["responses"]["Unprocessable"];
         };
     };
+    refreshConnectionMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: components["parameters"]["ConnectionNameParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The connection, refreshed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
     getConnection: {
         parameters: {
             query?: never;
@@ -3828,6 +3969,7 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
