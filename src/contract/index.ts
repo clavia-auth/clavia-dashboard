@@ -57,6 +57,12 @@ export type InitialAccessTokenState = Schemas["InitialAccessTokenState"];
 
 export type AuditEvent = Schemas["AuditEvent"];
 export type AuditEventType = AuditEvent["type"];
+
+export type Webhook = Schemas["Webhook"];
+export type WebhookWithSecret = Schemas["WebhookWithSecret"];
+export type WebhookCreate = Schemas["WebhookCreate"];
+export type WebhookUpdate = Schemas["WebhookUpdate"];
+export type WebhookDelivery = Schemas["WebhookDelivery"];
 export type AuditOutcome = Schemas["AuditOutcome"];
 export type AuditTargetType = Schemas["AuditTargetType"];
 

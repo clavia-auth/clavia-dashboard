@@ -89,6 +89,7 @@ src/
     shell/         the frame: sidebar, operator menu, command menu, providers
     app/           shared pieces: page header, fields, pager, dialogs, badges
     audit/         the audit log's table, details and labels
+    webhooks/      the event picker and the types an endpoint can hear
 test/            Vitest: core/, adapters/, support/ (fakes, shared contracts)
 e2e/             Playwright smoke suite
 docs/architecture.md

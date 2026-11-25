@@ -16,6 +16,7 @@ export type Section = Readonly<{
     | "keys"
     | "tokens"
     | "audit"
+    | "webhooks"
     | "endpoints";
   /** What the operator's token must carry to see it; null for every operator. */
   needs: ManagementScope | null;
@@ -54,6 +55,13 @@ export const SECTIONS: readonly Section[] = [
     icon: "keys",
     needs: "read:signing_keys",
     description: "What tokens are signed with",
+  },
+  {
+    title: "Webhooks",
+    href: "/webhooks",
+    icon: "webhooks",
+    needs: "read:webhooks",
+    description: "Send audit events elsewhere",
   },
   { title: "Audit log", href: "/audit", icon: "audit", needs: "read:audit_events", description: "What happened" },
   {

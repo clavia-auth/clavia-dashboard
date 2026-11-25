@@ -31,6 +31,11 @@ import type {
   UserPasskey,
   UserSession,
   UserUpdate,
+  Webhook,
+  WebhookCreate,
+  WebhookDelivery,
+  WebhookUpdate,
+  WebhookWithSecret,
 } from "@/contract";
 
 /**
@@ -48,6 +53,7 @@ export interface ManagementApi {
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
+  readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
 }
 
@@ -119,6 +125,26 @@ export interface InitialAccessTokensApi {
   issue(token: InitialAccessTokenCreate): Promise<IssuedInitialAccessToken>;
   /** Stop it registering more. The clients it registered keep working. */
   revoke(tokenId: string): Promise<void>;
+}
+
+/**
+ * The endpoints audit events are sent to, signed per Standard Webhooks. A secret is shown once, by
+ * `create` and `rotateSecret`, and never read again. Registering, changing where one points or
+ * what it hears, testing it and reading its log also need `read:audit_events`.
+ */
+export interface WebhooksApi {
+  /** Oldest first; at most twenty, so never paged. */
+  list(): Promise<Webhook[]>;
+  get(webhookId: string): Promise<Webhook>;
+  create(webhook: WebhookCreate): Promise<WebhookWithSecret>;
+  update(webhookId: string, changes: WebhookUpdate): Promise<Webhook>;
+  delete(webhookId: string): Promise<void>;
+  /** A new secret; the previous one keeps signing beside it for 24 hours. */
+  rotateSecret(webhookId: string): Promise<WebhookWithSecret>;
+  /** Queue a `webhook.tested` event for this endpoint alone; it is sent within the minute. */
+  test(webhookId: string): Promise<void>;
+  /** Newest first, kept seven days after they end. Never a body. */
+  deliveries(webhookId: string, query?: Omit<ListQuery, "search">): Promise<Page<WebhookDelivery>>;
 }
 
 export interface RolesApi {

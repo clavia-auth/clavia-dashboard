@@ -309,4 +309,97 @@ describe("ClaviaManagementApi", () => {
       });
     });
   });
+
+  describe("webhooks", () => {
+    const endpoint = {
+      id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c",
+      url: "https://siem.acme.example/hooks/clavia",
+      description: "SIEM",
+      events: ["user.created"],
+      is_enabled: true,
+      disabled_reason: null,
+      failing_since: null,
+      previous_secret_until: null,
+      created_at: "2026-03-04T09:00:00Z",
+      updated_at: "2026-03-04T09:00:00Z",
+    };
+    const base = "https://management.clavia.test/api/v1/webhooks";
+
+    it("lists the endpoints, all of them", async () => {
+      const { requests, api } = server(() => json([endpoint]));
+
+      const endpoints = await api.webhooks.list();
+
+      expect(requests[0]?.url).toBe(base);
+      expect(endpoints).toEqual([endpoint]);
+    });
+
+    it("registers an endpoint and hands back its secret", async () => {
+      const { requests, api } = server(() => json({ ...endpoint, secret: "whsec_abc" }, 201));
+
+      const created = await api.webhooks.create({ url: endpoint.url, description: "SIEM", events: ["*"] });
+
+      expect(requests[0]?.method).toBe("POST");
+      expect(await requests[0]?.json()).toEqual({ url: endpoint.url, description: "SIEM", events: ["*"] });
+      expect(created.secret).toBe("whsec_abc");
+    });
+
+    it("sends only what changes, and switches an endpoint off", async () => {
+      const { requests, api } = server(() => json({ ...endpoint, is_enabled: false }));
+
+      await api.webhooks.update(endpoint.id, { is_enabled: false });
+
+      expect(requests[0]?.method).toBe("PATCH");
+      expect(requests[0]?.url).toBe(`${base}/${endpoint.id}`);
+      expect(await requests[0]?.json()).toEqual({ is_enabled: false });
+    });
+
+    it("rotates the secret, tests and deletes by id", async () => {
+      const { requests, api } = server((request) =>
+        request.url.endsWith("/rotate-secret")
+          ? json({ ...endpoint, secret: "whsec_new" })
+          : new Response(null, { status: request.method === "POST" ? 202 : 204 }),
+      );
+
+      const rotated = await api.webhooks.rotateSecret(endpoint.id);
+      await api.webhooks.test(endpoint.id);
+      await api.webhooks.delete(endpoint.id);
+
+      expect(rotated.secret).toBe("whsec_new");
+      expect(requests.map((request) => `${request.method} ${new URL(request.url).pathname}`)).toEqual([
+        `POST /api/v1/webhooks/${endpoint.id}/rotate-secret`,
+        `POST /api/v1/webhooks/${endpoint.id}/test`,
+        `DELETE /api/v1/webhooks/${endpoint.id}`,
+      ]);
+    });
+
+    it("pages the delivery log", async () => {
+      const { requests, api } = server(() => json(PAGE));
+
+      await api.webhooks.deliveries(endpoint.id, { page: 2, perPage: 25 });
+
+      expect(requests[0]?.url).toBe(`${base}/${endpoint.id}/deliveries?page=2&per_page=25`);
+    });
+
+    it("names the field Clavia refuses", async () => {
+      const { api } = server(() =>
+        json(
+          {
+            title: "Unprocessable Content",
+            status: 422,
+            detail: "The request was refused.",
+            errors: [{ pointer: "/url", detail: "The URL must be https." }],
+          },
+          422,
+        ),
+      );
+
+      await expect(
+        api.webhooks.create({ url: "http://x.test/", description: "", events: ["*"] }),
+      ).rejects.toMatchObject({
+        kind: "invalid",
+        fields: [{ pointer: "/url" }],
+      });
+    });
+  });
 });

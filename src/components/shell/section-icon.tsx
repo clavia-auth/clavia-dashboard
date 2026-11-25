@@ -10,6 +10,7 @@ import {
   ShieldCheckIcon,
   TicketIcon,
   UsersIcon,
+  WebhookIcon,
 } from "lucide-react";
 
 import type { Section } from "./navigation";
@@ -24,6 +25,7 @@ const ICONS = {
   keys: KeyRoundIcon,
   tokens: TicketIcon,
   audit: ScrollTextIcon,
+  webhooks: WebhookIcon,
   endpoints: GlobeIcon,
 } as const;
 
