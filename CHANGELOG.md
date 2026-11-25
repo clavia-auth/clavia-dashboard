@@ -7,6 +7,11 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-25
+
+Integrations, for the console of Clavia 0.4.0: webhooks, SAML connections, SCIM provisioning,
+custom claims and application metadata, with the audit log exported and the week's sign-ins charted.
+
 ### Added
 
 - **Sign-in activity on the overview.** A chart of the last seven days' sign-ins and refused
@@ -67,9 +72,15 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Changed
 
-- **Needs Clavia 0.4.0 or later** (the version that adds custom claims), and a new scope,
-  `update:users_app_metadata`. A role must grant it for an operator to edit application metadata;
-  a session opened before it was granted has to sign in again to carry it. Nothing else to set up.
+- **Needs Clavia 0.4.0 or later**, which adds the endpoints behind everything above. Run its
+  migrations and seed its permissions first: the dashboard asks for every management scope when an
+  operator signs in, and Clavia refuses a sign-in that names a scope it does not have (the dashboard
+  then shows "provider error").
+- **New scopes.** `update:users_app_metadata` (application metadata), `read:webhooks`,
+  `create:webhooks`, `update:webhooks` and `delete:webhooks`, and `read:provisioning_tokens`,
+  `create:provisioning_tokens` and `delete:provisioning_tokens`. The SAML keys use the signing keys'
+  scopes. A role must grant a scope for an operator to use what needs it, and a session opened before
+  it was granted has to sign in again to carry it. Nothing else to set up.
 
 ## [0.3.0] - 2026-11-23
 
@@ -196,7 +207,8 @@ server.
 - Passkeys, signing keys and sign-in charts, which come with the next versions (0.2 to 0.4).
 - Exporting the audit log.
 
-[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.4.0
 [0.3.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.3.0
 [0.2.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.2.0
 [0.1.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.1.0
