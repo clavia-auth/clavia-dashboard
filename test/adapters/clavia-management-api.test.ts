@@ -417,6 +417,7 @@ describe("ClaviaManagementApi", () => {
         is_domain_connection: false,
         allow_sign_up: false,
         require_verified_email: false,
+        require_provisioning: false,
         saml: {
           metadata_url: "https://idp.example/metadata",
           name_id_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",

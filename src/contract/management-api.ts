@@ -2336,6 +2336,12 @@ export type components = {
              */
             require_verified_email: boolean;
             /**
+             * @description An OpenID Connect or SAML connection only: only the people a directory provisioned through
+             *     SCIM sign in through it, and nobody else's account is created on the way. The directory then
+             *     decides who gets in, and somebody it removed cannot come back by signing in again.
+             */
+            require_provisioning: boolean;
+            /**
              * @description Whether it could work if switched on: always for a pool; for the passwordless one,
              *     when the deployment sends mail; for a social connection, when the deployment set its
              *     credentials; for an OIDC one, when its secret decrypts.
@@ -2459,6 +2465,12 @@ export type components = {
              * @default false
              */
             require_verified_email: boolean;
+            /**
+             * @description An `oidc` or `saml` connection only, refused for any other kind: only the people a directory
+             *     provisioned through SCIM sign in through it.
+             * @default false
+             */
+            require_provisioning: boolean;
             /** @description An `oidc` connection's issuer, https. Required for one, refused for any other. */
             oidc_issuer?: string;
             oidc_client_id?: string;
@@ -2475,6 +2487,11 @@ export type components = {
             allow_sign_up?: boolean;
             /** @description A pool only. Refused for any other kind. */
             require_verified_email?: boolean;
+            /**
+             * @description An OpenID Connect or SAML connection only, refused for any other kind. Taking effect at the
+             *     next sign-in: sessions already established stand.
+             */
+            require_provisioning?: boolean;
             oidc_issuer?: string;
             oidc_client_id?: string;
             oidc_client_secret?: string;
