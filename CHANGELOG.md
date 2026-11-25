@@ -9,6 +9,10 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ### Added
 
+- **Export the audit log as CSV.** The audit log's "Export CSV" button downloads every event matching
+  the filters on screen, not just the page shown. The file is streamed from Clavia page by page, so a
+  long log never sits in memory, and it stops at the moment the export began. Values a spreadsheet
+  would read as a formula are neutralised. Needs `read:audit_events`, as the page does.
 - **SAML connections.** Create a connection to a SAML identity provider from its metadata URL or an
   uploaded document, choosing which attribute names the person, which carries the address (and
   whether the provider verifies it), and the profile attributes, starting from a preset for Microsoft

@@ -50,6 +50,15 @@ test("a password pool offers provisioning tokens", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test("the audit log exports as CSV", async ({ page }) => {
+  const response = await page.request.get("audit/export?outcome=success");
+
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("text/csv");
+  expect(response.headers()["content-disposition"]).toContain("audit-log-");
+  expect((await response.text()).replace("\uFEFF", "")).toMatch(/^id,occurred_at,type,outcome,/);
+});
+
 test("the command menu jumps to a section", async ({ page }) => {
   await page.goto("./");
   await page.keyboard.press("ControlOrMeta+k");
