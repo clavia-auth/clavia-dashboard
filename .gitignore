@@ -51,3 +51,6 @@ next-env.d.ts
 
 # Claude Code: personal settings, never shared.
 .claude/settings.local.json
+
+# vitest report written by the RTK wrapper
+/.vitest/
