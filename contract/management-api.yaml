@@ -99,6 +99,17 @@ tags:
       keys are the JWKS's to publish (`/oidc/jwks.json`), and the private ones never leave the
       backend. With any other backend the keys live at the provider and are rotated there;
       both operations answer 409.
+  - name: saml-keys
+    x-displayName: SAML keys
+    description: |
+      This server's own keys as a SAML service provider: one that signs its requests, one that
+      identity providers encrypt assertions to, each published as a self-signed certificate in the
+      service provider metadata. Never any key material: certificates are public, the private halves
+      stay in their backend (sealed in PostgreSQL with the `postgres` backend).
+
+      A rotation is a rollover in steps: a **next** pair is published beside the current one, and
+      promoted once identity providers have had `CLAVIA_SAML_KEY_OVERLAP_DAYS` to read it; the pair
+      it replaces is **retired**, its encryption key still decrypting for as long again.
   - name: audit
     x-displayName: Audit log
     description: |
@@ -1727,6 +1738,67 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/saml-keys:
+    get:
+      tags: [saml-keys]
+      operationId: listSamlKeys
+      summary: List SAML keys
+      description: |
+        Every service provider key: the current pair, the next one if a rotation is under way, and
+        the retired ones still kept.
+      security:
+        - managementToken: [read:signing_keys]
+      responses:
+        '200':
+          description: The keys.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SamlKey'
+              examples:
+                SamlKeys:
+                  $ref: '#/components/examples/SamlKeys'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/saml-keys/rotate:
+    post:
+      tags: [saml-keys]
+      operationId: rotateSamlKeys
+      summary: Rotate the SAML keys
+      description: |
+        One step of the rollover. With no keys, the first pair, current at once (`generated`). With
+        no next pair, one is published beside the current one (`introduced`), and `promotes_at` says
+        when it can be promoted. Before then nothing changes (`waiting`). After, the next pair becomes
+        current and the one it replaces is retired (`promoted`). Retired keys past their overlap are
+        deleted at every step. Recorded as `saml_key.generated` or `saml_key.rotated`.
+      security:
+        - managementToken: [create:signing_keys]
+      responses:
+        '200':
+          description: The step taken, and every key after it.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SamlKeyRotation'
+              examples:
+                SamlKeyRotation:
+                  $ref: '#/components/examples/SamlKeyRotation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
   /api/v1/initial-access-tokens:
     get:
       tags: [initial-access-tokens]
@@ -3233,6 +3305,69 @@ components:
           created_at: "2026-01-15T10:00:00Z"
           retired_at: "2026-03-01T00:00:00Z"
           published_until: "2026-03-03T01:00:00Z"
+    SamlKeys:
+      summary: A pair in use, the next one published
+      value:
+        - kid: "kQ7v1Zr3Xx9JmE2pY6tWcN4bL8sDfHgA0uI5oR2eT1M"
+          usage: "signing"
+          status: "current"
+          certificate: "MIIDnTCCAgWgAwIBAgIQZXhhbXBsZS1ub3QtcmVhbA=="
+          certificate_sha256: "3f1c9a7e2b4d6f8a0c1e3b5d7f9a2c4e6b8d0f1a3c5e7b9d1f3a5c7e9b2d4f6a"
+          valid_until: "2036-01-15T10:00:00Z"
+          created_at: "2026-01-15T10:00:00Z"
+          promoted_at: "2026-01-15T10:00:00Z"
+          retired_at: null
+        - kid: "Lm2xP8qR5tY1wN7vB3cF6gH9jK0dS4aE2uI8oZ1eT3X"
+          usage: "encryption"
+          status: "current"
+          certificate: "MIIDrzCCAhegAwIBAgIQbm90LWEtcmVhbC1jZXJ0aWY="
+          certificate_sha256: "9a2c4e6b8d0f1a3c5e7b9d1f3a5c7e9b2d4f6a3f1c9a7e2b4d6f8a0c1e3b5d7f"
+          valid_until: "2036-01-15T10:00:00Z"
+          created_at: "2026-01-15T10:00:00Z"
+          promoted_at: "2026-01-15T10:00:00Z"
+          retired_at: null
+        - kid: "Zx4cV6bN8mQ1wE3rT5yU7iO9pA2sD4fG6hJ8kL0zX1C"
+          usage: "signing"
+          status: "next"
+          certificate: "MIIDnTCCAgWgAwIBAgIQZXhhbXBsZS1uZXh0LWtleQ=="
+          certificate_sha256: "b5d7f9a2c4e6b8d0f1a3c5e7b9d1f3a5c7e9b2d4f6a3f1c9a7e2b4d6f8a0c1e3"
+          valid_until: "2036-03-01T09:00:00Z"
+          created_at: "2026-03-01T09:00:00Z"
+          promoted_at: null
+          retired_at: null
+        - kid: "Qw1eR3tY5uI7oP9aS2dF4gH6jK8lZ0xC2vB4nM6qW8E"
+          usage: "encryption"
+          status: "next"
+          certificate: "MIIDrzCCAhegAwIBAgIQbmV4dC1lbmNyeXB0aW9uLWs="
+          certificate_sha256: "e7b9d1f3a5c7e9b2d4f6a3f1c9a7e2b4d6f8a0c1e3b5d7f9a2c4e6b8d0f1a3c5"
+          valid_until: "2036-03-01T09:00:00Z"
+          created_at: "2026-03-01T09:00:00Z"
+          promoted_at: null
+          retired_at: null
+    SamlKeyRotation:
+      summary: A next pair published
+      value:
+        step: "introduced"
+        promotes_at: "2026-03-15T09:00:00Z"
+        keys:
+          - kid: "kQ7v1Zr3Xx9JmE2pY6tWcN4bL8sDfHgA0uI5oR2eT1M"
+            usage: "signing"
+            status: "current"
+            certificate: "MIIDnTCCAgWgAwIBAgIQZXhhbXBsZS1ub3QtcmVhbA=="
+            certificate_sha256: "3f1c9a7e2b4d6f8a0c1e3b5d7f9a2c4e6b8d0f1a3c5e7b9d1f3a5c7e9b2d4f6a"
+            valid_until: "2036-01-15T10:00:00Z"
+            created_at: "2026-01-15T10:00:00Z"
+            promoted_at: "2026-01-15T10:00:00Z"
+            retired_at: null
+          - kid: "Zx4cV6bN8mQ1wE3rT5yU7iO9pA2sD4fG6hJ8kL0zX1C"
+            usage: "signing"
+            status: "next"
+            certificate: "MIIDnTCCAgWgAwIBAgIQZXhhbXBsZS1uZXh0LWtleQ=="
+            certificate_sha256: "b5d7f9a2c4e6b8d0f1a3c5e7b9d1f3a5c7e9b2d4f6a3f1c9a7e2b4d6f8a0c1e3"
+            valid_until: "2036-03-01T09:00:00Z"
+            created_at: "2026-03-01T09:00:00Z"
+            promoted_at: null
+            retired_at: null
     InitialAccessTokenPage:
       summary: A page of initial access tokens
       value:
@@ -3643,7 +3778,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, initial_access_token.issued, initial_access_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated, webhook.tested, webhook.disabled]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, saml_key.generated, saml_key.rotated, initial_access_token.issued, initial_access_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated, webhook.tested, webhook.disabled]
         occurred_at:
           type: string
           format: date-time
@@ -3701,7 +3836,70 @@ components:
 
     AuditTargetType:
       type: string
-      enum: [user, client, resource_server, role, connection, signing_key, initial_access_token, webhook]
+      enum: [user, client, resource_server, role, connection, signing_key, saml_key, initial_access_token, webhook]
+
+    SamlKey:
+      description: A SAML service provider key, by its certificate; never its private half.
+      type: object
+      additionalProperties: false
+      required: [kid, usage, status, certificate, certificate_sha256, valid_until, created_at, promoted_at,
+        retired_at]
+      properties:
+        kid:
+          type: string
+          description: The RFC 7638 thumbprint of the public key.
+        usage:
+          type: string
+          enum: [signing, encryption]
+          description: |
+            `signing` signs this server's requests (and both certificates of its pair); `encryption` is
+            what identity providers encrypt assertions to. One key, one usage.
+        status:
+          type: string
+          enum: [next, current, retired]
+          description: |
+            `next` is published beside the current key but not used yet; `retired` is no longer
+            published, an encryption key still decrypting until it is deleted.
+        certificate:
+          type: string
+          description: The self-signed X.509 certificate, DER in base64, as metadata carries it.
+        certificate_sha256:
+          type: string
+          description: SHA-256 of the certificate's DER, lower-case hex, for an administrator to compare.
+        valid_until:
+          type: string
+          format: date-time
+          description: The certificate's `notAfter`; identity providers pin the key and ignore it.
+        created_at:
+          type: string
+          format: date-time
+        promoted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When it became current; null while it is next.
+        retired_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SamlKeyRotation:
+      type: object
+      additionalProperties: false
+      required: [step, promotes_at, keys]
+      properties:
+        step:
+          type: string
+          enum: [generated, introduced, waiting, promoted]
+        promotes_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the next pair can be promoted; null when there is none.
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/SamlKey'
 
     InitialAccessTokenPage:
       description: One page of initial access tokens, newest first.

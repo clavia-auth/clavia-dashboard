@@ -22,6 +22,7 @@ const CONFIGURATION = [
   "Roles",
   "Connections",
   "Signing keys",
+  "SAML keys",
   "Initial access tokens",
   "Webhooks",
   "Passkeys",

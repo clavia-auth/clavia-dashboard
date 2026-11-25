@@ -49,6 +49,8 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "connection.deleted": { label: "Connection deleted", group: "Connections", tone: "warning" },
   "signing_key.created": { label: "Signing key created", group: "Signing keys", tone: "positive" },
   "signing_key.rotated": { label: "Signing key rotated", group: "Signing keys", tone: "warning" },
+  "saml_key.generated": { label: "SAML keys generated", group: "SAML keys", tone: "positive" },
+  "saml_key.rotated": { label: "SAML keys rotated", group: "SAML keys", tone: "warning" },
   "initial_access_token.issued": {
     label: "Initial access token issued",
     group: "Initial access tokens",
@@ -91,6 +93,7 @@ export function targetHref(type: AuditTargetType, id: string): Route | null {
     role: "/roles",
     connection: "/connections",
     signing_key: null,
+    saml_key: null,
     initial_access_token: null,
     webhook: "/webhooks",
   }[type];
@@ -105,6 +108,7 @@ export const TARGET_TYPES: Readonly<Record<AuditTargetType, string>> = {
   role: "Role",
   connection: "Connection",
   signing_key: "Signing key",
+  saml_key: "SAML key",
   initial_access_token: "Initial access token",
   webhook: "Webhook",
 };
