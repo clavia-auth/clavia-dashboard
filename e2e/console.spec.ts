@@ -40,6 +40,16 @@ test("the operator finds themselves among the users", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toContainText(EMAIL);
 });
 
+test("a password pool offers provisioning tokens", async ({ page }) => {
+  const errors = watchForErrors(page);
+
+  await page.goto("connections/password");
+
+  await expect(page.getByText("Provisioning", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Issue token" })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test("the command menu jumps to a section", async ({ page }) => {
   await page.goto("./");
   await page.keyboard.press("ControlOrMeta+k");

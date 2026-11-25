@@ -14,6 +14,8 @@ const roleSchema = z.object({
   description: z.string().trim().max(500),
 });
 
+const updateSchema = roleSchema.extend({ provisionable: z.boolean() });
+
 export async function createRole(_: ActionState, form: FormData): Promise<ActionState> {
   const parsed = parse(roleSchema, { name: form.get("name"), description: form.get("description") ?? "" });
   if (!parsed.ok) {
@@ -21,7 +23,7 @@ export async function createRole(_: ActionState, form: FormData): Promise<Action
   }
   let created: string | undefined;
   const state = await perform(async ({ api }) => {
-    // Whether a directory's group may grant it is set from the role's page, once SCIM is set up.
+    // Whether a directory's group may grant it is set from the role's page, once there are permissions to judge.
     created = (await api.roles.create({ ...parsed.data, provisionable: false })).id;
 
     return `Created ${parsed.data.name}.`;
@@ -34,7 +36,12 @@ export async function createRole(_: ActionState, form: FormData): Promise<Action
 }
 
 export async function updateRole(roleId: string, _: ActionState, form: FormData): Promise<ActionState> {
-  const parsed = parse(roleSchema, { name: form.get("name"), description: form.get("description") ?? "" });
+  const parsed = parse(updateSchema, {
+    name: form.get("name"),
+    description: form.get("description") ?? "",
+    // A switch Clavia would refuse (the role holds a Management API permission) is shown off and disabled.
+    provisionable: form.get("provisionable") === "on",
+  });
   if (!parsed.ok) {
     return parsed.state;
   }

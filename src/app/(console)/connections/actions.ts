@@ -8,6 +8,8 @@ import { z } from "zod";
 import type { Connection } from "@/contract";
 import { type ActionState, parse, perform } from "@/server/actions";
 
+import { PROVISIONING_EXPIRIES } from "./[name]/provisioning-expiries";
+
 const optional = z
   .string()
   .trim()
@@ -130,6 +132,7 @@ const updateSchema = z.object({
   is_domain_connection: z.boolean(),
   allow_sign_up: z.boolean().optional(),
   require_verified_email: z.boolean().optional(),
+  require_provisioning: z.boolean().optional(),
   oidc_issuer: optional.pipe(z.url("The provider's issuer, an https URL.").optional()),
   oidc_client_id: optional,
   oidc_client_secret: z
@@ -141,7 +144,8 @@ const updateSchema = z.object({
 
 /**
  * Saves a connection's settings. `strategy` says which fields its form has: the OpenID Connect
- * settings for a provider, the self-service switches for a pool.
+ * settings for a provider, the self-service switches for a pool, and for either kind of enterprise
+ * connection whether only the people a directory provisioned may sign in.
  */
 export async function updateConnection(
   name: string,
@@ -151,12 +155,14 @@ export async function updateConnection(
 ): Promise<ActionState> {
   const oidc = strategy === "oidc";
   const pool = strategy === "database";
+  const enterprise = strategy === "oidc" || strategy === "saml";
   const parsed = parse(updateSchema, {
     display_name: form.get("display_name"),
     is_enabled: form.get("is_enabled") === "on",
     is_domain_connection: form.get("is_domain_connection") === "on",
     allow_sign_up: pool ? form.get("allow_sign_up") === "on" : undefined,
     require_verified_email: pool ? form.get("require_verified_email") === "on" : undefined,
+    require_provisioning: enterprise ? form.get("require_provisioning") === "on" : undefined,
     oidc_issuer: oidc ? (form.get("oidc_issuer") ?? "") : "",
     oidc_client_id: oidc ? (form.get("oidc_client_id") ?? "") : "",
     // Left empty, the secret Clavia holds is kept.
@@ -183,6 +189,65 @@ export async function refreshSamlMetadata(name: string): Promise<ActionState> {
     refresh();
 
     return "Metadata read again.";
+  });
+}
+
+/** An issued token's value and base URL, handed to the form once: Clavia keeps only the token's digest. */
+export type ProvisioningIssuedState = ActionState & {
+  readonly issued?: { token: string; baseUrl: string; description: string };
+};
+
+const issueProvisioningSchema = z.object({
+  description: z.string().trim().min(1, "Say which directory it is for.").max(120, "At most 120 characters."),
+  expires_in: z.coerce
+    .number()
+    .refine(
+      (seconds) => PROVISIONING_EXPIRIES.some((expiry) => expiry.seconds === seconds),
+      "Pick one of the durations.",
+    ),
+  subject_attribute: z.enum(["externalId", "userName"], "Pick one of the two."),
+  addresses_trusted: z.boolean(),
+  delete_deactivates: z.boolean(),
+});
+
+/**
+ * Issue the token a directory provisions a connection with. `enterprise` says whether the form
+ * asked for the subject attribute: a pool has none, and Clavia's default stands.
+ */
+export async function issueProvisioningToken(
+  connection: string,
+  enterprise: boolean,
+  _: ProvisioningIssuedState,
+  form: FormData,
+): Promise<ProvisioningIssuedState> {
+  const parsed = parse(issueProvisioningSchema, {
+    description: form.get("description"),
+    expires_in: form.get("expires_in"),
+    subject_attribute: enterprise ? form.get("subject_attribute") : "externalId",
+    addresses_trusted: form.get("addresses_trusted") === "on",
+    delete_deactivates: form.get("delete_deactivates") === "on",
+  });
+  if (!parsed.ok) {
+    return parsed.state;
+  }
+  let issued: ProvisioningIssuedState["issued"];
+  const state = await perform(async ({ api }) => {
+    const created = await api.provisioningTokens.issue({ connection, ...parsed.data });
+    issued = { token: created.token, baseUrl: created.base_url, description: created.description };
+    refresh();
+
+    return `Issued “${created.description}”.`;
+  });
+
+  return { ...state, ...(issued !== undefined ? { issued } : {}) };
+}
+
+export async function revokeProvisioningToken(tokenId: string): Promise<ActionState> {
+  return perform(async ({ api }) => {
+    await api.provisioningTokens.revoke(tokenId);
+    refresh();
+
+    return "Token revoked. The directory provisions nothing more.";
   });
 }
 

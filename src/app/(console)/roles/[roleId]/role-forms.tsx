@@ -4,7 +4,7 @@ import { Trash2Icon } from "lucide-react";
 import { useActionState } from "react";
 
 import { ConfirmAction } from "@/components/app/confirm-action";
-import { TextField } from "@/components/app/form-fields";
+import { SwitchField, TextField } from "@/components/app/form-fields";
 import { useActionFeedback } from "@/components/app/use-action-feedback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,19 @@ import { fieldError, IDLE } from "@/server/action-state";
 
 import { deleteRole, updateRole } from "../actions";
 
-export function RoleSettingsForm({ role, editable }: { role: RoleWithPermissions; editable: boolean }) {
+/**
+ * `holdsSystemPermission`: the role grants something on a system API (the Management API), which a
+ * directory's group may never grant, so Clavia refuses `provisionable` for it.
+ */
+export function RoleSettingsForm({
+  role,
+  editable,
+  holdsSystemPermission,
+}: {
+  role: RoleWithPermissions;
+  editable: boolean;
+  holdsSystemPermission: boolean;
+}) {
   const [state, action, pending] = useActionState(updateRole.bind(null, role.id), IDLE);
   useActionFeedback(state);
 
@@ -43,6 +55,17 @@ export function RoleSettingsForm({ role, editable }: { role: RoleWithPermissions
                 defaultValue={role.description}
                 maxLength={500}
                 error={fieldError(state, "description")}
+              />
+              <SwitchField
+                name="provisionable"
+                label="A directory may grant it"
+                description={
+                  holdsSystemPermission
+                    ? "Not for this role: it grants a permission on the Management API, which no directory's group may give. Take that permission away first."
+                    : "A group a directory sends through SCIM, named like the role, gives it to its members. A role holding a Management API permission can never be granted this way."
+                }
+                defaultChecked={role.provisionable && !holdsSystemPermission}
+                disabled={holdsSystemPermission}
               />
             </FieldGroup>
           </fieldset>

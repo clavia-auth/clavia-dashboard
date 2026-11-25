@@ -310,6 +310,60 @@ describe("ClaviaManagementApi", () => {
     });
   });
 
+  describe("provisioning tokens", () => {
+    const token = {
+      id: "0198f7a1-0000-7000-8000-000000000002",
+      connection: "acme-entra",
+      description: "Entra ID",
+      created_at: "2026-11-23T10:00:00Z",
+      expires_at: "2027-11-23T10:00:00Z",
+      expiring_soon: false,
+      state: "active",
+      revoked_at: null,
+      subject_attribute: "externalId",
+      addresses_trusted: false,
+      delete_deactivates: false,
+    };
+
+    it("lists one connection's tokens", async () => {
+      const { requests, api } = server(() => json({ items: [token], total: 1, page: 1, per_page: 25 }));
+
+      const page = await api.provisioningTokens.list({ connection: "acme-entra", perPage: 25 });
+
+      expect(new URL(requests[0]!.url).pathname).toBe("/api/v1/provisioning-tokens");
+      expect(new URL(requests[0]!.url).search).toBe("?per_page=25&connection=acme-entra");
+      expect(page.items[0]?.connection).toBe("acme-entra");
+    });
+
+    it("issues a token with what was asked, and hands back its value and the base URL", async () => {
+      const base_url = "https://management.clavia.test/scim/v2";
+      const { requests, api } = server(() => json({ ...token, token: "scim-secret", base_url }, 201));
+
+      const issued = await api.provisioningTokens.issue({
+        connection: "acme-entra",
+        description: "Entra ID",
+        expires_in: 31_536_000,
+        subject_attribute: "externalId",
+        addresses_trusted: false,
+        delete_deactivates: false,
+      });
+
+      expect(requests[0]?.method).toBe("POST");
+      expect(await requests[0]?.json()).toMatchObject({ connection: "acme-entra", expires_in: 31_536_000 });
+      expect(issued.token).toBe("scim-secret");
+      expect(issued.base_url).toBe(base_url);
+    });
+
+    it("revokes by id", async () => {
+      const { requests, api } = server(() => new Response(null, { status: 204 }));
+
+      await api.provisioningTokens.revoke(token.id);
+
+      expect(requests[0]?.method).toBe("DELETE");
+      expect(requests[0]?.url).toBe(`https://management.clavia.test/api/v1/provisioning-tokens/${token.id}`);
+    });
+  });
+
   describe("webhooks", () => {
     const endpoint = {
       id: "6b0e5c9a-2f4d-4a1e-9b3c-7d8e9f0a1b2c",

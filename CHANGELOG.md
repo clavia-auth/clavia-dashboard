@@ -21,6 +21,15 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 - **SAML keys, beside the signing keys.** This server's keys as a SAML service provider, by
   certificate: what each is for, its place in the rotation (current, next, retired) and when the
   certificate expires, with a button for the next step of the rotation. Needs Clavia 0.4.0 or later.
+- **Provisioning, on the connection page.** For a password pool, an OpenID Connect or a SAML
+  connection: issue the token a directory (Entra ID, Okta) provisions its accounts with, and see
+  the token and the SCIM base URL once, with copy buttons. Choose when it expires, which attribute
+  names a person (`externalId` for Entra ID, `userName` for Okta), whether the addresses it sends are
+  trusted and whether a delete deactivates. A token is flagged thirty days before it expires, and
+  revoking one stops the directory at once. An enterprise connection can require provisioning, so only
+  the people the directory sent can sign in. Roles have a switch for whether a directory's group may
+  grant them, unavailable for a role holding a Management API permission. Needs Clavia 0.4.0 or later
+  and the `*:provisioning_tokens` scopes.
 - **A Webhooks section.** Register the addresses that receive Clavia's audit events, signed as
   Standard Webhooks: add one (its secret is shown once, with a copy button), change its URL, events
   and description, switch it on or off, rotate its secret (the old one still signs for 24 hours),

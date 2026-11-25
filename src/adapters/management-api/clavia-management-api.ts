@@ -17,6 +17,7 @@ import type {
   SamlKeysApi,
   SigningKeysApi,
   UsersApi,
+  ProvisioningTokensApi,
   WebhooksApi,
 } from "@/core/management/management-api";
 
@@ -38,6 +39,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly signingKeys: SigningKeysApi;
   readonly samlKeys: SamlKeysApi;
   readonly initialAccessTokens: InitialAccessTokensApi;
+  readonly provisioningTokens: ProvisioningTokensApi;
   readonly webhooks: WebhooksApi;
   readonly auditEvents: AuditEventsApi;
 
@@ -197,6 +199,22 @@ export class ClaviaManagementApi implements ManagementApi {
         done(
           http.DELETE("/api/v1/initial-access-tokens/{initial_access_token_id}", {
             params: { path: { initial_access_token_id: tokenId } },
+          }),
+        ),
+    };
+
+    this.provisioningTokens = {
+      list: ({ connection, ...query } = {}) =>
+        read(
+          http.GET("/api/v1/provisioning-tokens", {
+            params: { query: { ...listParameters(query), ...(connection !== undefined ? { connection } : {}) } },
+          }),
+        ),
+      issue: (token) => read(http.POST("/api/v1/provisioning-tokens", { body: token })),
+      revoke: (tokenId) =>
+        done(
+          http.DELETE("/api/v1/provisioning-tokens/{provisioning_token_id}", {
+            params: { path: { provisioning_token_id: tokenId } },
           }),
         ),
     };
