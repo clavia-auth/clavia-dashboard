@@ -112,7 +112,8 @@ export async function createConnection(_: ActionState, form: FormData): Promise<
     return parsed.state;
   }
   const state = await perform(async ({ api }) => {
-    await api.connections.create({ ...parsed.data, is_enabled: true });
+    // Requiring provisioning is switched on from the connection's SCIM settings, once a directory is set up.
+    await api.connections.create({ ...parsed.data, is_enabled: true, require_provisioning: false });
 
     return `Created ${parsed.data.display_name}.`;
   });

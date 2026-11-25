@@ -3290,6 +3290,7 @@ components:
           is_domain_connection: true
           allow_sign_up: true
           require_verified_email: true
+          require_provisioning: false
           configured: true
           usable: true
           oidc_issuer: null
@@ -3304,6 +3305,7 @@ components:
           is_domain_connection: false
           allow_sign_up: false
           require_verified_email: false
+          require_provisioning: false
           configured: true
           usable: true
           oidc_issuer: "https://acme.okta.example"
@@ -3321,6 +3323,7 @@ components:
         is_domain_connection: false
         allow_sign_up: false
         require_verified_email: false
+        require_provisioning: false
         configured: true
         usable: true
         oidc_issuer: "https://acme.okta.example"
@@ -3347,6 +3350,7 @@ components:
         is_domain_connection: false
         allow_sign_up: false
         require_verified_email: false
+        require_provisioning: false
         configured: false
         usable: false
         oidc_issuer: null
@@ -3391,6 +3395,7 @@ components:
       value:
         allow_sign_up: true
         require_verified_email: true
+        require_provisioning: false
     PasswordPool:
       summary: The pool of email and password accounts
       value:
@@ -3401,6 +3406,7 @@ components:
         is_domain_connection: true
         allow_sign_up: true
         require_verified_email: true
+        require_provisioning: false
         configured: true
         usable: true
         oidc_issuer: null
@@ -5659,7 +5665,8 @@ components:
       type: object
       additionalProperties: false
       required: [name, display_name, strategy, is_enabled, is_domain_connection, allow_sign_up,
-        require_verified_email, configured, usable, oidc_issuer, oidc_client_id, oidc_scope, saml, created_at]
+        require_verified_email, require_provisioning, configured, usable, oidc_issuer, oidc_client_id, oidc_scope,
+        saml, created_at]
       properties:
         name:
           $ref: '#/components/schemas/ConnectionName'
@@ -5686,6 +5693,12 @@ components:
             A pool only: an account in it signs in with its password only once it has followed the
             verification link it is sent. With sign-up open, this stops anyone registering a
             stranger's address.
+        require_provisioning:
+          type: boolean
+          description: |
+            An OpenID Connect or SAML connection only: only the people a directory provisioned through
+            SCIM sign in through it, and nobody else's account is created on the way. The directory then
+            decides who gets in, and somebody it removed cannot come back by signing in again.
         configured:
           type: boolean
           description: |
@@ -5897,6 +5910,12 @@ components:
           type: boolean
           default: false
           description: A pool only. Refused for any other kind.
+        require_provisioning:
+          type: boolean
+          default: false
+          description: |
+            An `oidc` or `saml` connection only, refused for any other kind: only the people a directory
+            provisioned through SCIM sign in through it.
         oidc_issuer:
           type: string
           maxLength: 2048
@@ -5933,6 +5952,11 @@ components:
         require_verified_email:
           type: boolean
           description: A pool only. Refused for any other kind.
+        require_provisioning:
+          type: boolean
+          description: |
+            An OpenID Connect or SAML connection only, refused for any other kind. Taking effect at the
+            next sign-in: sessions already established stand.
         oidc_issuer:
           type: string
           maxLength: 2048
