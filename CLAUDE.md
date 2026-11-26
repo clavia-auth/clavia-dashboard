@@ -97,7 +97,7 @@ docs/RELEASING.md   how a release is made and what its workflow checks
 Dockerfile         the production image (Next.js standalone, port 3000)
 CHANGELOG.md       the release notes, one section per version
 .claude/         the ticket-* skills and board.sh, which move work through the backlog
-.github/         CI, the image and release workflows, the @claude workflow, issue forms, the pull request template
+.github/         CI, the image, edge and release workflows, the @claude workflow, issue forms, the pull request template
 ```
 
 ## Architecture

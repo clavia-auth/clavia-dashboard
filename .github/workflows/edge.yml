@@ -1,0 +1,87 @@
+name: Edge
+
+# `ghcr.io/clavia-auth/clavia-dashboard:edge` is the dashboard as `main` has it, for the end-to-end suites
+# that run another repository's change against it (clavia's, docs/design/end-to-end-scenarios.md in that
+# repository). It is not a release: only a tag publishes one, through the Release workflow.
+#
+# It is built after the CI run of a push to `main` succeeded, so `edge` is never a commit whose checks
+# failed. `workflow_run` runs the workflow file of the default branch with a token that can write
+# packages, so it only ever builds a commit of this repository that was pushed to `main`: never a pull
+# request, and never a fork's branch that happens to be called `main`.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer `main` replaces a build that has not finished: `edge` follows the newest.
+concurrency:
+  group: edge
+  cancel-in-progress: true
+
+# The third-party actions, in a job that holds `packages: write`, are pinned to a commit (the version is in
+# the comment), as in the Release workflow; Dependabot's weekly `github-actions` update moves them.
+jobs:
+  image:
+    name: Container image
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      COMMIT: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.COMMIT }}
+          fetch-depth: 0
+
+      # CI can finish after a newer commit landed; that one will publish `edge` when its own CI passes.
+      - name: This commit is still the tip of main
+        id: tip
+        run: |
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" = "${COMMIT}" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "main has moved on; the newer commit publishes edge."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.tip.outputs.current == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - if: steps.tip.outputs.current == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags and labels
+        if: steps.tip.outputs.current == 'true'
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: type=raw,value=edge
+          # The commit it was built from, not the default branch's tip the event carries.
+          labels: org.opencontainers.image.revision=${{ env.COMMIT }}
+
+      - if: steps.tip.outputs.current == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: production
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
