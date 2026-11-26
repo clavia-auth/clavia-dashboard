@@ -102,4 +102,16 @@ test.describe("signing out", () => {
     await page.goto("users");
     await expect(page).toHaveURL(/\/auth\/login/);
   });
+
+  test("can sign back in from the signed-out page", async ({ page }) => {
+    await signIn(page);
+    await page.getByRole("button", { name: EMAIL }).click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/signed-out/);
+
+    await page.getByRole("link", { name: "Sign in" }).click();
+
+    // Clavia's login page, not the signed-out page with `unknown_attempt`.
+    await expect(page).toHaveURL(/\/auth\/login/);
+  });
 });
