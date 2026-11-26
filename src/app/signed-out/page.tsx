@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { ClaviaMark } from "@/components/shell/brand";
 import { Button } from "@/components/ui/button";
@@ -39,9 +38,8 @@ export default async function SignedOutPage({ searchParams }: { searchParams: Pr
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href="/auth/sign-in" prefetch={false}>
-              Sign in
-            </Link>
+            {/* A plain anchor: the route redirects off-site, and a <Link> would run it twice (a background fetch, then a navigation), each setting a new state cookie. */}
+            <a href="/dashboard/auth/sign-in">Sign in</a>
           </Button>
         </CardContent>
       </Card>
