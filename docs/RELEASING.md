@@ -14,6 +14,10 @@ What a release publishes:
 | The container image                                         | `ghcr.io/clavia-auth/clavia-dashboard:X.Y.Z` (also `X.Y` and `latest`) | the **Release** workflow |
 | The GitHub release, with the changelog section as its notes | GitHub                                                                 | the **Release** workflow |
 
+`ghcr.io/clavia-auth/clavia-dashboard:edge` is not a release: the **Edge** workflow moves it to `main` after
+its CI run succeeded, for the end-to-end suites of both repositories, and nothing about it is promised
+to anyone running the dashboard. Pin a version.
+
 Claude prepares the release pull request (the **ticket-release** skill); tagging and publishing
 are public and hard to take back, so they are the maintainer's.
 
