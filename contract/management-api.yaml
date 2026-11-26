@@ -35,6 +35,17 @@ info:
     would come as `/api/v2`, beside this one. Which server release a copy of this document belongs
     to is a different number, Clavia's own (`0.3.0`), shown beside it on the published reference.
 
+    ## Guides
+
+    Read these before the operations below. They come with each release, beside this reference.
+
+    - [Getting a token](guides/getting-a-token.html): a machine client, or a person signing in.
+    - [Scopes and roles](guides/scopes-and-roles.html): what a token may do, and who decides.
+    - [Errors](guides/errors.html): problem documents, bearer refusals, and stepping up.
+    - [Paging and search](guides/paging-and-search.html): reading a list.
+    - [DPoP-bound tokens](guides/dpop.html): tokens a stolen copy of is useless.
+    - [Registering clients](guides/registering-clients.html): letting others register their applications.
+
 servers:
   - url: /
 
