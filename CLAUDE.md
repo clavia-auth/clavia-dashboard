@@ -275,7 +275,9 @@ to `ManagementError` kinds: `unauthenticated` (401), `step_up_required` (401 wit
   between runs, whose operator is enrolled already, set `E2E_TOTP_SECRET` to the key of their authenticator.
   A test that needs something arranged without a screen (an operator of its own, a session ended from
   elsewhere) calls Clavia's Management API as the machine client `seed-dev` made (`e2e/clavia.ts`, from the file
-  `E2E_CLAVIA_SEED` names: clavia's `test/e2e/.work/seed.txt`); without it those tests are skipped. The step-up test
+  `E2E_CLAVIA_SEED` names: clavia's `test/e2e/.work/seed.txt`); without it those tests are skipped. The webhooks test
+  registers an endpoint at the stack's receiver (`CLAVIA_E2E_RECEIVER=1` in clavia's `up.sh`; `E2E_RECEIVER_URL`
+  says where the tests read what it was sent) and checks the deliveries' signatures (`e2e/standard-webhooks.ts`). The step-up test
   changes the Management API's MFA policy, which is for everyone, so it is a Playwright project of its own that
   runs after the others (`playwright.config.ts`), and puts the policy back whatever happens. It waits out the
   minute a young session is not sent round (`STEP_UP_GRACE`), so it is the slow one.

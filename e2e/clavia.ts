@@ -126,6 +126,10 @@ export class Management {
     await this.call("DELETE", `/users/${userId}`);
   }
 
+  async deleteWebhook(webhookId: string): Promise<void> {
+    await this.call("DELETE", `/webhooks/${webhookId}`);
+  }
+
   async deleteRole(roleId: string): Promise<void> {
     await this.call("DELETE", `/roles/${roleId}`);
   }
