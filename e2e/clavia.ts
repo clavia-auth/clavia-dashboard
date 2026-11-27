@@ -38,8 +38,13 @@ export class Management {
     return new Management(http, token);
   }
 
-  /** An operator of their own, with every permission, under a name no other test uses. */
-  async createOperator(): Promise<Operator & { id: string }> {
+  /**
+   * An operator of their own under a name no other test uses: with every permission (the Administrator role),
+   * or, given `permissions`, only those, from a role made for them (`roleId`, to delete after the operator).
+   */
+  async createOperator(
+    options: { permissions?: readonly string[] } = {},
+  ): Promise<Operator & { id: string; roleId?: string }> {
     const email = `e2e-${Math.random().toString(36).slice(2, 10)}@clavia.test`;
     const password = `pw-${Math.random().toString(36).slice(2, 18)}`;
     const { id } = await this.call<{ id: string }>("POST", "/users", {
@@ -47,6 +52,20 @@ export class Management {
       password,
       email_verified: true,
     });
+
+    if (options.permissions !== undefined) {
+      const api = await this.managementApi();
+      const role = await this.call<{ id: string }>("POST", "/roles", {
+        name: `e2e-${Math.random().toString(36).slice(2, 10)}`,
+        description: "Made by an end-to-end test.",
+        provisionable: false,
+        permissions: options.permissions.map((value) => ({ resource_server_id: api.id, value })),
+      });
+      await this.call("POST", `/roles/${role.id}/users`, { user_ids: [id] });
+
+      return { id, email, password, roleId: role.id };
+    }
+
     const roles = await this.call<{ items: { id: string; name: string }[] }>("GET", "/roles?per_page=100");
     const administrator = roles.items.find((role) => role.name === "Administrator");
     if (!administrator) throw new Error("There is no Administrator role: was the stack seeded?");
@@ -61,12 +80,7 @@ export class Management {
    * and runs when no other test does.
    */
   async setMfaPolicy(policy: "optional" | "required"): Promise<void> {
-    const servers = await this.call<{ items: { id: string; identifier: string }[] }>(
-      "GET",
-      "/resource-servers?per_page=100",
-    );
-    const api = servers.items.find((server) => server.identifier === `${MANAGEMENT}/api/v1/`);
-    if (!api) throw new Error("Clavia does not list the Management API among its APIs.");
+    const api = await this.managementApi();
     await this.call("PATCH", `/resource-servers/${api.id}`, { mfa_policy: policy });
   }
 
@@ -79,8 +93,24 @@ export class Management {
     await this.call("DELETE", `/users/${userId}`);
   }
 
+  async deleteRole(roleId: string): Promise<void> {
+    await this.call("DELETE", `/roles/${roleId}`);
+  }
+
   async dispose(): Promise<void> {
     await this.http.dispose();
+  }
+
+  /** The Management API, which Clavia lists among its APIs: where permissions such as `read:users` are defined. */
+  private async managementApi(): Promise<{ id: string }> {
+    const servers = await this.call<{ items: { id: string; identifier: string }[] }>(
+      "GET",
+      "/resource-servers?per_page=100",
+    );
+    const api = servers.items.find((server) => server.identifier === `${MANAGEMENT}/api/v1/`);
+    if (!api) throw new Error("Clavia does not list the Management API among its APIs.");
+
+    return api;
   }
 
   private async call<T = undefined>(method: string, path: string, body?: object): Promise<T> {
