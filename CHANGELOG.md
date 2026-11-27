@@ -7,12 +7,32 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-27
+
+Branding, for the console of Clavia 0.5.0: an application's colour and logo on its sign-in pages, set from
+its page.
+
 ### Added
 
 - **Branding per application.** A Branding tab on an application that signs people in sets its accent
   colour (a picker and a hex field) and its logo (PNG, JPEG or WebP, at most 256 KiB), with a preview
   of the sign-in card wearing them; removing either gives the pages Clavia's back. For Clavia 0.5's
-  branding (clavia-auth/clavia#25).
+  branding (clavia-auth/clavia#25). Without `update:clients` the tab is read only.
+- **A `:edge` container image.** `ghcr.io/clavia-auth/clavia-dashboard:edge` is the dashboard as `main` has it,
+  rebuilt after its checks pass, for those who try their own changes against it (clavia's end-to-end suite
+  does). It is not a release: run a version.
+
+### Changed
+
+- **Branding needs Clavia 0.5.0 or later**, which adds the logo operations and an application's accent
+  colour: run its migrations first. The Branding tab is the only part of the dashboard that does; the rest
+  runs against 0.4. No new scope and no new setting.
+
+### Fixed
+
+- After signing out, "Sign in" on the signed-out page could end on "That sign-in has expired" instead of
+  Clavia's login page: the button ran the sign-in twice, each run storing a new attempt, and the browser
+  could keep the cookie of the one Clavia was not sent. It runs once now.
 
 ## [0.4.0] - 2026-11-25
 
@@ -214,7 +234,8 @@ server.
 - Passkeys, signing keys and sign-in charts, which come with the next versions (0.2 to 0.4).
 - Exporting the audit log.
 
-[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.5.0
 [0.4.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.4.0
 [0.3.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.3.0
 [0.2.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.2.0
