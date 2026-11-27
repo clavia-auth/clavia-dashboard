@@ -1,0 +1,97 @@
+name: End to end
+
+# The Playwright suite (e2e/) against Clavia as it is deployed: the stack of clavia's test/e2e (Caddy with
+# the production Caddyfile and a test certificate, PHP-FPM, PostgreSQL, Redis, Mailpit), Clavia's `:edge`
+# image, and this pull request's dashboard behind /dashboard. docs/design/end-to-end-scenarios.md, in
+# clavia, says why and how.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  playwright:
+    name: Playwright against Clavia's stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # What clavia's up.sh starts: the dashboard of this pull request (built below), and Clavia as `main`
+      # has it, run as it is.
+      CLAVIA_E2E_DASHBOARD: "1"
+      CLAVIA_E2E_DASHBOARD_IMAGE: clavia-dashboard:e2e
+      CLAVIA_E2E_IMAGE: ghcr.io/clavia-auth/clavia:edge
+    steps:
+      - uses: actions/checkout@v7
+
+      # Only what the stack needs of clavia: its scripts, the production Caddyfile and scheduler, the image's
+      # build files (compose reads them, though the published image is run as it is).
+      - name: Clavia's end-to-end stack
+        uses: actions/checkout@v7
+        with:
+          repository: clavia-auth/clavia
+          ref: main
+          path: clavia
+          sparse-checkout: |
+            test/e2e
+            deploy
+            docker/php
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: This pull request's dashboard image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: production
+          load: true
+          push: false
+          tags: clavia-dashboard:e2e
+
+      # A certificate for *.clavia.test from a CA made on this runner and trusted nowhere else.
+      - name: Install mkcert
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq mkcert
+
+      - name: Resolve the stack's names
+        run: echo '127.0.0.1 clavia.test auth.clavia.test management.clavia.test' | sudo tee -a /etc/hosts
+
+      - name: Start the stack
+        run: clavia/test/e2e/up.sh
+
+      - name: Check it answers
+        run: clavia/test/e2e/verify.sh
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Playwright
+        run: npm run e2e
+
+      - name: Traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright
+          path: test-results
+          retention-days: 7
+
+      - name: Server logs
+        if: failure()
+        run: docker compose -f clavia/test/e2e/compose.yaml --profile dashboard logs --no-color
+
+      - name: Stop the stack
+        if: always()
+        run: clavia/test/e2e/down.sh

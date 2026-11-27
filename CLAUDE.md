@@ -56,7 +56,7 @@ from `AGENTS.md` applies: read the guide in `node_modules/next/dist/docs/` befor
 | `npm run build` · `npm start`     | Production build · serve it                                                                            |
 | `npm run check`                   | Format check, ESLint, `tsc`, unit tests: what CI runs                                                  |
 | `npm test` · `npm run test:watch` | Vitest; the Redis store tests need `DASHBOARD_TEST_REDIS_URL` (a database of their own: they flush it) |
-| `npm run e2e`                     | Playwright smoke suite against a running dashboard (`E2E_DASHBOARD_URL`, `E2E_EMAIL`, `E2E_PASSWORD`)  |
+| `npm run e2e`                     | Playwright suite against a running dashboard (`E2E_DASHBOARD_URL`, `E2E_EMAIL`, `E2E_PASSWORD`)        |
 | `npm run contract`                | Regenerate `src/contract/` from `contract/management-api.yaml`                                         |
 | `npm run format`                  | Prettier, 120 columns                                                                                  |
 
@@ -91,7 +91,7 @@ src/
     audit/         the audit log's table, details and labels
     webhooks/      the event picker and the types an endpoint can hear
 test/            Vitest: core/, adapters/, support/ (fakes, shared contracts)
-e2e/             Playwright smoke suite
+e2e/             Playwright suite, run in CI against Clavia's end-to-end stack
 docs/architecture.md
 docs/RELEASING.md   how a release is made and what its workflow checks
 Dockerfile         the production image (Next.js standalone, port 3000)
@@ -267,9 +267,17 @@ to `ManagementError` kinds: `unauthenticated` (401), `step_up_required` (401 wit
   `ClaviaIdentityProvider` against a fake Clavia that signs real tokens
   (`test/support/fake-clavia.ts`); `ClaviaManagementApi` against recorded responses; both session
   stores against one shared contract (`test/support/session-store-contract.ts`).
-- **Smoke tests** (`e2e/`, Playwright): sign in through Clavia's real login page, open every
-  section, use the command menu, hit a 404, sign out. Run against a live stack (`make up && make
-seed` in Clavia, then `npm run dev`).
+- **End-to-end tests** (`e2e/`, Playwright): sign in through Clavia's real login page, open every
+  section, use the command menu, hit a 404, sign out and back in. Clavia asks the operator for a second
+  factor (the Management API's `mfa_policy`), so the first sign-in enrols an authenticator app (`e2e/totp.ts`
+  computes its codes) and keeps the key and the recovery codes in `e2e/.auth/` (`e2e/second-factor.ts`); each
+  later sign-in answers the challenge with a recovery code, which works once. Against a development stack kept
+  between runs, whose operator is enrolled already, set `E2E_TOTP_SECRET` to the key of their authenticator.
+  The **End to end** workflow runs the suite on every pull request against Clavia's stack (`test/e2e` in
+  clavia, `docs/design/end-to-end-scenarios.md` there): Clavia's `:edge` image and this pull request's image,
+  behind Caddy with a test certificate. To run it as CI does, check clavia out, `CLAVIA_E2E_DASHBOARD=1
+CLAVIA_E2E_DASHBOARD_IMAGE=<your image> test/e2e/up.sh`, add its names to `/etc/hosts`, and `npm run e2e`.
+  By hand, against a live stack: `make up && make seed` in Clavia, then `npm run dev`.
 - `server-only` is aliased to a no-op in Vitest (`test/support/server-only.ts`).
 
 ## Recipes
