@@ -7,6 +7,19 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-27
+
+A fix to signing in, for the console of Clavia 0.5.1. Nothing needs doing on upgrade: no new setting, no
+new scope, and it runs against Clavia 0.5.0 as well.
+
+### Fixed
+
+- **Signing in when Clavia cannot be reached** no longer answers an empty error page (#81). The browser
+  lands on the signed-out page, which says Clavia cannot be reached, and the server's log names Clavia's
+  host and why the connection failed: a refused connection, a name that does not resolve, a certificate
+  Node does not trust (in development, `NODE_EXTRA_CA_CERTS` not set), or a timeout. The same holds at
+  the callback, where a failed discovery or userinfo request also ended in an empty error.
+
 ## [0.5.0] - 2026-11-27
 
 Branding, for the console of Clavia 0.5.0: an application's colour and logo on its sign-in pages, set from
@@ -234,7 +247,8 @@ server.
 - Passkeys, signing keys and sign-in charts, which come with the next versions (0.2 to 0.4).
 - Exporting the audit log.
 
-[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/clavia-auth/clavia-dashboard/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.5.1
 [0.5.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.5.0
 [0.4.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.4.0
 [0.3.0]: https://github.com/clavia-auth/clavia-dashboard/releases/tag/v0.3.0
