@@ -166,6 +166,54 @@ describe("ClaviaManagementApi", () => {
     expect(failure).toMatchObject({ kind: "unavailable" });
   });
 
+  describe("an application's logo", () => {
+    const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+    it("downloads the image with the type Clavia recognised it as", async () => {
+      const { requests, api } = server(
+        () => new Response(PNG, { status: 200, headers: { "Content-Type": "image/png" } }),
+      );
+
+      const logo = await api.clients.logo("spa/one");
+
+      expect(requests[0]?.url).toBe("https://management.clavia.test/api/v1/clients/spa%2Fone/logo");
+      expect(logo.type).toBe("image/png");
+      expect(new Uint8Array(logo.bytes)).toEqual(PNG);
+    });
+
+    it("uploads the bytes as they are, with their type, never as JSON", async () => {
+      const { requests, api } = server(() => new Response(null, { status: 204 }));
+
+      await api.clients.setLogo("spa", { type: "image/png", bytes: PNG.buffer });
+
+      expect(requests[0]?.method).toBe("PUT");
+      expect(requests[0]?.headers.get("Content-Type")).toBe("image/png");
+      expect(new Uint8Array(await requests[0]!.arrayBuffer())).toEqual(PNG);
+    });
+
+    it("says what Clavia refused in the image, and that an application has none", async () => {
+      const { api } = server((request) =>
+        request.method === "PUT"
+          ? json(
+              {
+                type: "about:blank",
+                title: "Unprocessable",
+                status: 422,
+                detail: "A logo is a PNG, JPEG or WebP image.",
+              },
+              422,
+            )
+          : json({ type: "about:blank", title: "Not found", status: 404, detail: "No such logo." }, 404),
+      );
+
+      await expect(api.clients.setLogo("spa", { type: "image/svg+xml", bytes: PNG.buffer })).rejects.toMatchObject({
+        kind: "invalid",
+      });
+      await expect(api.clients.logo("spa")).rejects.toMatchObject({ kind: "not_found" });
+      await expect(api.clients.removeLogo("spa")).rejects.toMatchObject({ kind: "not_found" });
+    });
+  });
+
   describe("signing keys", () => {
     const retired = {
       kid: "old",

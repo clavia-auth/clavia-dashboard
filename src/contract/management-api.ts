@@ -117,6 +117,10 @@ export type paths = {
          *     password or address changes. Choosing a password verifies the address and ends every
          *     session of the account.
          *
+         *     The mail is in the language of the account's profile (`locale`), matched among the
+         *     languages the deployment offers (`fr-CA` finds `fr`), else in the deployment's default
+         *     language (`CLAVIA_DEFAULT_LANGUAGE`).
+         *
          *     Unlike the public form, the caller is told how it went. Mail counts against the
          *     account send limit per address and per client address, so a user cannot be flooded.
          *     Only an account in a pool has a password; a deactivated account is refused.
@@ -456,6 +460,43 @@ export type paths = {
          *     points at its entry (`/claims/2`), or at `/claims` for the list.
          */
         patch: operations["updateClient"];
+        trace?: never;
+    };
+    "/api/v1/clients/{client_id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download a client's logo
+         * @description The image the application's sign-in pages show in place of this server's logo, as it was
+         *     recognised: PNG, JPEG or WebP. `404` when it has none.
+         */
+        get: operations["getClientLogo"];
+        /**
+         * Set a client's logo
+         * @description The application's logo on its sign-in pages, in place of this server's: the body is the image
+         *     itself. What it is is read from its content, whatever the `Content-Type` says: a PNG, JPEG or
+         *     WebP image, 16 to 1024 pixels a side, at most 256 KiB; anything else, SVG included (an SVG can
+         *     carry script), is refused with `422`. The pages load it from the sign-in origin
+         *     (`https://auth.{domain}/auth/branding/{client_id}/logo`), never from anywhere else, beside the
+         *     application's name and its `accent_color`. Recorded in the audit trail as `client.updated`,
+         *     naming the field `logo`, never the image.
+         */
+        put: operations["setClientLogo"];
+        post?: never;
+        /**
+         * Remove a client's logo
+         * @description The application's sign-in pages show this server's logo again. `404` when it has none.
+         */
+        delete: operations["removeClientLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/clients/{client_id}/rotate-secret": {
@@ -1955,6 +1996,13 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens: boolean;
+            /** @description The application's colour on its sign-in pages (see `AccentColor`); null for this server's. */
+            accent_color: string | null;
+            /**
+             * @description Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
+             *     `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
+             */
+            logo_version: string | null;
             /**
              * @description For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
              *     access token let it in, and when. Null for a client an operator made. Such a client is
@@ -1973,6 +2021,12 @@ export type components = {
             created_at: string;
             claims: components["schemas"]["ApplicationClaims"];
         };
+        /**
+         * @description The application's colour on its sign-in pages (buttons, links, chosen options), `#` and six
+         *     hexadecimal digits, kept in lower case. The text on it is worked out: white or dark ink, whichever
+         *     contrasts more. Its pages are told it by a stylesheet of the sign-in origin, never inline.
+         */
+        AccentColor: string;
         /**
          * @description Custom claims in this application's ID tokens and userinfo answers, beside the protocol's
          *     and what the scope releases (see `ClaimMapping`). A first-party application's only: a
@@ -2030,6 +2084,13 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens: boolean;
+            /** @description The application's colour on its sign-in pages (see `AccentColor`); null for this server's. */
+            accent_color: string | null;
+            /**
+             * @description Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
+             *     `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
+             */
+            logo_version: string | null;
             /**
              * @description For a client that registered itself at `/oauth2/register` (RFC 7591): which initial
              *     access token let it in, and when. Null for a client an operator made. Such a client is
@@ -2106,6 +2167,7 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens?: boolean;
+            accent_color?: components["schemas"]["AccentColor"];
         };
         /**
          * @description `client_type` and `is_first_party` are identity, not configuration: neither can change
@@ -2144,6 +2206,8 @@ export type components = {
              *     already issued keep working as they were.
              */
             dpop_bound_access_tokens?: boolean;
+            /** @description The application's colour on its sign-in pages (see `AccentColor`); null gives it this server's back. */
+            accent_color?: string | null;
             /** @description Replaces the application's custom claims; refused for a third-party application (422). */
             claims?: components["schemas"]["ApplicationClaimMapping"][];
         };
@@ -3469,6 +3533,92 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getClientLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    setClientLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/png": string;
+                "image/jpeg": string;
+                "image/webp": string;
+            };
+        };
+        responses: {
+            /** @description Set. The client's `logo_version` names the new image. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    removeClientLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
         };
     };

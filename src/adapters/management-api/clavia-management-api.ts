@@ -119,6 +119,32 @@ export class ClaviaManagementApi implements ManagementApi {
             body: { connections: [...connections] },
           }),
         ),
+      logo: async (clientId) => {
+        const { data, error, response } = await reach(
+          http.GET("/api/v1/clients/{client_id}/logo", {
+            params: { path: { client_id: clientId } },
+            parseAs: "arrayBuffer",
+          }),
+        );
+        if (!response.ok || data === undefined) {
+          throw managementError(response, error);
+        }
+
+        return { type: response.headers.get("Content-Type") ?? "application/octet-stream", bytes: data };
+      },
+      // The body is the image itself, sent as it is: the contract types it as binary, and Clavia decides
+      // what it is from its content, whatever the Content-Type says.
+      setLogo: (clientId, logo) =>
+        done(
+          http.PUT("/api/v1/clients/{client_id}/logo", {
+            params: { path: { client_id: clientId } },
+            body: logo.bytes as unknown as string,
+            bodySerializer: (bytes: unknown) => bytes as BodyInit,
+            headers: { "Content-Type": logo.type },
+          }),
+        ),
+      removeLogo: (clientId) =>
+        done(http.DELETE("/api/v1/clients/{client_id}/logo", { params: { path: { client_id: clientId } } })),
     };
 
     this.resourceServers = {

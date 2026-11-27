@@ -91,6 +91,15 @@ export interface UsersApi {
   permissions(userId: string): Promise<EffectivePermission[]>;
 }
 
+/**
+ * An application's logo on its sign-in pages, as Clavia keeps it: a PNG, JPEG or WebP image, its media type
+ * the one Clavia recognised it as.
+ */
+export interface ClientLogo {
+  readonly type: string;
+  readonly bytes: ArrayBuffer;
+}
+
 export interface ClientsApi {
   list(query?: ListQuery): Promise<Page<Client>>;
   get(clientId: string): Promise<Client>;
@@ -99,6 +108,12 @@ export interface ClientsApi {
   delete(clientId: string): Promise<void>;
   rotateSecret(clientId: string): Promise<ClientWithSecret>;
   replaceConnections(clientId: string, connections: readonly string[]): Promise<string[]>;
+  /** The logo its sign-in pages show; `not_found` when it has none. */
+  logo(clientId: string): Promise<ClientLogo>;
+  /** Put this image in place of its logo: Clavia reads what it is from its content, and refuses the rest. */
+  setLogo(clientId: string, logo: ClientLogo): Promise<void>;
+  /** The sign-in pages show Clavia's logo again; `not_found` when it had none. */
+  removeLogo(clientId: string): Promise<void>;
 }
 
 export interface ResourceServersApi {
