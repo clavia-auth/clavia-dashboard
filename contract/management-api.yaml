@@ -371,6 +371,10 @@ paths:
         password or address changes. Choosing a password verifies the address and ends every
         session of the account.
 
+        The mail is in the language of the account's profile (`locale`), matched among the
+        languages the deployment offers (`fr-CA` finds `fr`), else in the deployment's default
+        language (`CLAVIA_DEFAULT_LANGUAGE`).
+
         Unlike the public form, the caller is told how it went. Mail counts against the
         account send limit per address and per client address, so a user cannot be flooded.
         Only an account in a pool has a password; a deactivated account is refused.
@@ -978,6 +982,116 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /api/v1/clients/{client_id}/logo:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+    get:
+      tags: [clients]
+      operationId: getClientLogo
+      summary: Download a client's logo
+      description: |
+        The image the application's sign-in pages show in place of this server's logo, as it was
+        recognised: PNG, JPEG or WebP. `404` when it has none.
+      security:
+        - managementToken: [read:clients]
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+              examples:
+                ClientLogo:
+                  $ref: '#/components/examples/ClientLogo'
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    put:
+      tags: [clients]
+      operationId: setClientLogo
+      summary: Set a client's logo
+      description: |
+        The application's logo on its sign-in pages, in place of this server's: the body is the image
+        itself. What it is is read from its content, whatever the `Content-Type` says: a PNG, JPEG or
+        WebP image, 16 to 1024 pixels a side, at most 256 KiB; anything else, SVG included (an SVG can
+        carry script), is refused with `422`. The pages load it from the sign-in origin
+        (`https://auth.{domain}/auth/branding/{client_id}/logo`), never from anywhere else, beside the
+        application's name and its `accent_color`. Recorded in the audit trail as `client.updated`,
+        naming the field `logo`, never the image.
+      security:
+        - managementToken: [update:clients]
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+            examples:
+              ClientLogo:
+                $ref: '#/components/examples/ClientLogo'
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '204':
+          description: Set. The client's `logo_version` names the new image.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags: [clients]
+      operationId: removeClientLogo
+      summary: Remove a client's logo
+      description: |
+        The application's sign-in pages show this server's logo again. `404` when it has none.
+      security:
+        - managementToken: [update:clients]
+      responses:
+        '204':
+          description: Removed.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Unprocessable'
 
@@ -2932,6 +3046,9 @@ components:
             ServiceUnavailable:
               $ref: '#/components/examples/ServiceUnavailable'
   examples:
+    ClientLogo:
+      summary: A PNG image, its bytes (shown here as their start)
+      value: "\u0089PNG\r\n\u001a\n…"
     UserImport:
       summary: Two accounts, one with its password hash
       value: |
@@ -3171,6 +3288,8 @@ components:
           - name: "https://example.com/tenant"
             source: "app_metadata.tenant.id"
             in: ["id_token", "userinfo"]
+        accent_color: "#0f766e"
+        logo_version: "3f1c2a9b8d7e6f50"
         registration: null
         created_at: "2026-01-15T10:00:00Z"
     SelfRegisteredClient:
@@ -3193,6 +3312,8 @@ components:
         require_pushed_authorization_requests: false
         dpop_bound_access_tokens: false
         claims: []
+        accent_color: null
+        logo_version: null
         registration:
           initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
           registered_at: "2026-02-01T09:00:00Z"
@@ -3218,6 +3339,8 @@ components:
             require_pushed_authorization_requests: false
             dpop_bound_access_tokens: false
             claims: []
+            accent_color: null
+            logo_version: null
             registration:
               initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
               registered_at: "2026-02-01T09:00:00Z"
@@ -3239,6 +3362,8 @@ components:
             require_pushed_authorization_requests: false
             dpop_bound_access_tokens: false
             claims: []
+            accent_color: null
+            logo_version: null
             registration: null
             created_at: "2026-01-15T10:00:00Z"
         total: 2
@@ -3276,6 +3401,8 @@ components:
         require_pushed_authorization_requests: false
         dpop_bound_access_tokens: false
         claims: []
+        accent_color: null
+        logo_version: null
         registration: null
         created_at: "2026-01-15T10:00:00Z"
         client_secret: "example-client-secret-not-a-real-one-00000"
@@ -5048,7 +5175,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, registration, created_at, claims]
+        dpop_bound_access_tokens, accent_color, logo_version, registration, created_at, claims]
       properties:
         client_id:
           type: string
@@ -5113,6 +5240,18 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        accent_color:
+          type: string
+          nullable: true
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: The application's colour on its sign-in pages (see `AccentColor`); null for this server's.
+        logo_version:
+          type: string
+          nullable: true
+          pattern: '^[0-9a-f]{16}$'
+          description: |
+            Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
+            `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
         registration:
           type: object
           nullable: true
@@ -5136,6 +5275,14 @@ components:
           format: date-time
         claims:
           $ref: '#/components/schemas/ApplicationClaims'
+
+    AccentColor:
+      type: string
+      pattern: '^#[0-9A-Fa-f]{6}$'
+      description: |
+        The application's colour on its sign-in pages (buttons, links, chosen options), `#` and six
+        hexadecimal digits, kept in lower case. The text on it is worked out: white or dark ink, whichever
+        contrasts more. Its pages are told it by a stylesheet of the sign-in origin, never inline.
 
     ApplicationClaims:
       type: array
@@ -5163,7 +5310,7 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, registration, created_at, claims, client_secret]
+        dpop_bound_access_tokens, accent_color, logo_version, registration, created_at, claims, client_secret]
       properties:
         client_id:
           type: string
@@ -5228,6 +5375,18 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        accent_color:
+          type: string
+          nullable: true
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: The application's colour on its sign-in pages (see `AccentColor`); null for this server's.
+        logo_version:
+          type: string
+          nullable: true
+          pattern: '^[0-9a-f]{16}$'
+          description: |
+            Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
+            `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
         registration:
           type: object
           nullable: true
@@ -5335,6 +5494,8 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        accent_color:
+          $ref: '#/components/schemas/AccentColor'
       description: |
         `client_type` defaults to `public`; `token_endpoint_auth_method` to `none` for a
         public client and `client_secret_basic` for a confidential one.
@@ -5400,6 +5561,11 @@ components:
             request without a `DPoP` proof is refused (`invalid_dpop_proof`). Off by default, when a
             proof is welcome but not required. Takes effect from its next token request: tokens
             already issued keep working as they were.
+        accent_color:
+          type: string
+          nullable: true
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: The application's colour on its sign-in pages (see `AccentColor`); null gives it this server's back.
         claims:
           type: array
           maxItems: 20

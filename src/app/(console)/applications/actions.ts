@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import type { ApplicationClaimMapping, GrantType } from "@/contract";
+import { ACCENT_COLOR, LOGO_MAX_BYTES, LOGO_TYPES } from "@/core/branding";
 import { type ActionState, parse, perform } from "@/server/actions";
 import { saveClaims } from "@/server/claims";
 import { config } from "@/server/config";
@@ -173,4 +174,65 @@ export async function saveApplicationClaims(clientId: string, drafts: unknown): 
   return saveClaims(drafts, true, (api, claims) =>
     api.clients.update(clientId, { claims: claims as ApplicationClaimMapping[] }),
   );
+}
+
+const accentSchema = z.object({
+  accent_color: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? null : value.toLowerCase()))
+    .refine((value) => value === null || ACCENT_COLOR.test(value), "A colour is # and six hexadecimal digits."),
+});
+
+/** The application's colour on its sign-in pages; an empty one gives them Clavia's back. */
+export async function saveAccentColor(clientId: string, _: ActionState, form: FormData): Promise<ActionState> {
+  const parsed = parse(accentSchema, { accent_color: form.get("accent_color") ?? "" });
+  if (!parsed.ok) {
+    return parsed.state;
+  }
+
+  return perform(async ({ api }) => {
+    await api.clients.update(clientId, { accent_color: parsed.data.accent_color });
+    refresh();
+
+    return parsed.data.accent_color === null ? "Its pages use Clavia's colour again." : "Colour saved.";
+  });
+}
+
+/**
+ * The application's logo, uploaded as it is. What the browser says the file is only spares a round trip:
+ * Clavia reads what it is from its content, and its refusal is the one shown.
+ */
+export async function uploadLogo(clientId: string, _: ActionState, form: FormData): Promise<ActionState> {
+  const file = form.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return refused("logo", "Choose an image.");
+  }
+  if (!(LOGO_TYPES as readonly string[]).includes(file.type)) {
+    return refused("logo", "A logo is a PNG, JPEG or WebP image.");
+  }
+  if (file.size > LOGO_MAX_BYTES) {
+    return refused("logo", "A logo is at most 256 KiB.");
+  }
+  const bytes = await file.arrayBuffer();
+
+  return perform(async ({ api }) => {
+    await api.clients.setLogo(clientId, { type: file.type, bytes });
+    refresh();
+
+    return "Logo saved.";
+  });
+}
+
+export async function removeLogo(clientId: string): Promise<ActionState> {
+  return perform(async ({ api }) => {
+    await api.clients.removeLogo(clientId);
+    refresh();
+
+    return "Its pages show Clavia's logo again.";
+  });
+}
+
+function refused(field: string, message: string): ActionState {
+  return { status: "error", message, fields: { [field]: message }, at: Date.now() };
 }

@@ -36,6 +36,10 @@ export default async function ApplicationLayout({ params, children }: Props) {
     ...(client.is_first_party
       ? [{ label: "Claims", href: `${base}/claims` as Route, count: client.claims.length }]
       : []),
+    // Branding shows on the sign-in pages of its authorization requests (Clavia #25).
+    ...(client.grant_types.includes("authorization_code")
+      ? [{ label: "Branding", href: `${base}/branding` as Route }]
+      : []),
     ...(operator.can("read:audit_events") ? [{ label: "Activity", href: `${base}/activity` as Route }] : []),
   ];
 

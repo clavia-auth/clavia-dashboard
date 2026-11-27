@@ -7,6 +7,13 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the dashbo
 
 ## [Unreleased]
 
+### Added
+
+- **Branding per application.** A Branding tab on an application that signs people in sets its accent
+  colour (a picker and a hex field) and its logo (PNG, JPEG or WebP, at most 256 KiB), with a preview
+  of the sign-in card wearing them; removing either gives the pages Clavia's back. For Clavia 0.5's
+  branding (clavia-auth/clavia#25).
+
 ## [0.4.0] - 2026-11-25
 
 Integrations, for the console of Clavia 0.4.0: webhooks, SAML connections, SCIM provisioning,
