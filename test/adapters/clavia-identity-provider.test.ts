@@ -203,6 +203,73 @@ describe("ClaviaIdentityProvider", () => {
     });
   });
 
+  describe("when Clavia cannot be reached", () => {
+    /** What Node's fetch throws when the connection fails: the reason is in `cause`. */
+    const fetchFailed = (code: string) =>
+      new TypeError("fetch failed", { cause: Object.assign(new Error("connection failed"), { code }) });
+    const pending = { state: "s", nonce: "n", codeVerifier: "v".repeat(43), returnTo: "/" };
+    const callback = new URL(`${REDIRECT_URI}?code=abc&state=s&iss=${encodeURIComponent(ISSUER)}`);
+
+    const failing = (fail: (path: string) => unknown) =>
+      new ClaviaIdentityProvider({
+        issuer: new URL(ISSUER),
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        redirectUri: REDIRECT_URI,
+        audience: "https://management.clavia.test/api/v1/",
+        fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
+          const path = new URL(input instanceof Request ? input.url : input).pathname;
+          const error = fail(path);
+          if (error !== undefined) {
+            throw error;
+          }
+
+          return clavia.fetcher(input, init);
+        }) as typeof fetch,
+      });
+
+    it("refuses to start a sign-in, naming Clavia's host and why the connection failed", async () => {
+      const unreachable = failing(() => fetchFailed("UNABLE_TO_VERIFY_LEAF_SIGNATURE"));
+
+      const refusal = await unreachable.authorize(["openid"]).catch((error: unknown) => error);
+
+      expect(refusal).toBeInstanceOf(SignInRefused);
+      expect(refusal).toMatchObject({ reason: "unreachable" });
+      expect((refusal as Error).message).toContain("auth.clavia.test");
+      expect((refusal as Error).message).toContain("UNABLE_TO_VERIFY_LEAF_SIGNATURE");
+    });
+
+    it("says a request that took too long timed out", async () => {
+      const unreachable = failing(() => new DOMException("The operation was aborted due to timeout", "TimeoutError"));
+
+      await expect(unreachable.authorize(["openid"])).rejects.toMatchObject({
+        reason: "unreachable",
+        message: expect.stringContaining("timed out"),
+      });
+    });
+
+    it("refuses to finish a sign-in when the code cannot be redeemed", async () => {
+      const unreachable = failing((path) => (path === "/oauth2/token" ? fetchFailed("ECONNREFUSED") : undefined));
+
+      await expect(unreachable.redeem(callback, pending)).rejects.toMatchObject({
+        reason: "unreachable",
+        message: expect.stringContaining("ECONNREFUSED"),
+      });
+    });
+
+    it("refuses to finish a sign-in when the operator cannot be described", async () => {
+      const unreachable = failing((path) => (path === "/oidc/userinfo" ? fetchFailed("ECONNRESET") : undefined));
+
+      await expect(unreachable.describe("access", "user-1")).rejects.toMatchObject({ reason: "unreachable" });
+    });
+
+    it("tells a Clavia that answers, but wrongly, from one that cannot be reached", async () => {
+      clavia.overrides.set("/.well-known/openid-configuration", () => new Response("Down", { status: 500 }));
+
+      await expect(provider.authorize(["openid"])).rejects.toMatchObject({ reason: "provider_error" });
+    });
+  });
+
   it("ends the session at Clavia with the ID token as hint, and comes back to the dashboard", async () => {
     const url = await provider.endSessionUrl("id-token", "https://management.clavia.test/dashboard/signed-out");
 

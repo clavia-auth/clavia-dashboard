@@ -52,9 +52,9 @@ export class ClaviaIdentityProvider implements IdentityProvider {
     scopes: readonly string[],
     acrValues?: string,
   ): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }> {
-    const as = await this.server();
+    const as = await this.signInServer();
     if (as.authorization_endpoint === undefined) {
-      throw new Error("Clavia's discovery document names no authorization endpoint.");
+      throw new SignInRefused("provider_error", "Clavia's discovery document names no authorization endpoint.");
     }
     const codeVerifier = oauth.generateRandomCodeVerifier();
     const state = oauth.generateRandomState();
@@ -84,7 +84,7 @@ export class ClaviaIdentityProvider implements IdentityProvider {
     callback: URL,
     pending: PendingSignIn,
   ): Promise<{ tokens: TokenSet; subject: string; sid: string | null }> {
-    const as = await this.server();
+    const as = await this.signInServer();
     let parameters: URLSearchParams;
     try {
       // Checks `state`, and `iss` when Clavia advertises RFC 9207 (it does).
@@ -124,24 +124,25 @@ export class ClaviaIdentityProvider implements IdentityProvider {
         sid: typeof claims.sid === "string" ? claims.sid : null,
       };
     } catch (error) {
-      if (error instanceof SignInRefused) {
-        throw error;
-      }
-      throw new SignInRefused("provider_error", describe(error));
+      throw this.refusal(error);
     }
   }
 
   async describe(accessToken: string, subject: string): Promise<OperatorIdentity> {
-    const as = await this.server();
-    const response = await oauth.userInfoRequest(as, this.client, accessToken, this.options());
-    const info = await oauth.processUserInfoResponse(as, this.client, subject, response);
+    const as = await this.signInServer();
+    try {
+      const response = await oauth.userInfoRequest(as, this.client, accessToken, this.options());
+      const info = await oauth.processUserInfoResponse(as, this.client, subject, response);
 
-    return {
-      subject: info.sub,
-      name: typeof info.name === "string" ? info.name : null,
-      email: typeof info.email === "string" ? info.email : null,
-      picture: typeof info.picture === "string" ? info.picture : null,
-    };
+      return {
+        subject: info.sub,
+        name: typeof info.name === "string" ? info.name : null,
+        email: typeof info.email === "string" ? info.email : null,
+        picture: typeof info.picture === "string" ? info.picture : null,
+      };
+    } catch (error) {
+      throw this.refusal(error);
+    }
   }
 
   async refresh(tokens: TokenSet): Promise<TokenSet | null> {
@@ -242,6 +243,32 @@ export class ClaviaIdentityProvider implements IdentityProvider {
     return this.metadata;
   }
 
+  /** The provider's metadata, for a step of signing in: a failure to read it is a refusal. */
+  private async signInServer(): Promise<oauth.AuthorizationServer> {
+    try {
+      return await this.server();
+    } catch (error) {
+      throw this.refusal(error);
+    }
+  }
+
+  /**
+   * A failed step of signing in, as the refusal it is: Clavia out of reach, named with its
+   * host and the connection's own reason so the log says what to fix, or Clavia answering
+   * something that does not check out.
+   */
+  private refusal(error: unknown): SignInRefused {
+    if (error instanceof SignInRefused) {
+      return error;
+    }
+    const failure = connectionFailure(error);
+    if (failure !== null) {
+      return new SignInRefused("unreachable", `Clavia cannot be reached at ${this.settings.issuer.host}: ${failure}.`);
+    }
+
+    return new SignInRefused("provider_error", describe(error));
+  }
+
   private jwks(as: oauth.AuthorizationServer): JWTVerifyGetKey {
     if (as.jwks_uri === undefined) {
       throw new Error("Clavia's discovery document names no jwks_uri.");
@@ -275,4 +302,24 @@ function tokenSet(result: oauth.TokenEndpointResponse, idToken: string, previous
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "Unexpected answer from Clavia.";
+}
+
+/**
+ * Why a request never got an answer, or null if it did. Node's `fetch` throws a bare
+ * `TypeError: fetch failed` and keeps the reason (`ECONNREFUSED`, `ENOTFOUND`,
+ * `UNABLE_TO_VERIFY_LEAF_SIGNATURE`…) in `cause`; a timeout is a `TimeoutError`.
+ */
+function connectionFailure(error: unknown): string | null {
+  if (error instanceof DOMException && error.name === "TimeoutError") {
+    return "the request timed out";
+  }
+  if (!(error instanceof TypeError) || error.message !== "fetch failed") {
+    return null;
+  }
+  const cause: unknown = error.cause;
+  if (cause instanceof Error) {
+    return "code" in cause && typeof cause.code === "string" ? cause.code : cause.message;
+  }
+
+  return error.message;
 }

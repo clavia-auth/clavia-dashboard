@@ -9,6 +9,7 @@ export interface IdentityProvider {
   /**
    * Where to send the browser, and what the callback will be checked against. `acrValues`
    * asks for an authentication level (OpenID Connect Core §3.1.2.1), as a step-up does.
+   * Throws {@link SignInRefused} when the provider cannot be reached or answers wrongly.
    */
   authorize(
     scopes: readonly string[],
@@ -16,10 +17,14 @@ export interface IdentityProvider {
   ): Promise<{ url: URL; pending: Omit<PendingSignIn, "returnTo"> }>;
   /**
    * Check the callback against the attempt and redeem its code. Throws
-   * {@link SignInRefused} when the provider sent an error, or anything does not check out.
+   * {@link SignInRefused} when the provider sent an error, cannot be reached, or anything
+   * does not check out.
    */
   redeem(callback: URL, pending: PendingSignIn): Promise<{ tokens: TokenSet; subject: string; sid: string | null }>;
-  /** The person behind an access token, from userinfo. */
+  /**
+   * The person behind an access token, from userinfo, as a sign-in completes. Throws
+   * {@link SignInRefused} when the provider cannot be reached or answers wrongly.
+   */
   describe(accessToken: string, subject: string): Promise<OperatorIdentity>;
   /** A new token set from a refresh token, or null when the provider no longer accepts it. */
   refresh(tokens: TokenSet): Promise<TokenSet | null>;
@@ -68,7 +73,9 @@ export type SignInRefusal =
   /** The operator, or Clavia on their behalf (no role on the Management API), refused. */
   | "access_denied"
   /** Anything else Clavia answered: an error, or a response that did not check out. */
-  | "provider_error";
+  | "provider_error"
+  /** Clavia could not be reached at all: a refused connection, a certificate, a name, a timeout. */
+  | "unreachable";
 
 export class SignInRefused extends Error {
   override readonly name = "SignInRefused";
