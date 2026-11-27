@@ -55,6 +55,21 @@ export class Management {
     return { id, email, password };
   }
 
+  /**
+   * Whether signing in to the Management API, which is to say to the dashboard, takes a second factor. It is
+   * `required` in a stack as `seed-dev` leaves it, and it is for everyone: a test that changes it puts it back,
+   * and runs when no other test does.
+   */
+  async setMfaPolicy(policy: "optional" | "required"): Promise<void> {
+    const servers = await this.call<{ items: { id: string; identifier: string }[] }>(
+      "GET",
+      "/resource-servers?per_page=100",
+    );
+    const api = servers.items.find((server) => server.identifier === `${MANAGEMENT}/api/v1/`);
+    if (!api) throw new Error("Clavia does not list the Management API among its APIs.");
+    await this.call("PATCH", `/resource-servers/${api.id}`, { mfa_policy: policy });
+  }
+
   /** Signs a person out of Clavia everywhere, and has it tell the applications they signed in to. */
   async endSessions(userId: string): Promise<void> {
     await this.call("DELETE", `/users/${userId}/sessions`);
