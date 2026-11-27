@@ -6,16 +6,22 @@ import { totp } from "./totp";
 export const EMAIL = process.env.E2E_EMAIL ?? "dev@clavia.test";
 const PASSWORD = process.env.E2E_PASSWORD ?? "devpassword";
 
+/** Someone who signs in to the dashboard. */
+export type Operator = { email: string; password: string };
+
+/** The operator `seed-dev` made, whom most tests are. */
+export const OPERATOR: Operator = { email: EMAIL, password: PASSWORD };
+
 /**
  * Goes to the dashboard, signs in on Clavia's login page, and takes what Clavia asks next: its consent, a
  * second factor to set up (the first time) or to answer (every time after), until the dashboard is open.
  */
-export async function signIn(page: Page, path = "./"): Promise<void> {
+export async function signIn(page: Page, path = "./", operator: Operator = OPERATOR): Promise<void> {
   await page.goto(path);
   await expect(page).toHaveURL(/\/auth\/login/);
 
-  await page.getByLabel("Email").fill(EMAIL);
-  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByLabel("Email").fill(operator.email);
+  await page.getByLabel("Password").fill(operator.password);
   // Not just "Sign in": the page has a "Sign in with a passkey" button too.
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
@@ -27,9 +33,9 @@ export async function signIn(page: Page, path = "./"): Promise<void> {
     if (pathname.startsWith("/auth/consent")) {
       await page.getByRole("button", { name: /^(allow|accept)$/i }).click();
     } else if (pathname.startsWith("/auth/mfa/enroll")) {
-      await enrol(page);
+      await enrol(page, operator);
     } else {
-      await page.getByRole("textbox", { name: "Code" }).fill(answer());
+      await page.getByRole("textbox", { name: "Code" }).fill(answer(operator.email));
       await page.getByRole("button", { name: "Continue" }).click();
     }
   }
@@ -38,7 +44,7 @@ export async function signIn(page: Page, path = "./"): Promise<void> {
 }
 
 /** Sets up an authenticator app, and keeps its key and the recovery codes Clavia shows once. */
-async function enrol(page: Page): Promise<void> {
+async function enrol(page: Page, operator: Operator): Promise<void> {
   const start = page.getByRole("button", { name: "Set up an authenticator app" });
   if (await start.isVisible()) {
     await start.click();
@@ -50,7 +56,7 @@ async function enrol(page: Page): Promise<void> {
 
   await expect(page.getByRole("heading", { level: 1, name: "Two-factor authentication is on" })).toBeVisible();
   const recoveryCodes = await page.getByRole("listitem").allInnerTexts();
-  remember({ secret, recoveryCodes: recoveryCodes.map((code) => code.trim()) });
+  remember(operator.email, { secret, recoveryCodes: recoveryCodes.map((code) => code.trim()) });
   await page.getByRole("button", { name: "Continue" }).click();
 }
 
