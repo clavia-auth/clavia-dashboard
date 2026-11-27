@@ -273,6 +273,9 @@ to `ManagementError` kinds: `unauthenticated` (401), `step_up_required` (401 wit
   computes its codes) and keeps the key and the recovery codes in `e2e/.auth/` (`e2e/second-factor.ts`); each
   later sign-in answers the challenge with a recovery code, which works once. Against a development stack kept
   between runs, whose operator is enrolled already, set `E2E_TOTP_SECRET` to the key of their authenticator.
+  A test that needs something arranged without a screen (an operator of its own, a session ended from
+  elsewhere) calls Clavia's Management API as the machine client `seed-dev` made (`e2e/clavia.ts`, from the file
+  `E2E_CLAVIA_SEED` names: clavia's `test/e2e/.work/seed.txt`); without it those tests are skipped.
   The **End to end** workflow runs the suite on every pull request against Clavia's stack (`test/e2e` in
   clavia, `docs/design/end-to-end-scenarios.md` there): Clavia's `:edge` image and this pull request's image,
   behind Caddy with a test certificate. To run it as CI does, check clavia out, `CLAVIA_E2E_DASHBOARD=1

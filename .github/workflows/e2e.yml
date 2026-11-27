@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 25
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # The machine client `seed-dev` made, for the tests that arrange something through the Management API.
+      E2E_CLAVIA_SEED: clavia/test/e2e/.work/seed.txt
       # What clavia's up.sh starts: the dashboard of this pull request (built below), and Clavia as `main`
       # has it, run as it is.
       CLAVIA_E2E_DASHBOARD: "1"
