@@ -25,6 +25,15 @@ export async function signIn(page: Page, path = "./", operator: Operator = OPERA
   // Not just "Sign in": the page has a "Sign in with a passkey" button too.
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
+  await takeWhatClaviaAsks(page, operator);
+}
+
+/**
+ * Takes what Clavia asks of someone it has the password of or a session for, until the dashboard is open
+ * again: its consent, a second factor to set up (the first time) or to answer (every time after). A step-up
+ * (RFC 9470) is this alone, with no password: Clavia raises the session with one more factor.
+ */
+export async function takeWhatClaviaAsks(page: Page, operator: Operator = OPERATOR): Promise<void> {
   for (let step = 0; step < 5; step++) {
     await page.waitForURL((url) => /^\/(dashboard(\/|$)|auth\/(consent|mfa))/.test(url.pathname));
     const { pathname } = new URL(page.url());

@@ -30,8 +30,16 @@ export default defineConfig({
     { name: "sign-in", testMatch: /sign-in\.setup\.ts/ },
     {
       name: "chromium",
+      testIgnore: /step-up\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/operator.json" },
       dependencies: ["sign-in"],
+    },
+    // After everything else, and alone: it changes the Management API's MFA policy, which is for everyone.
+    {
+      name: "step-up",
+      testMatch: /step-up\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["chromium"],
     },
   ],
 });
