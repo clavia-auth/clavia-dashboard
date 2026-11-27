@@ -84,6 +84,39 @@ export class Management {
     await this.call("PATCH", `/resource-servers/${api.id}`, { mfa_policy: policy });
   }
 
+  /** `count` people, under names no other test uses, each with an address and nothing else: their ids. */
+  async createUsers(count: number): Promise<string[]> {
+    const run = Math.random().toString(36).slice(2, 10);
+    const ids: string[] = [];
+    // A few at a time: quick, and no burst for Clavia to refuse.
+    for (let start = 0; start < count; start += 10) {
+      const batch = Array.from({ length: Math.min(10, count - start) }, (_, offset) => start + offset);
+      const made = await Promise.all(
+        batch.map((n) => this.call<{ id: string }>("POST", "/users", { email: `e2e-${run}-${n}@clavia.test` })),
+      );
+      ids.push(...made.map(({ id }) => id));
+    }
+
+    return ids;
+  }
+
+  async deleteUsers(userIds: readonly string[]): Promise<void> {
+    for (let start = 0; start < userIds.length; start += 10) {
+      await Promise.all(userIds.slice(start, start + 10).map((id) => this.deleteUser(id)));
+    }
+  }
+
+  /** A role with no permissions, for a test that wants an event of another kind: its id. */
+  async createRole(): Promise<string> {
+    const { id } = await this.call<{ id: string }>("POST", "/roles", {
+      name: `e2e-${Math.random().toString(36).slice(2, 10)}`,
+      description: "Made by an end-to-end test.",
+      provisionable: false,
+    });
+
+    return id;
+  }
+
   /** Signs a person out of Clavia everywhere, and has it tell the applications they signed in to. */
   async endSessions(userId: string): Promise<void> {
     await this.call("DELETE", `/users/${userId}/sessions`);
