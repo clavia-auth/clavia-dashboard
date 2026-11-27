@@ -127,7 +127,9 @@ The dashboard is a confidential OAuth client of Clavia (`client_secret_basic`). 
 1. **`GET /auth/sign-in`**: `Authentication.beginSignIn()` makes a PKCE (S256) pair, a nonce
    and a state, asks for `openid profile email` plus every management scope with the Management
    API as `audience`, and stores the attempt for ten minutes. The browser gets only the state,
-   in `clavia_dashboard_sign_in` (`Path=/dashboard/auth`).
+   in `clavia_dashboard_sign_in` (`Path=/dashboard/auth`). If Clavia cannot be reached (here or
+   at the callback), the sign-in is refused as `unreachable`: the log names the host and the
+   connection's reason, and the browser goes to `/signed-out?reason=unreachable`.
 2. **`GET /auth/callback`**: the state is compared in constant time, the attempt taken once,
    the code redeemed, the ID token checked (signature, issuer, audience, nonce). A session is
    created, and the browser gets `clavia_dashboard_session`: an opaque handle, `HttpOnly`,

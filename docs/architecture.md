@@ -30,6 +30,10 @@ The dashboard is a confidential OAuth client. Clavia never hands its tokens to t
 1. `GET /auth/sign-in` begins an authorization code flow with PKCE (S256), a nonce and a state.
    It asks for the Management API as `audience`. The attempt is stored server-side for ten
    minutes, and the browser gets only its state, in a cookie scoped to `/dashboard/auth`.
+   When Clavia cannot be reached, here or at the callback, the adapter refuses the sign-in as
+   `unreachable`, naming Clavia's host and the connection's own reason (`ECONNREFUSED`, a
+   certificate it does not trust, a timeout) in the log, and the browser lands on
+   `/signed-out?reason=unreachable` rather than on an empty error.
 2. `GET /auth/callback` checks the state in constant time and takes the attempt, which works
    once only. It then redeems the code with HTTP Basic and checks the ID token (signature,
    issuer, audience, nonce). It stores a session and sets an opaque, `HttpOnly`, `SameSite=Lax`

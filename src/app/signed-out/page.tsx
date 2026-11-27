@@ -20,6 +20,11 @@ const MESSAGES: Record<string, { title: string; description: string }> = {
     title: "Signing in did not work",
     description: "Clavia could not complete the sign-in. Try again; if it keeps failing, check the server's logs.",
   },
+  unreachable: {
+    title: "Clavia cannot be reached",
+    description:
+      "The dashboard could not connect to Clavia to sign you in. Try again in a moment; if it keeps failing, the server's logs say why.",
+  },
 };
 
 const SIGNED_OUT = { title: "You're signed out", description: "Your dashboard session has ended." };
