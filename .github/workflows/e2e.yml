@@ -25,6 +25,9 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
       # The machine client `seed-dev` made, for the tests that arrange something through the Management API.
       E2E_CLAVIA_SEED: clavia/test/e2e/.work/seed.txt
+      # The webhook receiver the stack starts, and where the tests read what it was sent.
+      CLAVIA_E2E_RECEIVER: "1"
+      E2E_RECEIVER_URL: http://127.0.0.1:8026
       # What clavia's up.sh starts: the dashboard of this pull request (built below), and Clavia as `main`
       # has it, run as it is.
       CLAVIA_E2E_DASHBOARD: "1"
