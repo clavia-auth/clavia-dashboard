@@ -36,6 +36,19 @@ export type ResourceServerCreate = Schemas["ResourceServerCreate"];
 export type ResourceServerUpdate = Schemas["ResourceServerUpdate"];
 export type Permission = Schemas["Permission"];
 
+export type ResourceServerAuthorization = Schemas["ResourceServerAuthorization"];
+export type ResourceServerAuthorizationUpdate = Schemas["ResourceServerAuthorizationUpdate"];
+export type AuthorizationModel = Schemas["AuthorizationModel"];
+export type AuthorizationModelVersion = Schemas["AuthorizationModelVersion"];
+export type AuthorizationModelPage = Schemas["AuthorizationModelPage"];
+export type AuthorizationEntity = Schemas["AuthorizationEntity"];
+export type Relationship = Schemas["Relationship"];
+export type RelationshipSubject = Schemas["RelationshipSubject"];
+export type RelationshipPage = Schemas["RelationshipPage"];
+export type AccessEvaluation = Schemas["AccessEvaluation"];
+export type AccessDecision = Schemas["AccessDecision"];
+export type DenialReason = NonNullable<AccessDecision["context"]>["reason"];
+
 export type Role = Schemas["Role"];
 export type RoleWithPermissions = Schemas["RoleWithPermissions"];
 export type RoleCreate = Schemas["RoleCreate"];
