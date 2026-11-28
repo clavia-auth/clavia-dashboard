@@ -5,9 +5,11 @@ import { Redis } from "ioredis";
 import { MANAGEMENT_SCOPES } from "@/contract";
 import { ClaviaManagementApi } from "@/adapters/management-api/clavia-management-api";
 import { ClaviaIdentityProvider } from "@/adapters/oidc/clavia-identity-provider";
+import { OpenFgaModelLanguage } from "@/adapters/openfga/openfga-model-language";
 import { RedisPendingSignInStore, RedisSessionStore } from "@/adapters/session/redis-session-store";
 import { Sealer } from "@/adapters/session/sealing";
 import { Authentication } from "@/core/auth/authentication";
+import type { ModelLanguage } from "@/core/authorization/model-language";
 import type { ManagementApi } from "@/core/management/management-api";
 
 import { config } from "./config";
@@ -62,4 +64,11 @@ export function authentication(): Authentication {
 /** The Management API on behalf of the operator whose access token this is. */
 export function managementApiFor(accessToken: string): ManagementApi {
   return new ClaviaManagementApi(new URL("/", config().managementApi).href.replace(/\/$/, ""), accessToken);
+}
+
+const MODEL_LANGUAGE: ModelLanguage = new OpenFgaModelLanguage();
+
+/** OpenFGA's modelling language, which an API's authorization model is edited in. */
+export function modelLanguage(): ModelLanguage {
+  return MODEL_LANGUAGE;
 }
