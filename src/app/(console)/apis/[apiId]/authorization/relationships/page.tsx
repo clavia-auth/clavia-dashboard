@@ -184,7 +184,7 @@ async function Relationships({
                   {href === null ? (
                     subject
                   ) : (
-                    <Link href={href} className="underline-offset-4 hover:underline">
+                    <Link href={href} className="text-primary underline-offset-4 hover:underline">
                       {subject}
                     </Link>
                   )}

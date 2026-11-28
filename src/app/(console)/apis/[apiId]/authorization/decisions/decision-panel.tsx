@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2Icon, CircleSlashIcon } from "lucide-react";
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useState, useTransition } from "react";
 
 import { TextField } from "@/components/app/form-fields";
 import { useActionFeedback } from "@/components/app/use-action-feedback";
@@ -45,6 +45,14 @@ export function DecisionPanel({
   lookUpPeople: boolean;
 }) {
   const [trial, action, pending] = useActionState<Trial, FormData>(tryDecision.bind(null, apiId), IDLE);
+  const [, startTransition] = useTransition();
+  // Submitted in a transition rather than through the form's `action`, which resets its fields afterwards:
+  // what the operator typed stays, refused or not.
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startTransition(() => action(data));
+  };
   const state: ActionState = trial.status === "answered" ? IDLE : trial;
   useActionFeedback(state.status === "success" ? IDLE : state);
   const [subjectType, setSubjectType] = useState(subjectTypes[0] ?? "user");
@@ -55,7 +63,7 @@ export function DecisionPanel({
 
   return (
     <Card>
-      <form action={action}>
+      <form onSubmit={submit}>
         <CardHeader>
           <CardTitle>Try a decision</CardTitle>
           <CardDescription>
@@ -181,12 +189,14 @@ export function DecisionPanel({
                 )}
                 <AlertTitle>{trial.decision ? "Permitted" : "Denied"}</AlertTitle>
                 <AlertDescription>
-                  <span className="font-mono text-xs break-all">{trial.question}</span>
-                  {!trial.decision ? (
-                    <span>{trial.reason === null ? "The API's store gave no reason." : DENIALS[trial.reason]}</span>
-                  ) : (
-                    <span>The API&apos;s clients would be told true, and may act.</span>
-                  )}
+                  <p className="font-mono text-xs break-all">{trial.question}</p>
+                  <p>
+                    {trial.decision
+                      ? "The API's clients would be told true, and may act."
+                      : trial.reason === null
+                        ? "The API's store gave no reason."
+                        : DENIALS[trial.reason]}
+                  </p>
                 </AlertDescription>
               </Alert>
             ) : null}

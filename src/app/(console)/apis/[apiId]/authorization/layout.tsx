@@ -7,9 +7,15 @@ import { Card } from "@/components/ui/card";
 
 import { apiById } from "../data";
 
-export const metadata: Metadata = { title: { default: "Authorization", template: "%s · Authorization" } };
-
 type Props = { params: Promise<{ apiId: string }>; children: React.ReactNode };
+
+// A tab's own title is followed by the API's name, as every tab of the API's page is.
+export async function generateMetadata({ params }: Omit<Props, "children">): Promise<Metadata> {
+  const { apiId } = await params;
+  const { name } = await apiById(apiId);
+
+  return { title: { absolute: `Authorization · ${name}`, template: `%s · Authorization · ${name}` } };
+}
 
 export default async function AuthorizationLayout({ params, children }: Props) {
   const { apiId } = await params;

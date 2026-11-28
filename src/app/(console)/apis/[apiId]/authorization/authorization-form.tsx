@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useTransition } from "react";
 
 import { CheckboxesField, LinesField, SwitchField } from "@/components/app/form-fields";
 import { useActionFeedback } from "@/components/app/use-action-feedback";
@@ -41,6 +41,14 @@ export function AuthorizationForm({
   editable: boolean;
 }) {
   const [state, action, pending] = useActionState(saveAuthorization.bind(null, apiId), IDLE);
+  const [, startTransition] = useTransition();
+  // Submitted in a transition rather than through the form's `action`, which resets its fields afterwards:
+  // what the operator typed stays, refused or not.
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startTransition(() => action(data));
+  };
   useActionFeedback(state);
   const modelId = useId();
   const modelError = fieldError(state, "model");
@@ -58,7 +66,7 @@ export function AuthorizationForm({
 
   return (
     <Card>
-      <form action={action}>
+      <form onSubmit={submit}>
         <CardHeader>
           <CardTitle>Model</CardTitle>
           <CardDescription>
