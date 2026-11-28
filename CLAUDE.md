@@ -73,11 +73,14 @@ src/
   core/          rules and ports: no Next.js, no fetch, no Redis
     auth/          Authentication (sign-in, session, refresh, sign-out, back-channel logout),
                    Operator, ports, safeReturnTo, endpointsOverview (the Endpoints page's addresses)
+    authorization/ an API's authorization model (its types, relations, OpenFGA's notation) and the
+                   ModelLanguage port
     management/    the ManagementApi port and ManagementError
   adapters/      the ports' implementations
     oidc/          ClaviaIdentityProvider (oauth4webapi, jose)
     session/       sealed Redis session and sign-in stores
     management-api/ ClaviaManagementApi (openapi-fetch) and problem mapping
+    openfga/       OpenFgaModelLanguage: OpenFGA's syntax transformer, map<any> bridged
   server/        composition root, data access layer, action helpers (server-only)
   proxy.ts       per-request CSP and nonce, early redirect to sign-in
   app/           routes
@@ -106,10 +109,10 @@ A hexagon. Dependencies point inward:
 
 - **`core`** imports only `contract`. It holds the sign-in and session rules (`Authentication`),
   the operator (`Operator.can(scope)`), the ports (`IdentityProvider`, `SessionStore`,
-  `PendingSignInStore`, `Clock`, `ManagementApi`) and their errors (`SignInRefused`,
+  `PendingSignInStore`, `Clock`, `ManagementApi`, `ModelLanguage`) and their errors (`SignInRefused`,
   `ManagementError`). No Next.js, no `fetch`, no Redis, no `process.env`.
 - **`adapters`** implement the ports: `ClaviaIdentityProvider`, `RedisSessionStore` and
-  `RedisPendingSignInStore`, `ClaviaManagementApi`.
+  `RedisPendingSignInStore`, `ClaviaManagementApi`, `OpenFgaModelLanguage`.
 - **`server`** wires them (`container.ts`, the composition root, cached on `globalThis`), reads
   the settings (`config.ts`, zod-validated on first use, never at build time), and gives pages
   and actions their entry points: `signedIn()`, `load()`/`find()`, `perform()`/`parse()`. Every
@@ -330,5 +333,13 @@ CLAVIA_E2E_DASHBOARD_IMAGE=<your image> test/e2e/up.sh`, add its names to `/etc/
 - **A slow DNS lookup looks like a timeout**: Node resolves names in a pool of four threads, so on
   macOS a `.local` Clavia domain (resolved through Bonjour) makes parallel API calls time out.
   Use `.test`.
+- **An API's fine-grained authorization** (its Authorization tab) goes through the Management
+  API alone, never the Authorization API: the dashboard speaks for no API. The model is edited in
+  OpenFGA's language and converted on the server (`modelLanguage()`); the versions and the
+  relationships page by the engine's token (`TokenPager`), and `fromEngine()` turns "no store",
+  "no engine" and "the engine does not answer" into what the tab shows.
+- **The dashboard asks for every scope the contract lists** (`REQUESTED_SCOPES`), so a Clavia that
+  has not registered one refuses the sign-in (`invalid_scope`): after copying a contract that adds
+  a scope, `management-api:register` must have run on the Clavia the dashboard signs in to.
 - **The development stack** is Clavia's: `make up && make seed` there prints this dashboard's
   settings, and its Caddy forwards `/dashboard` to port 3000.

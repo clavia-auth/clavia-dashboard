@@ -9,11 +9,13 @@ src/
 ├── contract/      the Management API's published language, generated from its OpenAPI document
 ├── core/          rules and ports: no Next.js, no fetch, no Redis
 │   ├── auth/          sign-in, sessions, refresh, sign-out, back-channel logout; the operator
+│   ├── authorization/ an API's authorization model: its types and relations, the ModelLanguage port
 │   └── management/    the ManagementApi port and the errors it may raise
 ├── adapters/      the ports' implementations
 │   ├── oidc/          ClaviaIdentityProvider (oauth4webapi, jose)
 │   ├── session/       sealed Redis session and sign-in stores
-│   └── management-api/ ClaviaManagementApi (openapi-fetch) and problem mapping
+│   ├── management-api/ ClaviaManagementApi (openapi-fetch) and problem mapping
+│   └── openfga/       OpenFgaModelLanguage (OpenFGA's syntax transformer)
 ├── server/        the composition root, the data access layer and the server action helpers
 ├── app/           routes: the primary adapters
 └── components/    UI: ui/ is shadcn's, shell/ the frame, app/ shared pieces, audit/ the log's
@@ -79,6 +81,28 @@ What an operator sees follows their token's scopes (`Operator.can()`). A section
 read is not in the navigation. An action they cannot take is hidden, or explained where its
 absence would confuse. Clavia enforces the same rules: the UI only avoids offering what would
 fail.
+
+## An API's fine-grained authorization
+
+An API's Authorization tab sets up what Clavia's design calls the administration point: the
+model, the clients that speak for the API, and whether a denial says its kind. It also shows
+the model's versions and the relationships in the API's store, and tries a decision. Everything
+goes through the Management API with the operator's token (`read:resource_servers`,
+`update:resource_servers`, `read:relationships`). The dashboard speaks for no API and never
+calls the Authorization API: a client speaks for one API at most, and the dashboard signs
+people in.
+
+Operators write the model in OpenFGA's modelling language; Clavia takes its JSON form. The
+conversion is OpenFGA's own syntax transformer, behind the `ModelLanguage` port, on the server
+only. Its grammar refuses `map<any>`, the type a condition reads Clavia's facts through, though
+the engine takes it and the transformer writes it. `OpenFgaModelLanguage` reads such a
+parameter as `map<string>` and sets it back to `any` in the JSON, so a model reads back as it
+was typed. The syntax is checked before the model is sent; whether it makes sense is the
+engine's to say.
+
+The versions and the relationships are read from the decision engine, which pages by token and
+gives no total, so they have a pager of their own. A tab the engine cannot answer says why: the
+API has no store, the deployment names no engine, or the engine does not answer now.
 
 ## Rendering
 
