@@ -167,8 +167,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [users]
       operationId: createUser
@@ -246,8 +244,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [users]
       operationId: updateUser
@@ -322,8 +318,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/mfa:
     parameters:
@@ -352,8 +346,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/password-reset:
     parameters:
@@ -441,8 +433,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/consents/{client_id}:
     parameters:
@@ -471,8 +461,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/sessions:
     parameters:
@@ -507,8 +495,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     delete:
       tags: [users]
       operationId: endUserSessions
@@ -533,8 +519,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/sessions/{sid}:
     parameters:
@@ -558,8 +542,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/identities:
     parameters:
@@ -591,8 +573,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/identities/{connection}:
     parameters:
@@ -623,8 +603,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/passkeys:
     parameters:
@@ -658,8 +636,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/passkeys/{passkey_id}:
     parameters:
@@ -688,8 +664,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/users/{user_id}/roles:
     parameters:
@@ -721,8 +695,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     put:
       tags: [users]
       operationId: setUserRoles
@@ -803,8 +775,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/clients:
     get:
@@ -834,8 +804,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [clients]
       operationId: createClient
@@ -912,8 +880,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [clients]
       operationId: updateClient
@@ -982,8 +948,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/clients/{client_id}/logo:
     parameters:
@@ -1024,8 +988,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     put:
       tags: [clients]
       operationId: setClientLogo
@@ -1092,8 +1054,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/clients/{client_id}/rotate-secret:
     parameters:
@@ -1205,8 +1165,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [connections]
       operationId: createConnection
@@ -1328,8 +1286,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [connections]
       operationId: updateConnection
@@ -1399,8 +1355,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/resource-servers:
     get:
@@ -1430,8 +1384,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [resource-servers]
       operationId: createResourceServer
@@ -1501,8 +1453,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [resource-servers]
       operationId: updateResourceServer
@@ -1575,8 +1525,308 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+
+  /api/v1/resource-servers/{resource_server_id}/authorization:
+    parameters:
+      - $ref: '#/components/parameters/ResourceServerId'
+    get:
+      tags: [resource-servers]
+      operationId: getResourceServerAuthorization
+      summary: Get the authorization of an API
+      description: |
+        Whether fine-grained authorization is on for the API, its store in the decision engine
+        (OpenFGA), the model in force there, and the clients that speak for the API. 404 when it was
+        never set up, or its store was deleted.
+      security:
+        - managementToken: [read:resource_servers]
+      responses:
+        '200':
+          description: The API's fine-grained authorization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceServerAuthorization'
+              examples:
+                ResourceServerAuthorization:
+                  $ref: '#/components/examples/ResourceServerAuthorization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [resource-servers]
+      operationId: putResourceServerAuthorization
+      summary: Turn on authorization
+      description: |
+        Turn on fine-grained authorization for the API, with this model and these clients speaking
+        for it, or change them. The first time, the API gets a store of its own in the decision engine,
+        kept from then on. A model that differs from the one in force is written as a new version, and
+        the store's relationships stay with it.
+
+        The model is OpenFGA's JSON form (schema 1.1), as OpenFGA's own tools convert the modelling
+        language to. It declares `type user`, the people Clavia knows. The types `user`, `client`,
+        `role` and `group` are Clavia's. `user` and `client` have no relation of their own. `role`
+        and `group`, when declared, are exactly `define member: [user]`. Clavia alone writes their
+        relationships. A model the engine refuses is a 422 at `/model`, with the engine's error code
+        and nothing else.
+
+        Each client speaking for the API is a first-party machine client (`client_credentials`), at
+        most twenty. A client speaks for one API at most (409 when it already speaks for another), and
+        asks for decisions with a token for the Authorization API, granted from the shell
+        (`clients:grant`). Refused on a system API (409), and while this server names no decision
+        engine (409). A decision engine that does not answer is a 503: nothing was changed.
+      security:
+        - managementToken: [update:resource_servers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceServerAuthorizationUpdate'
+            examples:
+              ResourceServerAuthorizationUpdate:
+                $ref: '#/components/examples/ResourceServerAuthorizationUpdate'
+      responses:
+        '200':
+          description: The API's fine-grained authorization, as it is now.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceServerAuthorization'
+              examples:
+                ResourceServerAuthorization:
+                  $ref: '#/components/examples/ResourceServerAuthorization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags: [resource-servers]
+      operationId: deleteResourceServerAuthorization
+      summary: Turn off authorization
+      description: |
+        Turn off fine-grained authorization for the API. Its store, its model and the relationships
+        in it are kept, so turning it on again brings them back.
+
+        With `confirm=delete`, the store is deleted instead, with every relationship in it, and
+        Clavia forgets it. That cannot be undone. A decision engine that does not answer is then a 503,
+        and nothing was changed.
+      security:
+        - managementToken: [update:resource_servers]
+      parameters:
+        - name: confirm
+          in: query
+          required: false
+          description: '`delete` to delete the store and every relationship in it.'
+          schema:
+            type: string
+            enum: [delete]
+      responses:
+        '204':
+          description: Turned off, or deleted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/resource-servers/{resource_server_id}/authorization/models:
+    parameters:
+      - $ref: '#/components/parameters/ResourceServerId'
+    get:
+      tags: [resource-servers]
+      operationId: listResourceServerAuthorizationModels
+      summary: List model versions
+      description: |
+        The versions of the API's model its store holds, newest first, a page at a time. The decision
+        engine keeps every version; `in_force` marks the one the API's questions are answered with.
+        Each model is shown as the engine keeps it, and reading one never puts it in force.
+
+        The store is read whether authorization is on or off. 404 when the API has no store (never set
+        up, or deleted), 409 while this server names no decision engine, 503 when the engine does not
+        answer. A page token that is not one a previous page gave is a 400.
+      security:
+        - managementToken: [read:resource_servers]
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          description: How many versions a page holds. A model can be 256 KiB.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+        - $ref: '#/components/parameters/EnginePageToken'
+      responses:
+        '200':
+          description: One page of model versions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationModelPage'
+              examples:
+                AuthorizationModelPage:
+                  $ref: '#/components/examples/AuthorizationModelPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/resource-servers/{resource_server_id}/authorization/relationships:
+    parameters:
+      - $ref: '#/components/parameters/ResourceServerId'
+    get:
+      tags: [resource-servers]
+      operationId: listResourceServerRelationships
+      summary: List an object's relationships
+      description: |
+        The relationships written on one of the API's own objects, a page at a time, as the decision
+        engine keeps them: what the API's clients read at `GET /access/v1/relationships`, read by an
+        operator. Clavia's own types (`user`, `client`, `role`, `group`) are not read here: who holds a
+        role is the roles' to tell. An object of one of them, or of a type the model does not declare,
+        is a 422 at `object`.
+
+        The store is read whether authorization is on or off. 404 when the API has no store, 409 while
+        this server names no decision engine, 503 when the engine does not answer. A page token that
+        is not one a previous page gave is a 400.
+      security:
+        - managementToken: [read:relationships]
+      parameters:
+        - name: object
+          in: query
+          required: true
+          description: The object, `type:id`.
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 512
+            pattern: '^[^:#@\s]+:[^#:\s]+$'
+        - name: page_size
+          in: query
+          required: false
+          description: How many relationships a page holds.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - $ref: '#/components/parameters/EnginePageToken'
+      responses:
+        '200':
+          description: One page of relationships.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipPage'
+              examples:
+                RelationshipPage:
+                  $ref: '#/components/examples/RelationshipPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/resource-servers/{resource_server_id}/authorization/evaluation:
+    parameters:
+      - $ref: '#/components/parameters/ResourceServerId'
+    post:
+      tags: [resource-servers]
+      operationId: evaluateResourceServerAuthorization
+      summary: Try a decision
+      description: |
+        Ask the API's store one question, as the API's own clients ask it at
+        `POST /access/v1/evaluation` (AuthZEN 1.0 §6), and get the decision they would get. Every step
+        of theirs is taken. A subject Clavia does not know, a deactivated account or a deleted client
+        is denied (`subject_inactive`) before the engine is asked. Clavia adds what it knows of the
+        subject as `context.clavia.subject`, and a condition the engine cannot evaluate is a denial
+        (`condition_failed`). A denial always says which kind it is, whatever the API's
+        `denial_reasons`. The facts Clavia added are not returned. Nothing is recorded in the audit
+        trail.
+
+        A subject that is not a `user` or a `client` the model declares, a resource type the model
+        does not declare, an action that is not a relation of that type, or a `context.clavia` (which
+        is Clavia's to write) is a 422 pointing at the member. The store is asked whether
+        authorization is on or off. 404 when the API has no store, 409 while this server names no
+        decision engine, 503 when the engine does not answer: never a decision.
+      security:
+        - managementToken: [read:relationships]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessEvaluation'
+            examples:
+              AccessEvaluation:
+                $ref: '#/components/examples/AccessEvaluation'
+      responses:
+        '200':
+          description: The decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessDecision'
+              examples:
+                AccessDenied:
+                  $ref: '#/components/examples/AccessDenied'
+                AccessPermitted:
+                  $ref: '#/components/examples/AccessPermitted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /api/v1/roles:
     get:
@@ -1606,8 +1856,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [roles]
       operationId: createRole
@@ -1681,8 +1929,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [roles]
       operationId: updateRole
@@ -1748,8 +1994,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/roles/{role_id}/users:
     parameters:
@@ -1782,8 +2026,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [roles]
       operationId: assignRole
@@ -1845,8 +2087,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/signing-keys:
     get:
@@ -2012,8 +2252,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [initial-access-tokens]
       operationId: issueInitialAccessToken
@@ -2080,8 +2318,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/provisioning-tokens:
     get:
@@ -2120,8 +2356,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [provisioning-tokens]
       operationId: issueProvisioningToken
@@ -2194,8 +2428,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     delete:
       tags: [provisioning-tokens]
       operationId: revokeProvisioningToken
@@ -2216,8 +2448,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/webhooks:
     get:
@@ -2246,8 +2476,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     post:
       tags: [webhooks]
       operationId: createWebhook
@@ -2327,8 +2555,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
     patch:
       tags: [webhooks]
       operationId: updateWebhook
@@ -2388,8 +2614,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/webhooks/{webhook_id}/rotate-secret:
     parameters:
@@ -2422,8 +2646,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/webhooks/{webhook_id}/test:
     parameters:
@@ -2452,8 +2674,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/webhooks/{webhook_id}/deliveries:
     parameters:
@@ -2490,8 +2710,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/jobs/users-imports:
     post:
@@ -2605,8 +2823,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/jobs/{job_id}/output:
     parameters:
@@ -2647,8 +2863,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/jobs/{job_id}:
     parameters:
@@ -2680,8 +2894,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
 
   /api/v1/audit-events:
     get:
@@ -2787,6 +2999,7 @@ components:
             create:resource_servers: Create APIs
             update:resource_servers: Modify APIs
             delete:resource_servers: Delete APIs
+            read:relationships: View the relationships of APIs, and what they decide
             read:roles: View roles and who holds them
             create:roles: Create roles and who holds them
             update:roles: Modify roles and who holds them
@@ -2864,6 +3077,17 @@ components:
         type: string
         minLength: 1
         maxLength: 64
+        # Visible ASCII without a colon, as a client id is (HTTP Basic cannot carry one).
+        pattern: '^[\x21-\x39\x3B-\x7E]+$'
+    EnginePageToken:
+      name: page_token
+      in: query
+      required: false
+      description: The `next_page_token` of the previous page.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 4096
     ResourceServerId:
       name: resource_server_id
       in: path
@@ -2930,9 +3154,11 @@ components:
   responses:
     BadRequest:
       description: |
-        The request could not be read: malformed JSON or a parameter sent twice (a problem
-        document), or a malformed `Authorization` header (`invalid_request`, an RFC 6750
-        challenge).
+        The request was built wrong (RFC 9110 §15.5.1), a problem document: it cannot be read
+        (malformed JSON, a parameter sent twice), or this document refuses it (a field it does not
+        describe, a wrong type, a value out of range, a parameter the operation does not take),
+        every violation listed with its `pointer` or `parameter`. Or a malformed `Authorization`
+        header (`invalid_request`, an RFC 6750 challenge).
       content:
         application/problem+json:
           schema:
@@ -2940,6 +3166,8 @@ components:
           examples:
             MalformedRequest:
               $ref: '#/components/examples/MalformedRequest'
+            ContractViolation:
+              $ref: '#/components/examples/ContractViolation'
         application/json:
           schema:
             $ref: '#/components/schemas/BearerError'
@@ -3018,7 +3246,10 @@ components:
             Conflict:
               $ref: '#/components/examples/Conflict'
     Unprocessable:
-      description: The request does not satisfy this document, or describes something that could never work.
+      description: |
+        The request is well formed, but a rule refuses it (RFC 9110 §15.5.21): a permission the API
+        does not define, a password found in a breach, metadata that does not hold together. Each
+        fault is pointed at; nothing changed.
       content:
         application/problem+json:
           schema:
@@ -3289,6 +3520,7 @@ components:
             source: "app_metadata.tenant.id"
             in: ["id_token", "userinfo"]
         accent_color: "#0f766e"
+        initiate_login_uri: "https://reports.example.com/sign-in"
         logo_version: "3f1c2a9b8d7e6f50"
         registration: null
         created_at: "2026-01-15T10:00:00Z"
@@ -3313,6 +3545,7 @@ components:
         dpop_bound_access_tokens: false
         claims: []
         accent_color: null
+        initiate_login_uri: null
         logo_version: null
         registration:
           initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
@@ -3340,6 +3573,7 @@ components:
             dpop_bound_access_tokens: false
             claims: []
             accent_color: null
+            initiate_login_uri: null
             logo_version: null
             registration:
               initial_access_token_id: "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a"
@@ -3363,6 +3597,7 @@ components:
             dpop_bound_access_tokens: false
             claims: []
             accent_color: null
+            initiate_login_uri: null
             logo_version: null
             registration: null
             created_at: "2026-01-15T10:00:00Z"
@@ -3381,6 +3616,7 @@ components:
         connections: ["password", "google"]
         backchannel_logout_uri: "https://reports.example.com/backchannel-logout"
         backchannel_logout_session_required: true
+        initiate_login_uri: "https://reports.example.com/sign-in"
     ClientWithSecret:
       summary: The application, with its secret shown once
       value:
@@ -3402,6 +3638,7 @@ components:
         dpop_bound_access_tokens: false
         claims: []
         accent_color: null
+        initiate_login_uri: "https://reports.example.com/sign-in"
         logo_version: null
         registration: null
         created_at: "2026-01-15T10:00:00Z"
@@ -3625,6 +3862,137 @@ components:
           - name: "https://example.com/deployment"
             source: "constant"
             value: "eu-1"
+    ResourceServerAuthorizationUpdate:
+      summary: Reports, which their owner and anybody holding a role may view
+      value:
+        model:
+          schema_version: "1.1"
+          type_definitions:
+            - type: "user"
+            - type: "role"
+              relations:
+                member:
+                  this: {}
+              metadata:
+                relations:
+                  member:
+                    directly_related_user_types:
+                      - type: "user"
+            - type: "report"
+              relations:
+                owner:
+                  this: {}
+                viewer:
+                  union:
+                    child:
+                      - this: {}
+                      - computedUserset:
+                          relation: "owner"
+              metadata:
+                relations:
+                  owner:
+                    directly_related_user_types:
+                      - type: "user"
+                  viewer:
+                    directly_related_user_types:
+                      - type: "user"
+                      - type: "role"
+                        relation: "member"
+        clients: ["Mc8tR3vN6qL1wZ4yB7hJ2dF9gS5aE0kX"]
+        denial_reasons: false
+    AuthorizationModelPage:
+      summary: The two versions of the Reports API's model
+      value:
+        items:
+          - id: "01JQ8ZK4A2HG7Y3W5P9S1T6VQF"
+            created_at: "2025-03-28T09:14:02Z"
+            in_force: true
+            model:
+              schema_version: "1.1"
+              type_definitions:
+                - type: "user"
+                - type: "report"
+                  relations:
+                    viewer:
+                      this: {}
+                  metadata:
+                    relations:
+                      viewer:
+                        directly_related_user_types:
+                          - type: "user"
+              conditions: {}
+          - id: "01JQ8ZK3Z8C4N6R2T1V7W9X5YB"
+            created_at: "2025-03-28T09:13:51Z"
+            in_force: false
+            model:
+              schema_version: "1.1"
+              type_definitions:
+                - type: "user"
+              conditions: {}
+    RelationshipPage:
+      summary: The first page of a report's relationships
+      value:
+        items:
+          - resource: {type: "report", id: "q3-revenue"}
+            relation: "viewer"
+            subject: {type: "user", id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"}
+          - resource: {type: "report", id: "q3-revenue"}
+            relation: "viewer"
+            subject: {type: "role", id: "rol_S4f9Gh2Jk7Lp3Qa1", relation: "member"}
+        next_page_token: "eyJ1bGlkIjoiMDFKOVgifQ"
+    AccessEvaluation:
+      summary: May Ada view the Q3 revenue report?
+      value:
+        subject: {type: "user", id: "3f8e2d1c-5b4a-4c9e-8d7f-6a5b4c3d2e1f"}
+        action: {name: "viewer"}
+        resource: {type: "report", id: "q3-revenue"}
+    AccessPermitted:
+      summary: Permitted
+      value: {decision: true}
+    AccessDenied:
+      summary: Denied, with its kind
+      value: {decision: false, context: {reason: "no_relation"}}
+    ResourceServerAuthorization:
+      summary: Fine-grained authorization on the Reports API
+      value:
+        enabled: true
+        store_id: "01JQ8ZK3V6M2XW4T9B7N5R1CDE"
+        model_id: "01JQ8ZK4A2HG7Y3W5P9S1T6VQF"
+        model:
+          schema_version: "1.1"
+          type_definitions:
+            - type: "user"
+            - type: "role"
+              relations:
+                member:
+                  this: {}
+              metadata:
+                relations:
+                  member:
+                    directly_related_user_types:
+                      - type: "user"
+            - type: "report"
+              relations:
+                owner:
+                  this: {}
+                viewer:
+                  union:
+                    child:
+                      - this: {}
+                      - computedUserset:
+                          relation: "owner"
+              metadata:
+                relations:
+                  owner:
+                    directly_related_user_types:
+                      - type: "user"
+                  viewer:
+                    directly_related_user_types:
+                      - type: "user"
+                      - type: "role"
+                        relation: "member"
+        clients: ["Mc8tR3vN6qL1wZ4yB7hJ2dF9gS5aE0kX"]
+        denial_reasons: false
     RolePage:
       summary: A page of roles
       value:
@@ -4023,18 +4391,28 @@ components:
         title: "Unsupported Media Type"
         status: 415
         detail: "The body must be application/json."
-    Unprocessable:
+    ContractViolation:
       summary: What the contract refuses, every violation listed
       value:
         type: "about:blank"
-        title: "Unprocessable Content"
-        status: 422
+        title: "Bad Request"
+        status: 400
         detail: "The request does not satisfy the API's contract."
         errors:
           - pointer: "/email"
             detail: "Must be a string."
           - parameter: "per_page"
             detail: "Must be at most 100."
+    Unprocessable:
+      summary: A rule refuses a well-formed request
+      value:
+        type: "about:blank"
+        title: "Unprocessable Content"
+        status: 422
+        detail: "The request is well formed, but a rule refuses it."
+        errors:
+          - pointer: "/claims/0"
+            detail: "That claim name is reserved: the protocol or this server defines it."
     TooManyRequests:
       summary: The send limit reached
       value:
@@ -4237,7 +4615,7 @@ components:
           format: uuid
         type:
           type: string
-          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, saml_key.generated, saml_key.rotated, initial_access_token.issued, initial_access_token.revoked, provisioning_token.issued, provisioning_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated, webhook.tested, webhook.disabled]
+          enum: [authentication.succeeded, authentication.failed, session.ended, session.stepped_up, mfa.enrolled, mfa.removed, passkey.registered, passkey.renamed, passkey.removed, passkey.counter_regressed, consent.given, consent.refused, consent.withdrawn, device.approved, device.refused, token.issued, token.revoked, token.code_replayed, token.refresh_replayed, client.created, client.updated, client.deleted, client.secret_rotated, client.granted, user.created, user.updated, user.deleted, user.identity_unlinked, user.roles_changed, user.signed_up, user.email_verified, user.password_reset, user.password_link_sent, user.exported, role.created, role.updated, role.deleted, resource_server.created, resource_server.updated, resource_server.deleted, resource_server.authorization_enabled, resource_server.authorization_disabled, resource_server.authorization_model_written, connection.created, connection.updated, connection.deleted, signing_key.created, signing_key.rotated, saml_key.generated, saml_key.rotated, initial_access_token.issued, initial_access_token.revoked, provisioning_token.issued, provisioning_token.revoked, webhook.created, webhook.updated, webhook.deleted, webhook.secret_rotated, webhook.tested, webhook.disabled]
         occurred_at:
           type: string
           format: date-time
@@ -5175,7 +5553,8 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, accent_color, logo_version, registration, created_at, claims]
+        dpop_bound_access_tokens, accent_color, initiate_login_uri, logo_version, registration, created_at,
+        claims]
       properties:
         client_id:
           type: string
@@ -5245,6 +5624,10 @@ components:
           nullable: true
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: The application's colour on its sign-in pages (see `AccentColor`); null for this server's.
+        initiate_login_uri:
+          type: string
+          nullable: true
+          description: Where it starts a sign-in of its own (see `InitiateLoginUri`); null when it registered none.
         logo_version:
           type: string
           nullable: true
@@ -5284,6 +5667,20 @@ components:
         hexadecimal digits, kept in lower case. The text on it is worked out: white or dark ink, whichever
         contrasts more. Its pages are told it by a stylesheet of the sign-in origin, never inline.
 
+    InitiateLoginUri:
+      type: string
+      minLength: 1
+      maxLength: 2048
+      pattern: '^https://'
+      description: |
+        Where the application starts a sign-in of its own: `initiate_login_uri` (OpenID Connect Dynamic
+        Client Registration 1.0 §2; OpenID Connect Core 1.0 §4, third-party initiated login), an https URL
+        without a fragment, kept as written. When a person signs in from a page whose request has
+        expired (it is held for an hour), they are sent there with a `303` and `iss` (this server's
+        issuer) appended to its query, so that the application starts a new request; without one they
+        are told to go back to the application. A GET to it must begin a sign-in with this server. Set
+        by operators only: a client that registered itself (RFC 7591) cannot.
+
     ApplicationClaims:
       type: array
       maxItems: 20
@@ -5310,7 +5707,8 @@ components:
       required: [client_id, name, client_type, token_endpoint_auth_method, redirect_uris, grant_types,
         response_types, post_logout_redirect_uris, is_first_party, connections, backchannel_logout_uri,
         backchannel_logout_session_required, require_pkce, mfa_policy, require_pushed_authorization_requests,
-        dpop_bound_access_tokens, accent_color, logo_version, registration, created_at, claims, client_secret]
+        dpop_bound_access_tokens, accent_color, initiate_login_uri, logo_version, registration, created_at, claims,
+        client_secret]
       properties:
         client_id:
           type: string
@@ -5380,6 +5778,10 @@ components:
           nullable: true
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: The application's colour on its sign-in pages (see `AccentColor`); null for this server's.
+        initiate_login_uri:
+          type: string
+          nullable: true
+          description: Where it starts a sign-in of its own (see `InitiateLoginUri`); null when it registered none.
         logo_version:
           type: string
           nullable: true
@@ -5496,6 +5898,8 @@ components:
             already issued keep working as they were.
         accent_color:
           $ref: '#/components/schemas/AccentColor'
+        initiate_login_uri:
+          $ref: '#/components/schemas/InitiateLoginUri'
       description: |
         `client_type` defaults to `public`; `token_endpoint_auth_method` to `none` for a
         public client and `client_secret_basic` for a confidential one.
@@ -5566,6 +5970,13 @@ components:
           nullable: true
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: The application's colour on its sign-in pages (see `AccentColor`); null gives it this server's back.
+        initiate_login_uri:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2048
+          pattern: '^https://'
+          description: Where it starts a sign-in of its own (see `InitiateLoginUri`); null removes it.
         claims:
           type: array
           maxItems: 20
@@ -5815,6 +6226,217 @@ components:
           maxItems: 20
           items:
             $ref: '#/components/schemas/ClaimMapping'
+
+    ResourceServerAuthorization:
+      type: object
+      additionalProperties: false
+      required: [enabled, store_id, model_id, model, clients, denial_reasons]
+      properties:
+        enabled:
+          type: boolean
+          description: Whether the API's clients get decisions. Off, the store and its relationships are kept.
+        store_id:
+          type: string
+          description: The API's store in the decision engine, a ULID.
+        model_id:
+          type: string
+          description: The version of the model in force, a ULID.
+        model:
+          $ref: '#/components/schemas/AuthorizationModel'
+        clients:
+          type: array
+          maxItems: 20
+          description: The clients that speak for the API.
+          items:
+            type: string
+        denial_reasons:
+          type: boolean
+          description: Whether a denial says which kind it is (`no_relation`, `subject_inactive`, `unknown_type`, `condition_failed`), never more.
+
+    ResourceServerAuthorizationUpdate:
+      type: object
+      additionalProperties: false
+      required: [model]
+      properties:
+        model:
+          $ref: '#/components/schemas/AuthorizationModel'
+        clients:
+          type: array
+          maxItems: 20
+          description: The clients that speak for the API; none when left out.
+          items:
+            type: string
+        denial_reasons:
+          type: boolean
+          description: Whether a denial says which kind it is; off when left out.
+
+    AuthorizationModel:
+      type: object
+      additionalProperties: false
+      required: [schema_version, type_definitions]
+      description: |
+        An OpenFGA authorization model in its JSON form, schema 1.1, kept as it was sent. It declares
+        `type user`. `user` and `client` have no relation of their own. `role` and `group` are exactly
+        `define member: [user]`.
+      properties:
+        schema_version:
+          type: string
+          enum: ['1.1']
+        type_definitions:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: true
+        conditions:
+          type: object
+          additionalProperties: true
+
+    AuthorizationModelVersion:
+      type: object
+      additionalProperties: false
+      required: [id, created_at, in_force, model]
+      properties:
+        id:
+          type: string
+          description: The version, a ULID.
+        created_at:
+          type: string
+          format: date-time
+          description: When the decision engine made it, read from its id.
+        in_force:
+          type: boolean
+          description: Whether the API's questions are answered with this version.
+        model:
+          type: object
+          additionalProperties: true
+          description: The model as the decision engine keeps it (OpenFGA's JSON, schema 1.1).
+
+    AuthorizationModelPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/AuthorizationModelVersion'
+        next_page_token:
+          type: string
+          description: Read the next page with it; absent on the last page.
+
+    AuthorizationEntity:
+      description: An object of the API's model, `type` and `id` as OpenFGA's notation takes them.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          type: string
+          minLength: 1
+          maxLength: 254
+          pattern: '^[^:#@\s]+$'
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: '^[^#:\s]+$'
+
+    RelationshipSubject:
+      description: |
+        Who holds the relation: a person (`user`), an application (`client`), one of the API's own
+        objects, or with `relation` a userset, everybody holding that relation on the object.
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        relation:
+          type: string
+
+    Relationship:
+      type: object
+      additionalProperties: false
+      required: [resource, relation, subject]
+      properties:
+        resource:
+          $ref: '#/components/schemas/AuthorizationEntity'
+        relation:
+          type: string
+        subject:
+          $ref: '#/components/schemas/RelationshipSubject'
+        condition:
+          type: object
+          additionalProperties: false
+          required: [name]
+          description: The condition the relationship is written under, and the values kept with it.
+          properties:
+            name:
+              type: string
+            context:
+              type: object
+              additionalProperties: true
+
+    RelationshipPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Relationship'
+        next_page_token:
+          type: string
+          description: Read the next page with it; absent on the last page.
+
+    AccessEvaluation:
+      description: One question, as AuthZEN 1.0 asks it (§6.1). Members it does not define are ignored.
+      type: object
+      additionalProperties: true
+      required: [subject, action, resource]
+      properties:
+        subject:
+          $ref: '#/components/schemas/AuthorizationEntity'
+        action:
+          type: object
+          additionalProperties: true
+          required: [name]
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: A relation of the resource's type.
+        resource:
+          $ref: '#/components/schemas/AuthorizationEntity'
+        context:
+          type: object
+          additionalProperties: true
+          description: What the model's conditions read. `clavia` is Clavia's to write.
+
+    AccessDecision:
+      description: AuthZEN 1.0 §5.5.
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision:
+          type: boolean
+        context:
+          type: object
+          additionalProperties: false
+          required: [reason]
+          properties:
+            reason:
+              type: string
+              enum: [no_relation, subject_inactive, unknown_type, condition_failed]
+              description: The kind of denial.
 
     ConnectionName:
       type: string

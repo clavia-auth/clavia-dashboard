@@ -704,6 +704,152 @@ export type paths = {
         patch: operations["updateResourceServer"];
         trace?: never;
     };
+    "/api/v1/resource-servers/{resource_server_id}/authorization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the authorization of an API
+         * @description Whether fine-grained authorization is on for the API, its store in the decision engine
+         *     (OpenFGA), the model in force there, and the clients that speak for the API. 404 when it was
+         *     never set up, or its store was deleted.
+         */
+        get: operations["getResourceServerAuthorization"];
+        /**
+         * Turn on authorization
+         * @description Turn on fine-grained authorization for the API, with this model and these clients speaking
+         *     for it, or change them. The first time, the API gets a store of its own in the decision engine,
+         *     kept from then on. A model that differs from the one in force is written as a new version, and
+         *     the store's relationships stay with it.
+         *
+         *     The model is OpenFGA's JSON form (schema 1.1), as OpenFGA's own tools convert the modelling
+         *     language to. It declares `type user`, the people Clavia knows. The types `user`, `client`,
+         *     `role` and `group` are Clavia's. `user` and `client` have no relation of their own. `role`
+         *     and `group`, when declared, are exactly `define member: [user]`. Clavia alone writes their
+         *     relationships. A model the engine refuses is a 422 at `/model`, with the engine's error code
+         *     and nothing else.
+         *
+         *     Each client speaking for the API is a first-party machine client (`client_credentials`), at
+         *     most twenty. A client speaks for one API at most (409 when it already speaks for another), and
+         *     asks for decisions with a token for the Authorization API, granted from the shell
+         *     (`clients:grant`). Refused on a system API (409), and while this server names no decision
+         *     engine (409). A decision engine that does not answer is a 503: nothing was changed.
+         */
+        put: operations["putResourceServerAuthorization"];
+        post?: never;
+        /**
+         * Turn off authorization
+         * @description Turn off fine-grained authorization for the API. Its store, its model and the relationships
+         *     in it are kept, so turning it on again brings them back.
+         *
+         *     With `confirm=delete`, the store is deleted instead, with every relationship in it, and
+         *     Clavia forgets it. That cannot be undone. A decision engine that does not answer is then a 503,
+         *     and nothing was changed.
+         */
+        delete: operations["deleteResourceServerAuthorization"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resource-servers/{resource_server_id}/authorization/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List model versions
+         * @description The versions of the API's model its store holds, newest first, a page at a time. The decision
+         *     engine keeps every version; `in_force` marks the one the API's questions are answered with.
+         *     Each model is shown as the engine keeps it, and reading one never puts it in force.
+         *
+         *     The store is read whether authorization is on or off. 404 when the API has no store (never set
+         *     up, or deleted), 409 while this server names no decision engine, 503 when the engine does not
+         *     answer. A page token that is not one a previous page gave is a 400.
+         */
+        get: operations["listResourceServerAuthorizationModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resource-servers/{resource_server_id}/authorization/relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List an object's relationships
+         * @description The relationships written on one of the API's own objects, a page at a time, as the decision
+         *     engine keeps them: what the API's clients read at `GET /access/v1/relationships`, read by an
+         *     operator. Clavia's own types (`user`, `client`, `role`, `group`) are not read here: who holds a
+         *     role is the roles' to tell. An object of one of them, or of a type the model does not declare,
+         *     is a 422 at `object`.
+         *
+         *     The store is read whether authorization is on or off. 404 when the API has no store, 409 while
+         *     this server names no decision engine, 503 when the engine does not answer. A page token that
+         *     is not one a previous page gave is a 400.
+         */
+        get: operations["listResourceServerRelationships"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resource-servers/{resource_server_id}/authorization/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Try a decision
+         * @description Ask the API's store one question, as the API's own clients ask it at
+         *     `POST /access/v1/evaluation` (AuthZEN 1.0 §6), and get the decision they would get. Every step
+         *     of theirs is taken. A subject Clavia does not know, a deactivated account or a deleted client
+         *     is denied (`subject_inactive`) before the engine is asked. Clavia adds what it knows of the
+         *     subject as `context.clavia.subject`, and a condition the engine cannot evaluate is a denial
+         *     (`condition_failed`). A denial always says which kind it is, whatever the API's
+         *     `denial_reasons`. The facts Clavia added are not returned. Nothing is recorded in the audit
+         *     trail.
+         *
+         *     A subject that is not a `user` or a `client` the model declares, a resource type the model
+         *     does not declare, an action that is not a relation of that type, or a `context.clavia` (which
+         *     is Clavia's to write) is a 422 pointing at the member. The store is asked whether
+         *     authorization is on or off. 404 when the API has no store, 409 while this server names no
+         *     decision engine, 503 when the engine does not answer: never a decision.
+         */
+        post: operations["evaluateResourceServerAuthorization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles": {
         parameters: {
             query?: never;
@@ -1392,7 +1538,7 @@ export type components = {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "saml_key.generated" | "saml_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "provisioning_token.issued" | "provisioning_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
+            type: "authentication.succeeded" | "authentication.failed" | "session.ended" | "session.stepped_up" | "mfa.enrolled" | "mfa.removed" | "passkey.registered" | "passkey.renamed" | "passkey.removed" | "passkey.counter_regressed" | "consent.given" | "consent.refused" | "consent.withdrawn" | "device.approved" | "device.refused" | "token.issued" | "token.revoked" | "token.code_replayed" | "token.refresh_replayed" | "client.created" | "client.updated" | "client.deleted" | "client.secret_rotated" | "client.granted" | "user.created" | "user.updated" | "user.deleted" | "user.identity_unlinked" | "user.roles_changed" | "user.signed_up" | "user.email_verified" | "user.password_reset" | "user.password_link_sent" | "user.exported" | "role.created" | "role.updated" | "role.deleted" | "resource_server.created" | "resource_server.updated" | "resource_server.deleted" | "resource_server.authorization_enabled" | "resource_server.authorization_disabled" | "resource_server.authorization_model_written" | "connection.created" | "connection.updated" | "connection.deleted" | "signing_key.created" | "signing_key.rotated" | "saml_key.generated" | "saml_key.rotated" | "initial_access_token.issued" | "initial_access_token.revoked" | "provisioning_token.issued" | "provisioning_token.revoked" | "webhook.created" | "webhook.updated" | "webhook.deleted" | "webhook.secret_rotated" | "webhook.tested" | "webhook.disabled";
             /** Format: date-time */
             occurred_at: string;
             outcome: components["schemas"]["AuditOutcome"];
@@ -1998,6 +2144,8 @@ export type components = {
             dpop_bound_access_tokens: boolean;
             /** @description The application's colour on its sign-in pages (see `AccentColor`); null for this server's. */
             accent_color: string | null;
+            /** @description Where it starts a sign-in of its own (see `InitiateLoginUri`); null when it registered none. */
+            initiate_login_uri: string | null;
             /**
              * @description Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
              *     `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
@@ -2027,6 +2175,16 @@ export type components = {
          *     contrasts more. Its pages are told it by a stylesheet of the sign-in origin, never inline.
          */
         AccentColor: string;
+        /**
+         * @description Where the application starts a sign-in of its own: `initiate_login_uri` (OpenID Connect Dynamic
+         *     Client Registration 1.0 §2; OpenID Connect Core 1.0 §4, third-party initiated login), an https URL
+         *     without a fragment, kept as written. When a person signs in from a page whose request has
+         *     expired (it is held for an hour), they are sent there with a `303` and `iss` (this server's
+         *     issuer) appended to its query, so that the application starts a new request; without one they
+         *     are told to go back to the application. A GET to it must begin a sign-in with this server. Set
+         *     by operators only: a client that registered itself (RFC 7591) cannot.
+         */
+        InitiateLoginUri: string;
         /**
          * @description Custom claims in this application's ID tokens and userinfo answers, beside the protocol's
          *     and what the scope releases (see `ClaimMapping`). A first-party application's only: a
@@ -2086,6 +2244,8 @@ export type components = {
             dpop_bound_access_tokens: boolean;
             /** @description The application's colour on its sign-in pages (see `AccentColor`); null for this server's. */
             accent_color: string | null;
+            /** @description Where it starts a sign-in of its own (see `InitiateLoginUri`); null when it registered none. */
+            initiate_login_uri: string | null;
             /**
              * @description Its logo on the sign-in pages, named by a digest of the image (it changes with the image);
              *     `GET /api/v1/clients/{client_id}/logo` downloads it. Null when the pages show this server's.
@@ -2168,6 +2328,7 @@ export type components = {
              */
             dpop_bound_access_tokens?: boolean;
             accent_color?: components["schemas"]["AccentColor"];
+            initiate_login_uri?: components["schemas"]["InitiateLoginUri"];
         };
         /**
          * @description `client_type` and `is_first_party` are identity, not configuration: neither can change
@@ -2208,6 +2369,8 @@ export type components = {
             dpop_bound_access_tokens?: boolean;
             /** @description The application's colour on its sign-in pages (see `AccentColor`); null gives it this server's back. */
             accent_color?: string | null;
+            /** @description Where it starts a sign-in of its own (see `InitiateLoginUri`); null removes it. */
+            initiate_login_uri?: string | null;
             /** @description Replaces the application's custom claims; refused for a third-party application (422). */
             claims?: components["schemas"]["ApplicationClaimMapping"][];
         };
@@ -2362,6 +2525,120 @@ export type components = {
             access_token_format?: components["schemas"]["AccessTokenFormat"];
             mfa_policy?: components["schemas"]["MfaPolicy"];
             claims?: components["schemas"]["ClaimMapping"][];
+        };
+        ResourceServerAuthorization: {
+            /** @description Whether the API's clients get decisions. Off, the store and its relationships are kept. */
+            enabled: boolean;
+            /** @description The API's store in the decision engine, a ULID. */
+            store_id: string;
+            /** @description The version of the model in force, a ULID. */
+            model_id: string;
+            model: components["schemas"]["AuthorizationModel"];
+            /** @description The clients that speak for the API. */
+            clients: string[];
+            /** @description Whether a denial says which kind it is (`no_relation`, `subject_inactive`, `unknown_type`, `condition_failed`), never more. */
+            denial_reasons: boolean;
+        };
+        ResourceServerAuthorizationUpdate: {
+            model: components["schemas"]["AuthorizationModel"];
+            /** @description The clients that speak for the API; none when left out. */
+            clients?: string[];
+            /** @description Whether a denial says which kind it is; off when left out. */
+            denial_reasons?: boolean;
+        };
+        /**
+         * @description An OpenFGA authorization model in its JSON form, schema 1.1, kept as it was sent. It declares
+         *     `type user`. `user` and `client` have no relation of their own. `role` and `group` are exactly
+         *     `define member: [user]`.
+         */
+        AuthorizationModel: {
+            /** @enum {string} */
+            schema_version: "1.1";
+            type_definitions: {
+                [key: string]: unknown;
+            }[];
+            conditions?: {
+                [key: string]: unknown;
+            };
+        };
+        AuthorizationModelVersion: {
+            /** @description The version, a ULID. */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When the decision engine made it, read from its id.
+             */
+            created_at: string;
+            /** @description Whether the API's questions are answered with this version. */
+            in_force: boolean;
+            /** @description The model as the decision engine keeps it (OpenFGA's JSON, schema 1.1). */
+            model: {
+                [key: string]: unknown;
+            };
+        };
+        AuthorizationModelPage: {
+            items: components["schemas"]["AuthorizationModelVersion"][];
+            /** @description Read the next page with it; absent on the last page. */
+            next_page_token?: string;
+        };
+        /** @description An object of the API's model, `type` and `id` as OpenFGA's notation takes them. */
+        AuthorizationEntity: {
+            type: string;
+            id: string;
+        };
+        /**
+         * @description Who holds the relation: a person (`user`), an application (`client`), one of the API's own
+         *     objects, or with `relation` a userset, everybody holding that relation on the object.
+         */
+        RelationshipSubject: {
+            type: string;
+            id: string;
+            relation?: string;
+        };
+        Relationship: {
+            resource: components["schemas"]["AuthorizationEntity"];
+            relation: string;
+            subject: components["schemas"]["RelationshipSubject"];
+            /** @description The condition the relationship is written under, and the values kept with it. */
+            condition?: {
+                name: string;
+                context?: {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        RelationshipPage: {
+            items: components["schemas"]["Relationship"][];
+            /** @description Read the next page with it; absent on the last page. */
+            next_page_token?: string;
+        };
+        /** @description One question, as AuthZEN 1.0 asks it (§6.1). Members it does not define are ignored. */
+        AccessEvaluation: {
+            subject: components["schemas"]["AuthorizationEntity"];
+            action: {
+                /** @description A relation of the resource's type. */
+                name: string;
+            } & {
+                [key: string]: unknown;
+            };
+            resource: components["schemas"]["AuthorizationEntity"];
+            /** @description What the model's conditions read. `clavia` is Clavia's to write. */
+            context?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description AuthZEN 1.0 §5.5. */
+        AccessDecision: {
+            decision: boolean;
+            context?: {
+                /**
+                 * @description The kind of denial.
+                 * @enum {string}
+                 */
+                reason: "no_relation" | "subject_inactive" | "unknown_type" | "condition_failed";
+            };
         };
         /** @description Lower-case letters, digits and dashes, starting with a letter; at most 32. */
         ConnectionName: string;
@@ -2728,9 +3005,11 @@ export type components = {
     };
     responses: {
         /**
-         * @description The request could not be read: malformed JSON or a parameter sent twice (a problem
-         *     document), or a malformed `Authorization` header (`invalid_request`, an RFC 6750
-         *     challenge).
+         * @description The request was built wrong (RFC 9110 §15.5.1), a problem document: it cannot be read
+         *     (malformed JSON, a parameter sent twice), or this document refuses it (a field it does not
+         *     describe, a wrong type, a value out of range, a parameter the operation does not take),
+         *     every violation listed with its `pointer` or `parameter`. Or a malformed `Authorization`
+         *     header (`invalid_request`, an RFC 6750 challenge).
          */
         BadRequest: {
             headers: {
@@ -2803,7 +3082,11 @@ export type components = {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description The request does not satisfy this document, or describes something that could never work. */
+        /**
+         * @description The request is well formed, but a rule refuses it (RFC 9110 §15.5.21): a permission the API
+         *     does not define, a password found in a breach, metadata that does not hold together. Each
+         *     fault is pointed at; nothing changed.
+         */
         Unprocessable: {
             headers: {
                 [name: string]: unknown;
@@ -2841,6 +3124,8 @@ export type components = {
         UserId: string;
         Sid: string;
         ClientId: string;
+        /** @description The `next_page_token` of the previous page. */
+        EnginePageToken: string;
         ResourceServerId: string;
         JobId: string;
         InitialAccessTokenId: string;
@@ -2889,7 +3174,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createUser: {
@@ -2948,7 +3232,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteUser: {
@@ -2974,7 +3257,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateUser: {
@@ -3032,7 +3314,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     sendUserPasswordLink: {
@@ -3089,7 +3370,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     withdrawUserConsent: {
@@ -3115,7 +3395,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listUserSessions: {
@@ -3142,7 +3421,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     endUserSessions: {
@@ -3167,7 +3445,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     endUserSession: {
@@ -3193,7 +3470,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listUserIdentities: {
@@ -3220,7 +3496,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     unlinkUserIdentity: {
@@ -3248,7 +3523,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listUserPasskeys: {
@@ -3275,7 +3549,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     removeUserPasskey: {
@@ -3301,7 +3574,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listUserRoles: {
@@ -3328,7 +3600,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     setUserRoles: {
@@ -3387,7 +3658,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listClients: {
@@ -3418,7 +3688,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createClient: {
@@ -3475,7 +3744,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteClient: {
@@ -3501,7 +3769,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateClient: {
@@ -3562,7 +3829,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     setClientLogo: {
@@ -3619,7 +3885,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     rotateClientSecret: {
@@ -3702,7 +3967,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createConnection: {
@@ -3789,7 +4053,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteConnection: {
@@ -3815,7 +4078,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateConnection: {
@@ -3878,7 +4140,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createResourceServer: {
@@ -3936,7 +4197,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteResourceServer: {
@@ -3962,7 +4222,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateResourceServer: {
@@ -3998,6 +4257,197 @@ export interface operations {
             422: components["responses"]["Unprocessable"];
         };
     };
+    getResourceServerAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The API's fine-grained authorization. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceServerAuthorization"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    putResourceServerAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceServerAuthorizationUpdate"];
+            };
+        };
+        responses: {
+            /** @description The API's fine-grained authorization, as it is now. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceServerAuthorization"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    deleteResourceServerAuthorization: {
+        parameters: {
+            query?: {
+                /** @description `delete` to delete the store and every relationship in it. */
+                confirm?: "delete";
+            };
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Turned off, or deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listResourceServerAuthorizationModels: {
+        parameters: {
+            query?: {
+                /** @description How many versions a page holds. A model can be 256 KiB. */
+                page_size?: number;
+                /** @description The `next_page_token` of the previous page. */
+                page_token?: components["parameters"]["EnginePageToken"];
+            };
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of model versions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorizationModelPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listResourceServerRelationships: {
+        parameters: {
+            query: {
+                /** @description The object, `type:id`. */
+                object: string;
+                /** @description How many relationships a page holds. */
+                page_size?: number;
+                /** @description The `next_page_token` of the previous page. */
+                page_token?: components["parameters"]["EnginePageToken"];
+            };
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of relationships. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    evaluateResourceServerAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource_server_id: components["parameters"]["ResourceServerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessEvaluation"];
+            };
+        };
+        responses: {
+            /** @description The decision. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDecision"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            415: components["responses"]["UnsupportedMediaType"];
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listRoles: {
         parameters: {
             query?: {
@@ -4026,7 +4476,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createRole: {
@@ -4084,7 +4533,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteRole: {
@@ -4109,7 +4557,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateRole: {
@@ -4174,7 +4621,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     assignRole: {
@@ -4230,7 +4676,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listSigningKeys: {
@@ -4358,7 +4803,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     issueInitialAccessToken: {
@@ -4413,7 +4857,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listProvisioningTokens: {
@@ -4446,7 +4889,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     issueProvisioningToken: {
@@ -4503,7 +4945,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     revokeProvisioningToken: {
@@ -4528,7 +4969,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listWebhooks: {
@@ -4552,7 +4992,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     createWebhook: {
@@ -4610,7 +5049,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     deleteWebhook: {
@@ -4635,7 +5073,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     updateWebhook: {
@@ -4694,7 +5131,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     testWebhook: {
@@ -4720,7 +5156,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listWebhookDeliveries: {
@@ -4752,7 +5187,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     importUsers: {
@@ -4815,7 +5249,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     getJobOutput: {
@@ -4845,7 +5278,6 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     getJob: {
@@ -4872,7 +5304,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
         };
     };
     listAuditEvents: {

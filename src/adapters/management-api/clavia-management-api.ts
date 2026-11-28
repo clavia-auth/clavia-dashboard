@@ -6,6 +6,7 @@ import type { paths } from "@/contract/management-api";
 import { ManagementError } from "@/core/management/errors";
 import type {
   AuditEventsApi,
+  AuthorizationApi,
   AuditQuery,
   ClientsApi,
   ConnectionsApi,
@@ -16,6 +17,7 @@ import type {
   RolesApi,
   SamlKeysApi,
   SigningKeysApi,
+  TokenPageQuery,
   UsersApi,
   ProvisioningTokensApi,
   WebhooksApi,
@@ -34,6 +36,7 @@ export class ClaviaManagementApi implements ManagementApi {
   readonly users: UsersApi;
   readonly clients: ClientsApi;
   readonly resourceServers: ResourceServersApi;
+  readonly authorization: AuthorizationApi;
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
@@ -169,6 +172,43 @@ export class ClaviaManagementApi implements ManagementApi {
         ),
     };
 
+    const api = (id: string) => ({ resource_server_id: id });
+    this.authorization = {
+      get: (id) =>
+        read(http.GET("/api/v1/resource-servers/{resource_server_id}/authorization", { params: { path: api(id) } })),
+      put: (id, body) =>
+        read(
+          http.PUT("/api/v1/resource-servers/{resource_server_id}/authorization", { params: { path: api(id) }, body }),
+        ),
+      turnOff: (id) =>
+        done(http.DELETE("/api/v1/resource-servers/{resource_server_id}/authorization", { params: { path: api(id) } })),
+      deleteStore: (id) =>
+        done(
+          http.DELETE("/api/v1/resource-servers/{resource_server_id}/authorization", {
+            params: { path: api(id), query: { confirm: "delete" } },
+          }),
+        ),
+      models: (id, query) =>
+        read(
+          http.GET("/api/v1/resource-servers/{resource_server_id}/authorization/models", {
+            params: { path: api(id), query: tokenPageParameters(query) },
+          }),
+        ),
+      relationships: (id, object, query) =>
+        read(
+          http.GET("/api/v1/resource-servers/{resource_server_id}/authorization/relationships", {
+            params: { path: api(id), query: { object, ...tokenPageParameters(query) } },
+          }),
+        ),
+      evaluate: (id, body) =>
+        read(
+          http.POST("/api/v1/resource-servers/{resource_server_id}/authorization/evaluation", {
+            params: { path: api(id) },
+            body,
+          }),
+        ),
+    };
+
     this.roles = {
       list: (query) => read(http.GET("/api/v1/roles", { params: { query: listParameters(query) } })),
       get: (roleId) => read(http.GET("/api/v1/roles/{role_id}", { params: { path: { role_id: roleId } } })),
@@ -275,6 +315,13 @@ function listParameters(query: ListQuery | undefined): { page?: number; per_page
     ...(query?.page === undefined ? {} : { page: query.page }),
     ...(query?.perPage === undefined ? {} : { per_page: query.perPage }),
     ...(search === undefined || search === "" ? {} : { q: search }),
+  };
+}
+
+function tokenPageParameters(query: TokenPageQuery | undefined): { page_size?: number; page_token?: string } {
+  return {
+    ...(query?.pageSize === undefined ? {} : { page_size: query.pageSize }),
+    ...(query?.pageToken === undefined || query.pageToken === "" ? {} : { page_token: query.pageToken }),
   };
 }
 

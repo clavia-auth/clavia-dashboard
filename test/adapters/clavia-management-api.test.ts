@@ -580,4 +580,110 @@ describe("ClaviaManagementApi", () => {
       ]);
     });
   });
+
+  describe("an API's authorization", () => {
+    const MODEL = { schema_version: "1.1" as const, type_definitions: [{ type: "user" }, { type: "report" }] };
+    const SETTINGS = {
+      enabled: true,
+      store_id: "01JQ8ZK3V6M2XW4T9B7N5R1CDE",
+      model_id: "01JQ8ZK4A2HG7Y3W5P9S1T6VQF",
+      model: MODEL,
+      clients: ["reports-api"],
+      denial_reasons: false,
+    };
+    const route = (request: Request) =>
+      `${request.method} ${new URL(request.url).pathname}${new URL(request.url).search}`;
+
+    it("reads, turns on, turns off and deletes the store, by the operations the contract names", async () => {
+      const { requests, api } = server((request) =>
+        request.method === "DELETE" ? new Response(null, { status: 204 }) : json(SETTINGS),
+      );
+
+      await expect(api.authorization.get("rs_1")).resolves.toEqual(SETTINGS);
+      await api.authorization.put("rs_1", { model: MODEL, clients: ["reports-api"], denial_reasons: true });
+      await api.authorization.turnOff("rs_1");
+      await api.authorization.deleteStore("rs_1");
+
+      expect(requests.map(route)).toEqual([
+        "GET /api/v1/resource-servers/rs_1/authorization",
+        "PUT /api/v1/resource-servers/rs_1/authorization",
+        "DELETE /api/v1/resource-servers/rs_1/authorization",
+        "DELETE /api/v1/resource-servers/rs_1/authorization?confirm=delete",
+      ]);
+      expect(await requests[1]!.json()).toEqual({ model: MODEL, clients: ["reports-api"], denial_reasons: true });
+    });
+
+    it("pages model versions and relationships by the engine's token, and leaves out what was not asked", async () => {
+      const { requests, api } = server(() => json({ items: [] }));
+
+      await api.authorization.models("rs_1");
+      await api.authorization.models("rs_1", { pageSize: 5, pageToken: "next" });
+      await api.authorization.relationships("rs_1", "report:q3&q4", { pageToken: "" });
+
+      expect(requests.map(route)).toEqual([
+        "GET /api/v1/resource-servers/rs_1/authorization/models",
+        "GET /api/v1/resource-servers/rs_1/authorization/models?page_size=5&page_token=next",
+        "GET /api/v1/resource-servers/rs_1/authorization/relationships?object=report%3Aq3%26q4",
+      ]);
+    });
+
+    it("tries a decision with AuthZEN's question and returns the decision with its kind", async () => {
+      const { requests, api } = server(() => json({ decision: false, context: { reason: "no_relation" } }));
+      const question = {
+        subject: { type: "user", id: "u-1" },
+        action: { name: "viewer" },
+        resource: { type: "report", id: "q3" },
+        context: { network: "office" },
+      };
+
+      await expect(api.authorization.evaluate("rs_1", question)).resolves.toEqual({
+        decision: false,
+        context: { reason: "no_relation" },
+      });
+      expect(route(requests[0]!)).toBe("POST /api/v1/resource-servers/rs_1/authorization/evaluation");
+      expect(await requests[0]!.json()).toEqual(question);
+    });
+
+    it("says it was never set up, that the server names no engine, and that the engine does not answer", async () => {
+      const problem = (status: number, title: string, detail: string) =>
+        json({ type: "about:blank", title, status, detail }, status);
+      const answers = [
+        problem(404, "Not Found", "The API has no store."),
+        problem(409, "Conflict", "This server names no decision engine."),
+        problem(503, "Service Unavailable", "The decision engine cannot answer now."),
+      ];
+      const { api } = server(() => answers.shift()!);
+
+      await expect(api.authorization.get("rs_1")).rejects.toMatchObject({ kind: "not_found" });
+      await expect(api.authorization.models("rs_1")).rejects.toMatchObject({
+        kind: "conflict",
+        message: "This server names no decision engine.",
+      });
+      await expect(api.authorization.evaluate("rs_1", {} as never)).rejects.toMatchObject({
+        kind: "service_unavailable",
+      });
+    });
+
+    it("points at what the engine refused in a model", async () => {
+      const { api } = server(() =>
+        json(
+          {
+            type: "about:blank",
+            title: "Unprocessable Content",
+            status: 422,
+            detail: "The request is well formed, but a rule refuses it.",
+            errors: [
+              { pointer: "/model", detail: "The decision engine refused the model: invalid_authorization_model." },
+            ],
+          },
+          422,
+        ),
+      );
+
+      await expect(api.authorization.put("rs_1", { model: MODEL })).rejects.toMatchObject({
+        kind: "invalid",
+        fields: [{ pointer: "/model" }],
+      });
+    });
+  });
 });

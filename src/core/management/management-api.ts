@@ -1,5 +1,8 @@
 import type {
+  AccessDecision,
+  AccessEvaluation,
   AuditEvent,
+  AuthorizationModelPage,
   AuditOutcome,
   AuditTargetType,
   Client,
@@ -16,7 +19,10 @@ import type {
   IssuedInitialAccessToken,
   Page,
   PasswordLinkSent,
+  RelationshipPage,
   ResourceServer,
+  ResourceServerAuthorization,
+  ResourceServerAuthorizationUpdate,
   ResourceServerCreate,
   ResourceServerUpdate,
   ProvisioningToken,
@@ -54,6 +60,7 @@ export interface ManagementApi {
   readonly users: UsersApi;
   readonly clients: ClientsApi;
   readonly resourceServers: ResourceServersApi;
+  readonly authorization: AuthorizationApi;
   readonly roles: RolesApi;
   readonly connections: ConnectionsApi;
   readonly signingKeys: SigningKeysApi;
@@ -122,6 +129,33 @@ export interface ResourceServersApi {
   create(resourceServer: ResourceServerCreate): Promise<ResourceServer>;
   update(resourceServerId: string, changes: ResourceServerUpdate): Promise<ResourceServer>;
   delete(resourceServerId: string): Promise<void>;
+}
+
+/** A page of what the decision engine pages by token: the previous page's `next_page_token`. */
+export type TokenPageQuery = Readonly<{ pageSize?: number; pageToken?: string }>;
+
+/**
+ * An API's fine-grained authorization, by the API's id: its settings, the versions of its model,
+ * the relationships in its store and a decision tried there. Everything but the settings is read
+ * from the decision engine, whether authorization is on or off, and answers `not_found` when the
+ * API has no store, `conflict` when the server names no engine, `service_unavailable` when the
+ * engine does not answer.
+ */
+export interface AuthorizationApi {
+  /** The settings and the model in force; `not_found` when it was never set up, or its store deleted. */
+  get(resourceServerId: string): Promise<ResourceServerAuthorization>;
+  /** Turn it on, or change it: a model that differs from the one in force becomes a new version. */
+  put(resourceServerId: string, settings: ResourceServerAuthorizationUpdate): Promise<ResourceServerAuthorization>;
+  /** Turn it off. The store, its model and its relationships are kept for when it is turned on again. */
+  turnOff(resourceServerId: string): Promise<void>;
+  /** Delete the store and every relationship in it, for good. */
+  deleteStore(resourceServerId: string): Promise<void>;
+  /** The model's versions, newest first, the one in force marked. */
+  models(resourceServerId: string, query?: TokenPageQuery): Promise<AuthorizationModelPage>;
+  /** The relationships written on one of the API's own objects (`type:id`), as written. */
+  relationships(resourceServerId: string, object: string, query?: TokenPageQuery): Promise<RelationshipPage>;
+  /** The decision the API's own clients would get, a denial always saying which kind it is. */
+  evaluate(resourceServerId: string, question: AccessEvaluation): Promise<AccessDecision>;
 }
 
 /**

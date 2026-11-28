@@ -130,6 +130,24 @@ export class Management {
     await this.call("DELETE", `/webhooks/${webhookId}`);
   }
 
+  /** An API of its own, under a name no other test uses: its id. */
+  async createApi(): Promise<string> {
+    const run = Math.random().toString(36).slice(2, 10);
+    const { id } = await this.call<{ id: string }>("POST", "/resource-servers", {
+      name: `e2e API ${run}`,
+      identifier: `https://e2e-${run}.clavia.test/`,
+      permissions: [],
+      access_token_format: "opaque",
+    });
+
+    return id;
+  }
+
+  /** Deleting an API deletes its store in the decision engine too. */
+  async deleteApi(apiId: string): Promise<void> {
+    await this.call("DELETE", `/resource-servers/${apiId}`);
+  }
+
   async deleteRole(roleId: string): Promise<void> {
     await this.call("DELETE", `/roles/${roleId}`);
   }
