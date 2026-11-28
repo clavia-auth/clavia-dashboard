@@ -44,6 +44,13 @@ export const EVENT_TYPES: Readonly<Record<AuditEventType, { label: string; group
   "resource_server.created": { label: "API created", group: "APIs", tone: "positive" },
   "resource_server.updated": { label: "API changed", group: "APIs", tone: "neutral" },
   "resource_server.deleted": { label: "API deleted", group: "APIs", tone: "warning" },
+  "resource_server.authorization_enabled": { label: "Authorization turned on", group: "APIs", tone: "positive" },
+  "resource_server.authorization_disabled": { label: "Authorization turned off", group: "APIs", tone: "warning" },
+  "resource_server.authorization_model_written": {
+    label: "Authorization model written",
+    group: "APIs",
+    tone: "neutral",
+  },
   "connection.created": { label: "Connection created", group: "Connections", tone: "positive" },
   "connection.updated": { label: "Connection changed", group: "Connections", tone: "neutral" },
   "connection.deleted": { label: "Connection deleted", group: "Connections", tone: "warning" },

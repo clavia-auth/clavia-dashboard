@@ -15,6 +15,7 @@ export const MANAGEMENT_SCOPES = {
   "create:resource_servers": "Create APIs",
   "update:resource_servers": "Modify APIs",
   "delete:resource_servers": "Delete APIs",
+  "read:relationships": "View the relationships of APIs, and what they decide",
   "read:roles": "View roles and who holds them",
   "create:roles": "Create roles and who holds them",
   "update:roles": "Modify roles and who holds them",
